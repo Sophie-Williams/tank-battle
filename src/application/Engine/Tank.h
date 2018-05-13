@@ -31,6 +31,7 @@ protected:
 	float _rotateSpeed;
 	float _movingSpeed;
 	float _rotateBarrelSpeed;
+	float _fireSpeed; // number of bullet can be fired in one minute
 
 	float _lastRotatingAt;
 	float _lastMovingAt;

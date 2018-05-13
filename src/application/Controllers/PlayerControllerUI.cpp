@@ -9,6 +9,7 @@ PlayerControllerUI::PlayerControllerUI(std::shared_ptr<Tank> player, ci::app::Wi
 PlayerControllerUI::~PlayerControllerUI() {}
 
 void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
+	float t = (float)ci::app::App::get()->getElapsedSeconds();
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = true;
 	}
@@ -27,11 +28,15 @@ void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
 	else if (e.getCode() == app::KeyEvent::KEY_x) {
 		_keyXDown = true;
 	}
-	float t = (float)ci::app::App::get()->getElapsedSeconds();
+	else if (e.getCode() == app::KeyEvent::KEY_SPACE) {
+		_player->fire(t);
+	}
 	makeAction(t);
 }
 
 void PlayerControllerUI::onKeyUp(ci::app::KeyEvent& e) {
+	float t = (float)ci::app::App::get()->getElapsedSeconds();
+
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = false;
 	}
@@ -50,7 +55,6 @@ void PlayerControllerUI::onKeyUp(ci::app::KeyEvent& e) {
 	else if (e.getCode() == app::KeyEvent::KEY_x) {
 		_keyXDown = false;
 	}
-	float t = (float)ci::app::App::get()->getElapsedSeconds();
 	makeAction(t);
 }
 

@@ -11,28 +11,40 @@ GameObject::~GameObject() {
 void GameObject::setBound(const ci::Rectf& boundRect) {
 	_boundRect = boundRect;
 
-	setPivot(_boundRect.getCenter());
+	setPivot(vec3(_boundRect.getCenter(), 0));
 }
 
 const ci::Rectf& GameObject::getBound() const {
 	return _boundRect;
 }
 
-void GameObject::setPivot(const ci::vec2& pivot) {
+void GameObject::setPivot(const ci::vec3& pivot) {
 	_pivot = pivot;
 }
 
-void GameObject::move(const ci::vec2& offset) {
-	_tMat = glm::translate(_tMat, ci::vec3(offset, 0));
+const ci::vec3& GameObject::getPivot() const {
+	return _pivot;
+}
+
+void GameObject::move(const ci::vec3& offset) {
+	_tMat = glm::translate(_tMat, offset);
 }
 
 void GameObject::rotate(const float& angle) {
 	// translate to object's origin
-	_tMat = glm::translate(_tMat, ci::vec3(-_pivot, 0));
+	_tMat = glm::translate(_tMat, -_pivot);
 	// rotate object by 0z
 	_tMat = glm::rotate(_tMat, angle, ci::vec3(0, 0, 1));
 	// translate object back to current position
-	_tMat = glm::translate(_tMat, ci::vec3(_pivot, 0));
+	_tMat = glm::translate(_tMat, _pivot);
+}
+
+void GameObject::setTransformation(const glm::mat4& tMat) {
+	_tMat = tMat;
+}
+
+const glm::mat4& GameObject::getTransformation() const {
+	return _tMat;
 }
 
 void GameObject::drawInternal() {

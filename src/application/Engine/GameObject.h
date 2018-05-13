@@ -3,13 +3,17 @@
 
 #include "cinder/gl/gl.h"
 
+class Scene;
+
 class GameObject
 {
 protected:
 	ci::Rectf _boundRect;
 	// transformation matrix
 	glm::mat4 _tMat;
-	ci::vec2 _pivot;
+	ci::vec3 _pivot;
+
+protected:
 
 	virtual void drawInternal();
 public:
@@ -18,13 +22,17 @@ public:
 
 	virtual void setBound(const ci::Rectf& boundRect);
 	virtual const ci::Rectf& getBound() const;
-	virtual void setPivot(const ci::vec2& pivot);
+	virtual void setPivot(const ci::vec3& pivot);
+	virtual const ci::vec3& getPivot() const;
+
 	virtual void update(float t) = 0;
 	virtual void draw();
 
-	virtual void move(const ci::vec2& offset);
+	virtual void move(const ci::vec3& offset);
 	virtual void rotate(const float& angle);
 
+	virtual void setTransformation(const glm::mat4& tMat);
+	virtual const glm::mat4& getTransformation() const;
 };
 
 typedef std::shared_ptr<GameObject> GameObjectRef;

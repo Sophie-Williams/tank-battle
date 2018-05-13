@@ -26,6 +26,8 @@ SET (ENGINE_SRC
     engine/TexturedObject.cpp
     engine/PlayerController.h
     engine/PlayerController.cpp
+    engine/Bullet.h
+    engine/Bullet.cpp
 )
 
 SET (UI_SRC

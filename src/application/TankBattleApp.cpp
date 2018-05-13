@@ -240,11 +240,11 @@ void BasicApp::setupGame() {
 	const float sceneHeight = 70;
 
 	Rectf gameArea(-sceneWidth/2, -sceneHeight/2, sceneWidth/2, sceneHeight/2);
-	auto gameScene = std::make_shared<Scene>(gameArea);
+	auto gameScene = Scene::createScene(gameArea);
 	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
 	gameScene->addGameObject(tank1);
 
-	_gameView->setScene(gameScene);
+	_gameView->setScene(std::shared_ptr<Scene>(gameScene));
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
 
 	_playerControllerUI = std::make_shared<PlayerControllerUI>(tank1, getWindow());

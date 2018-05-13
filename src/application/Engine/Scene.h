@@ -10,8 +10,8 @@ protected:
 	ci::ColorA8u _backGround;
 	ci::gl::Texture2dRef _backGroundTex;
 	ci::Rectf _sceneArea;
-public:
 	Scene(const ci::Rectf& area);
+public:
 	virtual ~Scene();
 
 	void update(float t);
@@ -21,5 +21,9 @@ public:
 	const ci::ColorA8u& getBackgroundColor()const;
 
 	void addGameObject(GameObjectRef gameObjectRef);
+
+	// current, the engine is allow create only one scene during game time
+	static Scene* createScene(const ci::Rectf& area);
+	static Scene* getCurrentScene();
 };
 

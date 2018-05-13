@@ -1,4 +1,6 @@
 #include "Tank.h"
+#include "Bullet.h"
+#include "Scene.h"
 
 using namespace ci;
 
@@ -13,6 +15,7 @@ Tank::Tank() :
 {
 	_movingSpeed = 10; // 10 metter per second
 	_rotateSpeed = glm::pi<float>()/ 6; // 60 degree per second
+	_fireSpeed = 60; // 60 bullets can be fired in one minute
 	_rotateBarrelSpeed = glm::half_pi<float>();
 }
 
@@ -53,14 +56,16 @@ void Tank::setSize(const ci::vec2& size) {
 	_barrel.setBound(barrelBound);
 
 	// set pivots
-	setPivot(bodyBound.getCenter());
-	_barrel.setPivot(barrelPivot);
+	setPivot(ci::vec3(bodyBound.getCenter(), 0));
+	_barrel.setPivot(ci::vec3(barrelPivot, 0));
 }
 
 void Tank::update(float t) {
+	// update tank components
 	_body.update(t);
 	_barrel.update(t);
 
+	// update rotation
 	if (_rotateDir) {
 		auto delta = t - _lastRotatingAt;
 		if (delta > 0) {
@@ -68,6 +73,8 @@ void Tank::update(float t) {
 			_lastRotatingAt = t;
 		}
 	}
+
+	// update barrel rotation
 	if (_rotateBarrelDir) {
 		auto delta = t - _lastRotatingBarrelAt;
 		if (delta > 0) {
@@ -75,10 +82,12 @@ void Tank::update(float t) {
 			_lastRotatingBarrelAt = t;
 		}
 	}
+
+	// update tank's position
 	if (_movingDir) {
 		auto delta = t - _lastMovingAt;
 		if (delta > 0) {
-			ci::vec3 movingDir(0,1,0);
+			ci::vec3 movingDir(0, 1, 0);
 			movingDir *= _movingDir*_movingSpeed*delta;
 			GameObject::move(movingDir);
 			_lastMovingAt = t;
@@ -124,5 +133,43 @@ void Tank::spinBarrel(char direction, float at) {
 }
 
 void Tank::fire(float at) {
-	_lastFireTime = at;
+	if (_lastFireTime < 0 || (at - _lastFireTime) >= _fireSpeed/60) {
+		auto currentScene = Scene::getCurrentScene();
+		if (currentScene) {
+			auto bullet = std::make_shared<Bullet>(at);
+
+			auto& tankTransform = getTransformation();
+			auto& barrelTransform = _barrel.getTransformation();
+
+			// put bullet transformation at tank's barrel
+			auto bulletTransform = tankTransform * barrelTransform;
+			bullet->setTransformation(bulletTransform);
+
+			auto& barelBound = _barrel.getBound();
+			auto& pivot = _barrel.getPivot();
+			// bullet out position is center of bottom edge of the bound rectangle
+			auto bulletOutPosition = (barelBound.getLowerLeft() + barelBound.getLowerRight())/2.0f;
+
+			// after put bullet transformation at tank's barrel
+			// the bullet is put at pivot of barrel
+			// now we move it to bullet out position by offset the transformation matrix by translation vector of
+			// pivot and bullet out position
+			auto v = ci::vec3(bulletOutPosition, 0) - pivot;
+			bullet->move(v);
+
+			currentScene->addGameObject(bullet);
+
+			// bullet speed is 3 times faster than tank's moving speed
+			bullet->setSpeed(_movingSpeed * 3);
+
+			// set bullet size, should be smaller than tank's gun, current is 0.75 compare to tank's gun
+			// the width of tank's gun assume that is half of barrel's width
+			auto& defaultBulletBound = bullet->getBound();
+			auto bulletW = 0.75f * barelBound.getWidth()/2;
+			auto bulletH = bulletW * defaultBulletBound.getHeight() / defaultBulletBound.getWidth();
+			bullet->setSize(bulletW, bulletH);
+
+			_lastFireTime = at;
+		}
+	}
 }

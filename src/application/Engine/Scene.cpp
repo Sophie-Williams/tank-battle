@@ -2,12 +2,17 @@
 
 using namespace ci;
 
+static Scene* s_currentScene = nullptr;
+
 Scene::Scene(const ci::Rectf& area) : _sceneArea(area) {
 	auto img = loadImage("E:\\Projects\\TankBattle\\src\\application\\assets\\background.jpg");
 	_backGroundTex = gl::Texture2d::create(img);
+
+	s_currentScene = this;
 }
 
 Scene::~Scene() {
+	s_currentScene = nullptr;
 }
 
 void Scene::update(float t) {
@@ -44,4 +49,16 @@ const ci::ColorA8u& Scene::getBackgroundColor() const {
 
 void Scene::addGameObject(GameObjectRef gameObjectRef) {
 	_gameObjects.push_back(gameObjectRef);
+}
+
+Scene* Scene::createScene(const ci::Rectf& area) {
+	if (s_currentScene == nullptr) {
+		return new Scene(area);
+	}
+
+	return s_currentScene;
+}
+
+Scene* Scene::getCurrentScene() {
+	return s_currentScene;
 }
