@@ -97,6 +97,8 @@ void Tank::setComponentTexture(const std::string& bodyImage, const std::string& 
 }
 
 void Tank::move(char direction, float at) {
+	if (_movingDir == direction) return;
+
 	_movingDir = direction;
 	if (direction) {
 		_lastMovingAt = at;
@@ -104,6 +106,8 @@ void Tank::move(char direction, float at) {
 }
 
 void Tank::turn(char direction, float at) {
+	if (_rotateDir == direction) return;
+
 	_rotateDir = direction;
 	if (direction) {
 		_lastRotatingAt = at;
@@ -111,6 +115,8 @@ void Tank::turn(char direction, float at) {
 }
 
 void Tank::spinBarrel(char direction, float at) {
+	if (_rotateBarrelDir == direction) return;
+
 	_rotateBarrelDir = direction;
 	if (direction) {
 		_lastRotatingBarrelAt = at;
