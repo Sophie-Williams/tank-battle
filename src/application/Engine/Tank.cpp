@@ -1,6 +1,8 @@
 #include "Tank.h"
 #include "Bullet.h"
 #include "Scene.h"
+#include "GameEngine.h"
+#include "GameController.h"
 
 using namespace ci;
 
@@ -60,7 +62,7 @@ void Tank::setSize(const ci::vec2& size) {
 	_barrel.setPivot(ci::vec3(barrelPivot, 0));
 }
 
-void Tank::update(float t) {
+void Tank::updateInternal(float t) {
 	// update tank components
 	_body.update(t);
 	_barrel.update(t);
@@ -137,6 +139,13 @@ void Tank::fire(float at) {
 		auto currentScene = Scene::getCurrentScene();
 		if (currentScene) {
 			auto bullet = std::make_shared<Bullet>(at);
+			currentScene->addGameObject(bullet);
+
+			auto onCollisionDetected = std::bind(&GameController::OnBulletCollisionDetected,
+				GameController::getInstance(), bullet, std::placeholders::_1);
+			GameEngine::getInstance()->registerCollisionDetection(bullet, onCollisionDetected);
+
+			bullet->setOwner(currentScene->findObjectRef(this));
 
 			auto& tankTransform = getTransformation();
 			auto& barrelTransform = _barrel.getTransformation();
@@ -145,7 +154,7 @@ void Tank::fire(float at) {
 			auto bulletTransform = tankTransform * barrelTransform;
 			bullet->setTransformation(bulletTransform);
 
-			auto& barelBound = _barrel.getBound();
+			auto& barelBound = _barrel.getBound(); 
 			auto& pivot = _barrel.getPivot();
 			// bullet out position is center of bottom edge of the bound rectangle
 			auto bulletOutPosition = (barelBound.getLowerLeft() + barelBound.getLowerRight())/2.0f;
@@ -157,10 +166,8 @@ void Tank::fire(float at) {
 			auto v = ci::vec3(bulletOutPosition, 0) - pivot;
 			bullet->move(v);
 
-			currentScene->addGameObject(bullet);
-
-			// bullet speed is 3 times faster than tank's moving speed
-			bullet->setSpeed(_movingSpeed * 3);
+			// bullet speed is 5 times faster than tank's moving speed
+			bullet->setSpeed(_movingSpeed * 5);
 
 			// set bullet size, should be smaller than tank's gun, current is 0.75 compare to tank's gun
 			// the width of tank's gun assume that is half of barrel's width

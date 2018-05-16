@@ -7,5 +7,5 @@ TankBarrel::TankBarrel() {
 
 TankBarrel::~TankBarrel() {}
 
-void TankBarrel::update(float t) {
+void TankBarrel::updateInternal(float t) {
 }

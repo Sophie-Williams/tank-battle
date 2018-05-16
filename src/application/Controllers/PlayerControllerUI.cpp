@@ -1,4 +1,5 @@
 #include "PlayerControllerUI.h"
+#include "../Engine/GameEngine.h"
 using namespace ci;
 
 PlayerControllerUI::PlayerControllerUI(std::shared_ptr<Tank> player, ci::app::WindowRef inputWindow) : PlayerController(player) {
@@ -9,7 +10,7 @@ PlayerControllerUI::PlayerControllerUI(std::shared_ptr<Tank> player, ci::app::Wi
 PlayerControllerUI::~PlayerControllerUI() {}
 
 void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
-	float t = (float)ci::app::App::get()->getElapsedSeconds();
+	float t = GameEngine::getInstance()->getCurrentTime();
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = true;
 	}
@@ -35,7 +36,7 @@ void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
 }
 
 void PlayerControllerUI::onKeyUp(ci::app::KeyEvent& e) {
-	float t = (float)ci::app::App::get()->getElapsedSeconds();
+	float t = GameEngine::getInstance()->getCurrentTime();
 
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = false;

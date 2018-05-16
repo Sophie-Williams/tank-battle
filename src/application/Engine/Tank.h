@@ -1,10 +1,10 @@
 #pragma once
-#include "GameObject.h"
+#include "LiveObject.h"
 #include "cinder/gl/gl.h"
 #include "TankBody.h"
 #include "TankBarrel.h"
 
-class Tank : public GameObject
+class Tank : public LiveObject
 {
 public:
 	enum TankState {
@@ -45,11 +45,11 @@ protected:
 protected:
 	virtual void setBound(const ci::Rectf& boundRect);
 	virtual void drawInternal();
+	virtual void updateInternal(float t);
 public:
 	Tank();
 	virtual ~Tank();
-
-	virtual void update(float t);
+	
 	virtual void setComponentTexture(const std::string& bodyImage, const std::string& barrelImage);
 
 	virtual void setSize(const ci::vec2& size);

@@ -6,5 +6,5 @@ TankBody::TankBody() {
 
 TankBody::~TankBody() {}
 
-void TankBody::update(float t) {
+void TankBody::updateInternal(float t) {
 }

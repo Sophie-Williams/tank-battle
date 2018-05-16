@@ -60,10 +60,6 @@ void WxGameView::setScene(std::shared_ptr<Scene> gameScene) {
 }
 
 void WxGameView::update() {
-	if (_gameScene) {
-		float t = (float)ci::app::App::get()->getElapsedSeconds();
-		_gameScene->update(t);
-	}
 }
 
 void WxGameView::draw() {

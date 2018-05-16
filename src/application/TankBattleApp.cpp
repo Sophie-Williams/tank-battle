@@ -28,6 +28,7 @@ using namespace std;
 #include "UI/CiWndCandle.h"
 #include "UI/WxGameView.h"
 #include "Engine/Tank.h"
+#include "Engine/Barrier.h"
 #include "Controllers/PlayerControllerUI.h"
 
 using namespace ci;
@@ -232,6 +233,8 @@ void BasicApp::setup()
 }
 
 void BasicApp::setupGame() {
+	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
+
 	auto tank1 = make_shared<Tank>();
 	tank1->setSize(vec2(3.8f, 4.4f));
 	tank1->setComponentTexture("E:\\Projects\\TankBattle\\src\\application\\assets\\tankBody.png", "E:\\Projects\\TankBattle\\src\\application\\assets\\tankBarrel.png");
@@ -240,11 +243,30 @@ void BasicApp::setupGame() {
 	const float sceneHeight = 70;
 
 	Rectf gameArea(-sceneWidth/2, -sceneHeight/2, sceneWidth/2, sceneHeight/2);
-	auto gameScene = Scene::createScene(gameArea);
+	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
 	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
 	gameScene->addGameObject(tank1);
 
-	_gameView->setScene(std::shared_ptr<Scene>(gameScene));
+	auto barrier1 = std::make_shared<Barrier>();
+	auto barrier2 = std::make_shared<Barrier>();
+	auto barrier3 = std::make_shared<Barrier>();
+	auto barrier4 = std::make_shared<Barrier>();
+
+	float wallDepth1 = 6;
+	float wallDepth2 = 5;
+
+	barrier1->setBound(Rectf(gameArea.x1, gameArea.y1, gameArea.x2, gameArea.y1 + wallDepth1));
+	barrier2->setBound(Rectf(gameArea.x2 - wallDepth2, gameArea.y1, gameArea.x2, gameArea.y2));
+	barrier3->setBound(Rectf(gameArea.x1, gameArea.y2 - wallDepth1, gameArea.x2, gameArea.y2));
+	barrier4->setBound(Rectf(gameArea.x1, gameArea.y1, gameArea.x1 + wallDepth2, gameArea.y2));
+
+	gameScene->addGameObject(barrier1);
+	gameScene->addGameObject(barrier2);
+	gameScene->addGameObject(barrier3);
+	gameScene->addGameObject(barrier4);
+
+	_gameEngine->setScene(gameScene);
+	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
 
 	_playerControllerUI = std::make_shared<PlayerControllerUI>(tank1, getWindow());
@@ -290,6 +312,7 @@ void BasicApp::update()
 		}
 	}
 
+	_gameEngine->doUpdate();
 	_topCotrol->update();
 
 	// update popup window

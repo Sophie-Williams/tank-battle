@@ -2,7 +2,11 @@
 
 using namespace ci;
 
-GameObject::GameObject() {
+GameObject::GameObject() : _available(true) {
+
+	// at begin transformation of previous frame is not available
+	// so the time is set to -1
+	_previousMatFrame.second = -1;
 }
 
 GameObject::~GameObject() {
@@ -47,11 +51,33 @@ const glm::mat4& GameObject::getTransformation() const {
 	return _tMat;
 }
 
+const std::pair<glm::mat4, float>& GameObject::getPreviousTransformation() const {
+	return _previousMatFrame;
+}
+
+bool GameObject::isAvailable() const {
+	return _available;
+}
+
+void GameObject::setAvailable(bool flag) {
+	_available = flag;
+}
+
+void GameObject::destroy() {
+	setAvailable(false);
+}
+
 void GameObject::drawInternal() {
 #ifdef SHOW_OBJECT_BOUNDARY
 	gl::ScopedColor foreGroundColor(1, 0, 0);
 	gl::drawStrokedRect(_boundRect);
 #endif
+}
+
+void GameObject::update(float t) {
+	_previousMatFrame.first = _tMat;
+	_previousMatFrame.second = t;
+	updateInternal(t);
 }
 
 void GameObject::draw() {

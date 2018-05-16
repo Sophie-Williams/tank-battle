@@ -8,14 +8,18 @@ class Scene;
 class GameObject
 {
 protected:
+	bool _available;
 	ci::Rectf _boundRect;
 	// transformation matrix
 	glm::mat4 _tMat;
+	// transformation matrix of previous frame
+	std::pair<glm::mat4, float> _previousMatFrame;
 	ci::vec3 _pivot;
 
 protected:
 
 	virtual void drawInternal();
+	virtual void updateInternal(float t) = 0;
 public:
 	GameObject();
 	virtual ~GameObject();
@@ -25,7 +29,7 @@ public:
 	virtual void setPivot(const ci::vec3& pivot);
 	virtual const ci::vec3& getPivot() const;
 
-	virtual void update(float t) = 0;
+	virtual void update(float t);
 	virtual void draw();
 
 	virtual void move(const ci::vec3& offset);
@@ -33,6 +37,12 @@ public:
 
 	virtual void setTransformation(const glm::mat4& tMat);
 	virtual const glm::mat4& getTransformation() const;
+
+	virtual const std::pair<glm::mat4, float>& getPreviousTransformation() const;
+
+	virtual bool isAvailable() const;
+	virtual void setAvailable(bool flag);
+	virtual void destroy();
 };
 
 typedef std::shared_ptr<GameObject> GameObjectRef;

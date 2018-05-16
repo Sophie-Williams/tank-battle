@@ -11,6 +11,9 @@ protected:
 	ci::gl::Texture2dRef _backGroundTex;
 	ci::Rectf _sceneArea;
 	Scene(const ci::Rectf& area);
+
+protected:
+	std::list<GameObjectRef>::const_iterator findObjectIter(const GameObject* pObject) const;
 public:
 	virtual ~Scene();
 
@@ -21,6 +24,10 @@ public:
 	const ci::ColorA8u& getBackgroundColor()const;
 
 	void addGameObject(GameObjectRef gameObjectRef);
+	void removeGameObject(GameObjectRef gameObjectRef);
+	GameObjectRef findObjectRef(const GameObject* pObject) const;
+	const std::list<GameObjectRef>& getObjects() const;
+	std::list<GameObjectRef>& getObjects();
 
 	// current, the engine is allow create only one scene during game time
 	static Scene* createScene(const ci::Rectf& area);

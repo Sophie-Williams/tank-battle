@@ -51,6 +51,43 @@ void Scene::addGameObject(GameObjectRef gameObjectRef) {
 	_gameObjects.push_back(gameObjectRef);
 }
 
+void Scene::removeGameObject(GameObjectRef gameObjectRef) {
+	auto it = findObjectIter(gameObjectRef.get());
+	if (it == _gameObjects.end()) {
+		return;
+	}
+
+	_gameObjects.erase(it);
+}
+
+std::list<GameObjectRef>::const_iterator Scene::findObjectIter(const GameObject* pObject) const {
+	for (auto it = _gameObjects.begin(); it != _gameObjects.end(); it++) {
+		if (pObject == it->get()) {
+			return it;
+		}
+	}
+
+	return _gameObjects.end();
+}
+
+GameObjectRef Scene::findObjectRef(const GameObject* pObject) const {
+	auto it = findObjectIter(pObject);
+	if (it == _gameObjects.end()) {
+		return nullptr;
+	}
+
+	return *it;
+}
+
+const std::list<GameObjectRef>& Scene::getObjects() const {
+	return _gameObjects;
+}
+
+std::list<GameObjectRef>& Scene::getObjects() {
+	return _gameObjects;
+}
+
+
 Scene* Scene::createScene(const ci::Rectf& area) {
 	if (s_currentScene == nullptr) {
 		return new Scene(area);

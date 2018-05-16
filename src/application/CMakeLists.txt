@@ -28,6 +28,15 @@ SET (ENGINE_SRC
     engine/PlayerController.cpp
     engine/Bullet.h
     engine/Bullet.cpp
+    engine/CollisionDetector.h
+    engine/CollisionDetector.cpp
+    engine/GameController.h
+    engine/GameController.cpp
+    engine/LiveObject.h
+    engine/LiveObject.cpp
+    engine/Geometry.h
+    engine/Barrier.h
+    engine/Barrier.cpp
 )
 
 SET (UI_SRC

@@ -7,6 +7,12 @@ class Bullet : public TexturedObject
 protected:
 	float _lastUpdate;
 	float _movingSpeed;
+	float _damaged;
+	// the owner object of the bullet where it was fired
+	// it can be null
+	GameObjectRef _owner;
+protected:
+	virtual void updateInternal(float t);
 public:
 
 	// constructor of a bullet need to know that time it is created
@@ -15,6 +21,10 @@ public:
 
 	void setSpeed(float speed);
 	float getSpeed() const;
-	virtual void update(float t);
-	virtual void setSize(const float& w, const float& h);
+	void setSize(const float& w, const float& h);
+	void setOwner(GameObjectRef owner);
+	GameObjectRef getOwner() const;
+
+	void setDamage(float damage);
+	float getDamage() const;
 };
