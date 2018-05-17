@@ -39,6 +39,8 @@ SET (ENGINE_SRC
     engine/Barrier.cpp
     engine/Animation.h
     engine/Animation.cpp
+    engine/DrawableObject.h
+    engine/DrawableObject.cpp
 )
 
 SET (UI_SRC

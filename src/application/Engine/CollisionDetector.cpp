@@ -3,8 +3,6 @@
 
 using namespace ci;
 
-static Scene* s_currentScene = nullptr;
-
 CollisionDetector::CollisionDetector() {}
 
 CollisionDetector::~CollisionDetector() {
@@ -21,8 +19,8 @@ void transform(std::vector<ci::vec2>& points, const glm::mat4& m) {
 	}
 }
 
-bool CollisionDetector::checkCollision(GameObjectRef object1, GameObjectRef object2, float at) {
-	if (object1.get() == object2.get()) {
+bool CollisionDetector::checkCollision(DrawableObject* object1, DrawableObject* object2, float at) {
+	if (object1 == object2) {
 		return false;
 	}
 

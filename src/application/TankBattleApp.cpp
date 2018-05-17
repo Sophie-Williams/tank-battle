@@ -246,7 +246,7 @@ void BasicApp::setupGame() {
 	Rectf gameArea(-sceneWidth/2, -sceneHeight/2, sceneWidth/2, sceneHeight/2);
 	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
 	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
-	gameScene->addGameObject(tank1);
+	gameScene->addDrawbleObject(tank1);
 
 	auto barrier1 = std::make_shared<Barrier>();
 	auto barrier2 = std::make_shared<Barrier>();
@@ -261,10 +261,10 @@ void BasicApp::setupGame() {
 	barrier3->setBound(Rectf(gameArea.x1, gameArea.y2 - wallDepth1, gameArea.x2, gameArea.y2));
 	barrier4->setBound(Rectf(gameArea.x1, gameArea.y1, gameArea.x1 + wallDepth2, gameArea.y2));
 
-	gameScene->addGameObject(barrier1);
-	gameScene->addGameObject(barrier2);
-	gameScene->addGameObject(barrier3);
-	gameScene->addGameObject(barrier4);
+	gameScene->addDrawbleObject(barrier1);
+	gameScene->addDrawbleObject(barrier2);
+	gameScene->addDrawbleObject(barrier3);
+	gameScene->addDrawbleObject(barrier4);
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);

@@ -55,15 +55,15 @@ void GameEngine::doUpdate() {
 		_gameScene->update(t);
 
 		// check collision after the scene is updated
-		auto& objects = _gameScene->getObjects();
+		auto& objects = _gameScene->getDrawableObjects();
 		for (auto it = objects.begin(); it != objects.end();) {
-			if (it->get()->isAvailable()) {
-				auto& obj2 = *it;
+			auto& obj2 = *it;
+			if (obj2->isAvailable()) {
 				if (obj2->canBeWentThrough() == false) {
 					for (auto jt = _monitoredObjects.begin(); jt != _monitoredObjects.end();) {
 						auto& obj1 = jt->first;
 
-						if (obj1.get() != obj2.get() && _collisionDetector->checkCollision(obj1, obj2, t)) {
+						if (obj1.get() != obj2.get() && _collisionDetector->checkCollision(obj1.get(), obj2.get(), t)) {
 							(jt->second)(obj2);
 						}
 
@@ -87,20 +87,36 @@ void GameEngine::doUpdate() {
 				objects.erase(itTemp);
 			}
 		}
+		
+		// remove game object that not available
+		{
+			auto& objects = _gameScene->getObjects();
+			for (auto it = objects.begin(); it != objects.end();) {
+				if (it->get()->isAvailable()) {
+					it++;
+				}
+				else {
+					auto itTemp = it;
+					it++;
+					objects.erase(itTemp);
+				}
+			}
+		}
+
 	}
 }
 
-void GameEngine::registerCollisionDetection(GameObjectRef object, CollisionDetectedHandler&& hander) {
-	std::pair<GameObjectRef, CollisionDetectedHandler> detectionElement;
+void GameEngine::registerCollisionDetection(DrawableObjectRef object, CollisionDetectedHandler&& hander) {
+	std::pair<DrawableObjectRef, CollisionDetectedHandler> detectionElement;
 	detectionElement.first = object;
 	detectionElement.second = hander;
 
 	_monitoredObjects.push_back(detectionElement);
 }
 
-bool GameEngine::unregisterCollisionDetection(GameObjectRef object) {
+bool GameEngine::unregisterCollisionDetection(DrawableObjectRef object) {
 	auto it = std::find_if(_monitoredObjects.begin(), _monitoredObjects.end(),
-		[&object](const std::pair<GameObjectRef, CollisionDetectedHandler>& monitoredObject) {
+		[&object](const std::pair<DrawableObjectRef, CollisionDetectedHandler>& monitoredObject) {
 		if (monitoredObject.first.get() == object.get()) {
 			return true;
 		}

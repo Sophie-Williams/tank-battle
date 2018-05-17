@@ -1,8 +1,8 @@
 #pragma once
-#include "GameObject.h"
+#include "DrawableObject.h"
 #include "cinder/gl/gl.h"
 
-class TexturedObject : public GameObject
+class TexturedObject : public DrawableObject
 {
 protected:
 	ci::gl::Texture2dRef _tex;

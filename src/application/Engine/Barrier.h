@@ -1,7 +1,7 @@
 #pragma once
-#include "GameObject.h"
+#include "DrawableObject.h"
 
-class Barrier : public GameObject
+class Barrier : public DrawableObject
 {
 public:
 	Barrier();

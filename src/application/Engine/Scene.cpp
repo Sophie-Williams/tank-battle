@@ -33,7 +33,7 @@ void Scene::draw() {
 
 	gl::draw(_backGroundTex, _sceneArea);
 
-	for (auto it = _gameObjects.begin(); it != _gameObjects.end(); it++) {
+	for (auto it = _drawableObjects.begin(); it != _drawableObjects.end(); it++) {
 		gl::ScopedModelMatrix modelMatrixScope;
 		(*it)->draw();
 	}
@@ -45,6 +45,11 @@ void Scene::setBackgroundColor(const ci::ColorA8u& backGround) {
 
 const ci::ColorA8u& Scene::getBackgroundColor() const {
 	return _backGround;
+}
+
+void Scene::addDrawbleObject(DrawableObjectRef drawableObject) {
+	_drawableObjects.push_back(drawableObject);
+	addGameObject(drawableObject);
 }
 
 void Scene::addGameObject(GameObjectRef gameObjectRef) {
@@ -87,6 +92,13 @@ std::list<GameObjectRef>& Scene::getObjects() {
 	return _gameObjects;
 }
 
+const std::list<DrawableObjectRef>& Scene::getDrawableObjects() const {
+	return _drawableObjects;
+}
+
+std::list<DrawableObjectRef>& Scene::getDrawableObjects() {
+	return _drawableObjects;
+}
 
 Scene* Scene::createScene(const ci::Rectf& area) {
 	if (s_currentScene == nullptr) {

@@ -27,7 +27,7 @@ Tank::Tank() :
 Tank::~Tank() {}
 
 void Tank::setBound(const ci::Rectf& boundRect) {
-	GameObject::setBound(boundRect);
+	DrawableObject::setBound(boundRect);
 }
 
 void Tank::setSize(const ci::vec2& size) {
@@ -94,7 +94,7 @@ void Tank::updateInternal(float t) {
 		if (delta > 0) {
 			ci::vec3 movingDir(0, 1, 0);
 			movingDir *= _movingDir*_movingSpeed*delta;
-			GameObject::move(movingDir);
+			DrawableObject::move(movingDir);
 			_lastMovingAt = t;
 		}
 	}
@@ -142,7 +142,7 @@ void Tank::fire(float at) {
 		auto currentScene = Scene::getCurrentScene();
 		if (currentScene) {
 			auto bullet = std::make_shared<Bullet>(at);
-			currentScene->addGameObject(bullet);
+			currentScene->addDrawbleObject(bullet);
 
 			auto onCollisionDetected = std::bind(&GameController::OnBulletCollisionDetected,
 				GameController::getInstance(), bullet, std::placeholders::_1);
