@@ -45,6 +45,8 @@ SET (ENGINE_SRC
     engine/LifeTimeControlComponent.cpp
     engine/GameComponent.h
     engine/GameComponent.cpp
+    engine/GameResource.h
+    engine/GameResource.cpp
 )
 
 SET (UI_SRC

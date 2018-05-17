@@ -30,6 +30,7 @@ using namespace std;
 #include "Engine/Tank.h"
 #include "Engine/Barrier.h"
 #include "Controllers/PlayerControllerUI.h"
+#include "Engine/GameResource.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -57,6 +58,7 @@ class BasicApp : public App {
 	SyncMessageQueue<Task> _tasks;
 	
 	shared_ptr<GameEngine> _gameEngine;
+	shared_ptr<GameResource> _gameResource;
 
 	shared_ptr<PlayerControllerUI> _playerControllerUI;
 	
@@ -234,6 +236,12 @@ void BasicApp::setup()
 
 void BasicApp::setupGame() {
 	addAssetDirectory("E:/Projects/tank-battle/src/application/assets");
+	_gameResource = std::shared_ptr<GameResource>(GameResource::createInstance());
+	_gameResource->setTexture(TEX_ID_BULLET, "bulletBlue1_outline.png");
+	_gameResource->setTexture(TEX_ID_EXPLOSION, "explosion.png");
+	_gameResource->setTexture(TEX_ID_TANKBODY, "tankBody.png");
+	_gameResource->setTexture(TEX_ID_TANKBARREL, "tankBarrel.png");
+	_gameResource->setTexture(TEX_ID_TANKSHOT, "shotLarge.png");
 
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
 

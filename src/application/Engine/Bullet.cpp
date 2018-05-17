@@ -3,11 +3,12 @@
 #include "Scene.h"
 #include "LifeTimeControlComponent.h"
 #include "GameEngine.h"
+#include "GameResource.h"
 
 using namespace ci;
 
 Bullet::Bullet(float t) : _lastUpdate(t), _movingSpeed(100), _damaged(20) {
-	setTexture("bulletBlue1_outline.png");
+	setTexture(GameResource::getInstance()->getTexture(TEX_ID_BULLET));
 	setSize(8, 14);
 }
 
@@ -62,7 +63,7 @@ void Bullet::destroy() {
 	auto t = GameEngine::getInstance()->getCurrentTime();
 
 	// setup animation
-	explosion->setTexture("explosion.png");
+	explosion->setTexture(GameResource::getInstance()->getTexture(TEX_ID_EXPLOSION));
 	explosion->setFrameSize(ivec2(128, 128));
 	// 30 frames per second
 	explosion->setDisplayFrameDuration(1.0f/30);

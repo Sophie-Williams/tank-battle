@@ -4,6 +4,7 @@
 #include "GameEngine.h"
 #include "GameController.h"
 #include "LifeTimeControlComponent.h"
+#include "GameResource.h"
 
 using namespace ci;
 
@@ -17,7 +18,7 @@ Tank::Tank() :
 	_lastFireTime(-1)
 {
 	_movingSpeed = 10; // 10 metter per second
-	_rotateSpeed = glm::pi<float>()/ 6; // 60 degree per second
+	_rotateSpeed = glm::pi<float>()/ 5;
 	_fireSpeed = 60; // 60 bullets can be fired in one minute
 	_rotateBarrelSpeed = glm::half_pi<float>();
 
@@ -107,8 +108,8 @@ void Tank::drawInternal() {
 }
 
 void Tank::setComponentTextures() {
-	_body.setTexture("tankBody.png");
-	_barrel.setTexture("tankBarrel.png");
+	_body.setTexture(GameResource::getInstance()->getTexture(TEX_ID_TANKBODY));
+	_barrel.setTexture(GameResource::getInstance()->getTexture(TEX_ID_TANKBARREL));
 }
 
 void Tank::move(char direction, float at) {

@@ -13,4 +13,5 @@ public:
 	virtual ~TexturedObject();
 
 	void setTexture(const std::string& imageFile);
+	void setTexture(const ci::gl::Texture2dRef& texture);
 };

@@ -16,5 +16,9 @@ void TexturedObject::drawInternal() {
 
 void TexturedObject::setTexture(const std::string& imageFile) {
 	auto img = loadImage(ci::app::loadAsset((imageFile)));
-	_tex = gl::Texture2d::create(img);
+	setTexture(gl::Texture2d::create(img));
+}
+
+void TexturedObject::setTexture(const gl::Texture2dRef& texture) {
+	_tex = texture;
 }

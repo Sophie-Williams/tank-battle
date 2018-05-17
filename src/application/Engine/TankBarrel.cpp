@@ -1,4 +1,5 @@
 #include "TankBarrel.h"
+#include "GameResource.h"
 
 using namespace ci;
 
@@ -29,7 +30,7 @@ void TankBarrel::setBound(const ci::Rectf& boundRect) {
 	ci::vec2 shotSize(boundRect.getWidth() * 20 / 16, 0);
 	shotSize.y = shotSize.x * baseShotSize.y / baseShotSize.x;
 
-	_fireAnim.setTexture("shotLarge.png");
+	_fireAnim.setTexture(GameResource::getInstance()->getTexture(TEX_ID_TANKSHOT));
 	_fireAnim.setDisplayFrameDuration(0.15f);
 
 	// fire animation boundary
