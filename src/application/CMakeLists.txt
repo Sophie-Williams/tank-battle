@@ -37,6 +37,8 @@ SET (ENGINE_SRC
     engine/Geometry.h
     engine/Barrier.h
     engine/Barrier.cpp
+    engine/Animation.h
+    engine/Animation.cpp
 )
 
 SET (UI_SRC

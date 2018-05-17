@@ -233,11 +233,12 @@ void BasicApp::setup()
 }
 
 void BasicApp::setupGame() {
+	addAssetDirectory("E:/Projects/tank-battle/src/application/assets");
+
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
 
 	auto tank1 = make_shared<Tank>();
 	tank1->setSize(vec2(3.8f, 4.4f));
-	tank1->setComponentTexture("E:\\Projects\\TankBattle\\src\\application\\assets\\tankBody.png", "E:\\Projects\\TankBattle\\src\\application\\assets\\tankBarrel.png");
 
 	const float sceneWidth = 70;
 	const float sceneHeight = 70;

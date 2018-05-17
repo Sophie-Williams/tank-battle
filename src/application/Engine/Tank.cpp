@@ -19,6 +19,9 @@ Tank::Tank() :
 	_rotateSpeed = glm::pi<float>()/ 6; // 60 degree per second
 	_fireSpeed = 60; // 60 bullets can be fired in one minute
 	_rotateBarrelSpeed = glm::half_pi<float>();
+
+	allowGoThrough(false);
+	setComponentTextures();
 }
 
 Tank::~Tank() {}
@@ -102,9 +105,9 @@ void Tank::drawInternal() {
 	_barrel.draw();
 }
 
-void Tank::setComponentTexture(const std::string& bodyImage, const std::string& barrelImage) {
-	_body.setTexture(bodyImage);
-	_barrel.setTexture(barrelImage);
+void Tank::setComponentTextures() {
+	_body.setTexture("tankBody.png");
+	_barrel.setTexture("tankBarrel.png");
 }
 
 void Tank::move(char direction, float at) {
@@ -175,6 +178,8 @@ void Tank::fire(float at) {
 			auto bulletW = 0.75f * barelBound.getWidth()/2;
 			auto bulletH = bulletW * defaultBulletBound.getHeight() / defaultBulletBound.getWidth();
 			bullet->setSize(bulletW, bulletH);
+
+			_barrel.fire(at);
 
 			_lastFireTime = at;
 		}

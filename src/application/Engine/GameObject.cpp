@@ -2,7 +2,7 @@
 
 using namespace ci;
 
-GameObject::GameObject() : _available(true) {
+GameObject::GameObject() : _available(true), _allowGoThrough(true) {
 
 	// at begin transformation of previous frame is not available
 	// so the time is set to -1
@@ -67,6 +67,15 @@ void GameObject::destroy() {
 	setAvailable(false);
 }
 
+bool GameObject::canBeWentThrough() const {
+	return _allowGoThrough;
+
+}
+
+void GameObject::allowGoThrough(bool allowGoThrough) {
+	_allowGoThrough = allowGoThrough;
+}
+
 void GameObject::drawInternal() {
 #ifdef SHOW_OBJECT_BOUNDARY
 	gl::ScopedColor foreGroundColor(1, 0, 0);
@@ -89,3 +98,4 @@ void GameObject::draw() {
 
 	gl::setModelMatrix(currentModelMatrix);
 }
+

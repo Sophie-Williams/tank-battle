@@ -4,6 +4,7 @@
 
 class TexturedObject : public GameObject
 {
+protected:
 	ci::gl::Texture2dRef _tex;
 protected:
 	virtual void drawInternal();

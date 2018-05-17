@@ -9,6 +9,7 @@ class GameObject
 {
 protected:
 	bool _available;
+	bool _allowGoThrough;
 	ci::Rectf _boundRect;
 	// transformation matrix
 	glm::mat4 _tMat;
@@ -43,6 +44,9 @@ public:
 	virtual bool isAvailable() const;
 	virtual void setAvailable(bool flag);
 	virtual void destroy();
+	
+	virtual bool canBeWentThrough() const;
+	virtual void allowGoThrough(bool allowGoThrough);
 };
 
 typedef std::shared_ptr<GameObject> GameObjectRef;

@@ -46,11 +46,10 @@ protected:
 	virtual void setBound(const ci::Rectf& boundRect);
 	virtual void drawInternal();
 	virtual void updateInternal(float t);
+	void setComponentTextures();
 public:
 	Tank();
 	virtual ~Tank();
-	
-	virtual void setComponentTexture(const std::string& bodyImage, const std::string& barrelImage);
 
 	virtual void setSize(const ci::vec2& size);
 	void move(char direction, float at);

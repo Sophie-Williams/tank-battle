@@ -58,20 +58,23 @@ void GameEngine::doUpdate() {
 		auto& objects = _gameScene->getObjects();
 		for (auto it = objects.begin(); it != objects.end();) {
 			if (it->get()->isAvailable()) {
-				for (auto jt = _monitoredObjects.begin(); jt != _monitoredObjects.end();) {
-					auto& obj1 = jt->first;
-					auto& obj2 = *it;
-					if (obj1.get() != obj2.get() && _collisionDetector->checkCollision(obj1, obj2, t)) {
-						(jt->second)(obj2);
-					}
+				auto& obj2 = *it;
+				if (obj2->canBeWentThrough() == false) {
+					for (auto jt = _monitoredObjects.begin(); jt != _monitoredObjects.end();) {
+						auto& obj1 = jt->first;
 
-					if (obj1->isAvailable()) {
-						jt++;
-					}
-					else {
-						auto itTemp = jt;
-						jt++;
-						_monitoredObjects.erase(itTemp);
+						if (obj1.get() != obj2.get() && _collisionDetector->checkCollision(obj1, obj2, t)) {
+							(jt->second)(obj2);
+						}
+
+						if (obj1->isAvailable()) {
+							jt++;
+						}
+						else {
+							auto itTemp = jt;
+							jt++;
+							_monitoredObjects.erase(itTemp);
+						}
 					}
 				}
 			}

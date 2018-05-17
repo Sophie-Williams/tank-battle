@@ -2,7 +2,7 @@
 using namespace ci;
 
 Bullet::Bullet(float t) : _lastUpdate(t), _movingSpeed(100), _damaged(20) {
-	setTexture("E:\\Projects\\tank-battle\\src\\application\\assets\\bulletBlue1_outline.png");
+	setTexture("bulletBlue1_outline.png");
 	setSize(8, 14);
 }
 

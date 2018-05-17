@@ -2,6 +2,7 @@
 using namespace ci;
 
 Barrier::Barrier() {
+	allowGoThrough(false);
 }
 
 Barrier::~Barrier() {}

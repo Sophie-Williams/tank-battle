@@ -1,4 +1,5 @@
 #include "TexturedObject.h"
+#include "cinder/app/App.h"
 using namespace ci;
 
 TexturedObject::TexturedObject() {
@@ -14,6 +15,6 @@ void TexturedObject::drawInternal() {
 }
 
 void TexturedObject::setTexture(const std::string& imageFile) {
-	auto img = loadImage(imageFile);
+	auto img = loadImage(ci::app::loadAsset((imageFile)));
 	_tex = gl::Texture2d::create(img);
 }
