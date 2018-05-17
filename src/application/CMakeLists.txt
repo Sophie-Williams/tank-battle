@@ -41,6 +41,10 @@ SET (ENGINE_SRC
     engine/Animation.cpp
     engine/DrawableObject.h
     engine/DrawableObject.cpp
+    engine/LifeTimeControlComponent.h
+    engine/LifeTimeControlComponent.cpp
+    engine/GameComponent.h
+    engine/GameComponent.cpp
 )
 
 SET (UI_SRC

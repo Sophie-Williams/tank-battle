@@ -1,4 +1,9 @@
 #include "Bullet.h"
+#include "Animation.h"
+#include "Scene.h"
+#include "LifeTimeControlComponent.h"
+#include "GameEngine.h"
+
 using namespace ci;
 
 Bullet::Bullet(float t) : _lastUpdate(t), _movingSpeed(100), _damaged(20) {
@@ -47,4 +52,37 @@ void Bullet::setDamage(float damage) {
 
 float Bullet::getDamage() const {
 	return _damaged;
+}
+
+void Bullet::destroy() {
+	TexturedObject::destroy();
+	auto explosion = std::make_shared<Animation>();
+	Scene::getCurrentScene()->addDrawbleObject(explosion);
+	
+	auto t = GameEngine::getInstance()->getCurrentTime();
+
+	// setup animation
+	explosion->setTexture("explosion.png");
+	explosion->setFrameSize(ivec2(128, 128));
+	// 30 frames per second
+	explosion->setDisplayFrameDuration(1.0f/30);
+	explosion->autoCalculateFrameCount();
+
+	//
+	auto& bulletBound = getBound();
+	auto center = bulletBound.getCenter();
+
+	glm::mat4::col_type p4(center, 0, 1);
+	p4 = _tMat * p4;
+
+	float w = bulletBound.getWidth() * 16;
+	explosion->setBound(ci::Rectf(p4.x - w/2, p4.y - w * 3 / 4, p4.x + w / 2, p4.y + w / 4));
+
+	// ensure that the explosion animation destroy automatically after it run to end
+	auto animDuration = explosion->getDisplayFrameDuration() * explosion->getFrameCount();
+	auto animLifeTimeControl = std::make_shared<LifeTimeControlComponent>(animDuration + 0.5f);
+	animLifeTimeControl->startLifeTimeCountDown(t);
+	explosion->addComponent(animLifeTimeControl);
+
+	explosion->start(t);
 }

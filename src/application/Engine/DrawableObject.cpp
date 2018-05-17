@@ -71,6 +71,8 @@ void DrawableObject::drawInternal() {
 }
 
 void DrawableObject::update(float t) {
+	GameObject::update(t);
+
 	_previousMatFrame.first = _tMat;
 	_previousMatFrame.second = t;
 	updateInternal(t);

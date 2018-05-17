@@ -77,6 +77,18 @@ void Animation::setFrameCount(int frameCount) {
 	}
 }
 
+int Animation::getFrameCount() const {
+	return _frameCount;
+}
+
 void Animation::setDisplayFrameDuration(float duration) {
 	_frameDuration = duration;
+}
+
+float Animation::getDisplayFrameDuration() const {
+	return _frameDuration;
+}
+
+void Animation::setFrameSize(const ci::ivec2& frameSize) {
+	_frameSize = frameSize;
 }

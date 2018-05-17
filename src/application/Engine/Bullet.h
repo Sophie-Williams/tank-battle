@@ -14,7 +14,6 @@ protected:
 protected:
 	virtual void updateInternal(float t);
 public:
-
 	// constructor of a bullet need to know that time it is created
 	Bullet(float t);
 	virtual ~Bullet();
@@ -27,4 +26,6 @@ public:
 
 	void setDamage(float damage);
 	float getDamage() const;
+
+	void destroy();
 };

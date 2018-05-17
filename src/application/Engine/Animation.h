@@ -13,7 +13,6 @@ protected:
 protected:
 	virtual void updateInternal(float t);
 	virtual void drawInternal();
-	void autoCalculateFrameCount();
 public:
 	Animation();
 	virtual ~Animation();
@@ -26,6 +25,10 @@ public:
 	void setLoop(int loop);
 	// set frameCount to -1 to auto compute frame count base on image size and frame size
 	void setFrameCount(int frameCount);
+	int getFrameCount() const;
 	// default duration = 1/30 (second)
 	void setDisplayFrameDuration(float duration);
+	float getDisplayFrameDuration() const;
+	void setFrameSize(const ci::ivec2& frameSize);
+	void autoCalculateFrameCount();
 };

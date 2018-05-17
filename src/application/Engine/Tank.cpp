@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "GameEngine.h"
 #include "GameController.h"
+#include "LifeTimeControlComponent.h"
 
 using namespace ci;
 
@@ -144,6 +145,11 @@ void Tank::fire(float at) {
 			auto bullet = std::make_shared<Bullet>(at);
 			currentScene->addDrawbleObject(bullet);
 
+			// ensure that the bullet destroy automatically after 5 seconds
+			auto bulletLifeTimeControl = std::make_shared<LifeTimeControlComponent>(1.0f);
+			bulletLifeTimeControl->startLifeTimeCountDown(at);
+			bullet->addComponent(bulletLifeTimeControl);
+
 			auto onCollisionDetected = std::bind(&GameController::OnBulletCollisionDetected,
 				GameController::getInstance(), bullet, std::placeholders::_1);
 			GameEngine::getInstance()->registerCollisionDetection(bullet, onCollisionDetected);
@@ -180,7 +186,6 @@ void Tank::fire(float at) {
 			bullet->setSize(bulletW, bulletH);
 
 			_barrel.fire(at);
-
 			_lastFireTime = at;
 		}
 	}
