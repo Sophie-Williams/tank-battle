@@ -41,17 +41,36 @@ bool CollisionDetector::checkCollision(DrawableObject* object1, DrawableObject* 
 	// transform local bounding poly of object 2 to world space
 	transform(poly2, m2);
 
+	int m = (int)poly1.size();
+	int n = (int)poly2.size();
+
 	// check if poly 1 contains any vertex of poly 2 and reverse
-	for (int i = 0; i < (int)poly2.size(); i++) {
+	for (int i = 0; i < n; i++) {
 		auto& Q = poly2[i];
 		if (isPointInside(poly1, Q)) {
 			return true;
 		}
 	}
-	for (int i = 0; i < (int)poly1.size(); i++) {
+	for (int i = 0; i < m; i++) {
 		auto& Q = poly1[i];
 		if (isPointInside(poly2, Q)) {
 			return true;
+		}
+	}
+
+	// check if any segment of two polygon intersect
+	float t1, t2;
+	for (int i = 0; i < m; i++) {
+		auto& P1 = poly1[i];
+		auto u1 = poly1[(i + 1) % m] - P1;
+		for (int j = 0; j < n; j++) {
+			auto& P2 = poly2[j];
+			auto u2 = poly2[(j + 1) % n] - P2;
+			
+			// two segment must be intersect at the middle of each other
+			if (Intersect2D_Lines(P1, u1, P2, u2, &t1, &t2) && t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+				return true;
+			}
 		}
 	}
 

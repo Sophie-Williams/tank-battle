@@ -171,9 +171,10 @@ template <class T>
 bool isPointInside(const std::vector<T>& poly, const T& Q) {
 	float prevVal = 0;
 	char sign = 1;
-	for (int j = 0; j < (int)poly.size(); j++) {
+	int n = (int)poly.size();
+	for (int j = 0; j < n; j++) {
 		auto& P1 = poly[j];
-		auto& P2 = poly[(j + 1) % poly.size()];
+		auto& P2 = poly[(j + 1) % n];
 		auto u = P2 - P1;
 		float currVal = compute(P1, u, Q);
 
