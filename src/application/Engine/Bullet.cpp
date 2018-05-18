@@ -66,7 +66,7 @@ void Bullet::destroy() {
 	explosion->setTexture(GameResource::getInstance()->getTexture(TEX_ID_EXPLOSION));
 	explosion->setFrameSize(ivec2(128, 128));
 	// 30 frames per second
-	explosion->setDisplayFrameDuration(1.0f/30);
+	explosion->setDisplayFrameDuration(1.0f/60);
 	explosion->autoCalculateFrameCount();
 
 	//
@@ -76,7 +76,7 @@ void Bullet::destroy() {
 	glm::mat4::col_type p4(center, 0, 1);
 	p4 = _tMat * p4;
 
-	float w = bulletBound.getWidth() * 16;
+	float w = bulletBound.getWidth() * 24;
 	explosion->setBound(ci::Rectf(p4.x - w/2, p4.y - w * 3 / 4, p4.x + w / 2, p4.y + w / 4));
 
 	// ensure that the explosion animation destroy automatically after it run to end

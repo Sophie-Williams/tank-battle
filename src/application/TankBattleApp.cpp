@@ -246,7 +246,7 @@ void BasicApp::setupGame() {
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
 
 	auto tank1 = make_shared<Tank>();
-	tank1->setSize(vec2(3.8f, 4.4f));
+	tank1->setSize(vec2(5.7f, 6.6f));
 
 	const float sceneWidth = 70;
 	const float sceneHeight = 70;
