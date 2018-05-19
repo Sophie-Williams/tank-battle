@@ -17,11 +17,14 @@ bool Intersect2D_Lines(
 	//lines are parallel
 	if (std::abs(D) < GEOMETRY_EPSILON) return false;
 
+	auto A = Q.x - P.x;
+	auto B = Q.y - P.y;
+
 	if (t1) {
-		*t1 = (float)((v.x*(Q.y - P.y) - v.y*(Q.x - P.x)) / D);
+		*t1 = (float)((v.x * B - v.y * A) / D);
 	}
 	if (t2) {
-		*t2 = (float)((u.x*(Q.y - P.y) - u.y*(Q.x - P.x)) / D);
+		*t2 = (float)((u.x * B - u.y * A) / D);
 	}
 	return true;
 }
@@ -168,7 +171,7 @@ void offset(T& P, const T& u, float distance) {
 }
 
 template <class T>
-bool isPointInside(const std::vector<T>& poly, const T& Q) {
+char isPointInside(const std::vector<T>& poly, const T& Q) {
 	float prevVal = 0;
 	char sign = 1;
 	int n = (int)poly.size();
@@ -199,5 +202,5 @@ bool isPointInside(const std::vector<T>& poly, const T& Q) {
 		prevVal = currVal;
 	}
 
-	return (sign >= 0);
+	return sign;
 }

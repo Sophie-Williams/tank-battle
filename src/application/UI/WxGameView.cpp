@@ -68,12 +68,37 @@ void WxGameView::draw() {
 	//	gl::ScopedColor lineColorScope(1, 0, 0);
 	//	gl::drawStrokedRect(Rectf(_viewPort), 3);
 	//}
+	{
+		auto h = _parent->getHeight();
+		// mapping scene to view port area
+		gl::ScopedViewport scopeViewPort(_viewPort.x1, h - _viewPort.y1 - _viewPort.getHeight(), _viewPort.getWidth(), _viewPort.getHeight());
 
-	auto h = _parent->getHeight();
-	// mapping scene to view port area
-	gl::ScopedViewport scopeViewPort(_viewPort.x1, h - _viewPort.y1 - _viewPort.getHeight(), _viewPort.getWidth(), _viewPort.getHeight());
+		if (_gameScene) {
+			_gameScene->draw();
+		}
+	}
+	{
+		static float lastStartCountTime = -1;
+		static int frameCount = 0;
+		// measure at least for last 3 seconds
+		constexpr float measureDuration = 3.0f;
+		auto currentTime = ci::app::getElapsedSeconds();
 
-	if (_gameScene) {
-		_gameScene->draw();
+		if (lastStartCountTime == -1) {
+			lastStartCountTime = currentTime;
+			frameCount = 0;
+		}
+
+		frameCount++;
+
+		auto fs = frameCount / (currentTime - lastStartCountTime);
+		auto fsStr = std::to_string((int)fs);
+		fsStr.append(" fps");
+		gl::drawString(fsStr, _viewPort.getUL());
+
+		if (currentTime - lastStartCountTime > measureDuration) {
+			lastStartCountTime = currentTime;
+			frameCount = 1;
+		}
 	}
 }

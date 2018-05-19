@@ -19,6 +19,7 @@ class GameEngine
 {
 private:
 	bool _runFlag;
+	float _lastUpdate;
 private:
 	std::shared_ptr<Scene> _gameScene;
 	std::shared_ptr<CollisionDetector> _collisionDetector;

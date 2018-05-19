@@ -23,6 +23,7 @@ Tank::Tank() :
 	_rotateBarrelSpeed = glm::half_pi<float>();
 
 	allowGoThrough(false);
+	setObjectStaticFlag(false);
 	setComponentTextures();
 }
 
@@ -75,30 +76,24 @@ void Tank::updateInternal(float t) {
 	// update rotation
 	if (_rotateDir) {
 		auto delta = t - _lastRotatingAt;
-		if (delta > 0) {
-			rotate(_rotateDir * _rotateSpeed * delta);
-			_lastRotatingAt = t;
-		}
+		rotate(_rotateDir * _rotateSpeed * delta);
+		_lastRotatingAt = t;
 	}
 
 	// update barrel rotation
 	if (_rotateBarrelDir) {
 		auto delta = t - _lastRotatingBarrelAt;
-		if (delta > 0) {
-			_barrel.rotate(_rotateBarrelDir * _rotateBarrelSpeed * delta);
-			_lastRotatingBarrelAt = t;
-		}
+		_barrel.rotate(_rotateBarrelDir * _rotateBarrelSpeed * delta);
+		_lastRotatingBarrelAt = t;
 	}
 
 	// update tank's position
 	if (_movingDir) {
 		auto delta = t - _lastMovingAt;
-		if (delta > 0) {
-			ci::vec3 movingDir(0, 1, 0);
-			movingDir *= _movingDir*_movingSpeed*delta;
-			DrawableObject::move(movingDir);
-			_lastMovingAt = t;
-		}
+		ci::vec3 movingDir(0, 1, 0);
+		movingDir *= _movingDir*_movingSpeed*delta;
+		DrawableObject::move(movingDir);
+		_lastMovingAt = t;
 	}
 }
 

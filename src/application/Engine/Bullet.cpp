@@ -10,6 +10,8 @@ using namespace ci;
 Bullet::Bullet(float t) : _lastUpdate(t), _movingSpeed(100), _damaged(20) {
 	setTexture(GameResource::getInstance()->getTexture(TEX_ID_BULLET));
 	setSize(8, 14);
+	allowGoThrough(false);
+	setObjectStaticFlag(false);
 }
 
 Bullet::~Bullet() {}

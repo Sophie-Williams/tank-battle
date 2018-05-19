@@ -1,12 +1,14 @@
 #pragma once
 #include "GameObject.h"
 #include "cinder/gl/gl.h"
+#include <vector>
 
 class DrawableObject : public GameObject
 {
 protected:
 	bool _available;
 	bool _allowGoThrough;
+	bool _staticObject;
 	ci::Rectf _boundRect;
 	// transformation matrix
 	glm::mat4 _tMat;
@@ -23,6 +25,9 @@ public:
 
 	virtual void setBound(const ci::Rectf& boundRect);
 	virtual const ci::Rectf& getBound() const;
+	// bounding poly array must be initialized with at least 4 elements
+	void getBoundingPoly(std::vector<ci::vec2>& boundingPoly) const;
+
 	virtual void setPivot(const ci::vec3& pivot);
 	virtual const ci::vec3& getPivot() const;
 
@@ -39,6 +44,9 @@ public:
 
 	virtual bool canBeWentThrough() const;
 	virtual void allowGoThrough(bool allowGoThrough);
+
+	void setObjectStaticFlag(bool staticFlag);
+	bool isStaticObject() const;
 };
 
 typedef std::shared_ptr<DrawableObject> DrawableObjectRef;
