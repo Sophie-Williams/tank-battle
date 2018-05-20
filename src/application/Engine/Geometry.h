@@ -126,7 +126,7 @@ void projectPoints(const T& p, const T& u, Iterator begin, Iterator end) {
 
 template <class T>
 float projectPoint(const T& p, const T& u, const T& x) {
-	auto v = T(u.y, -u.x);
+	T v(u.y, -u.x);
 	float t;
 	Intersect2D_Lines(p, u, x, v, &t, nullptr);
 	return t;
@@ -155,6 +155,30 @@ bool IsMidleSegment2(
 
 	return dotProduct < 0;
 }
+
+template <class T>
+auto computeRank(
+	const T& P, const T& A, const T& B
+)
+{
+	T u = P - A;
+	T v = P - B;
+	return (u.x*v.x + u.y*v.y);
+}
+
+// compute ratio of vector v base on vector u
+// vector u must be not a zero vector
+template <class T>
+auto computeT(
+	const T&u, const T&v
+)
+{
+	if (u.x) {
+		return v.x / u.x;
+	}
+	return v.y / u.y;
+}
+
 /// offset a vector by a distance in direction of its normal vector which follow right hand rule
 template <class T>
 void offset(T& P, const T& u, float distance) {
@@ -203,4 +227,61 @@ char isPointInside(const std::vector<T>& poly, const T& Q) {
 	}
 
 	return sign;
+}
+
+// check if a point inside a polygon
+// lies on an edge is not count
+template <class T>
+bool isPointInside2(const std::vector<T>& poly, const T& Q) {
+	float prevVal = 0;
+	int n = (int)poly.size();
+	int j;
+	for (j = 0; j < n; j++) {
+		auto& P1 = poly[j];
+		auto& P2 = poly[(j + 1) % n];
+		auto u = P2 - P1;
+		float currVal = compute(P1, u, Q);
+
+		// check if the point lies on current edge
+		if (currVal == 0) {
+			break;
+		}
+
+		// if the previous value and current value is opposite of sign
+		// it means the point is out side of the polygon
+		if (prevVal * currVal < 0) {\
+			break;
+		}
+		prevVal = currVal;
+	}
+
+	return j == n;
+}
+
+
+template <class T>
+auto triangleArea(const T& A, const T& B, const T& C) {
+	auto u = C - B;
+	auto t = projectPoint(B, u, A);
+	auto projectedA = B + u * t;
+
+	auto la2 = lengthSquaredd(u);
+	auto lh2 = lengthSquaredd(projectedA - A);
+	
+	return sqrt(la2*lh2) / 2;
+}
+
+template <class T>
+auto polyArea(const std::vector<T>& poly) {
+	int n = (int)poly.size();
+	double area = 0;
+	auto& A = poly[j];
+	for (int j = 1; j < n - 1; j++) {
+		auto& B = poly[j];
+		auto& C = poly[j + 1];
+
+		area += triangleArea(A, B, C);
+	}
+
+	return area;
 }
