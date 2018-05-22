@@ -285,3 +285,102 @@ auto polyArea(const std::vector<T>& poly) {
 
 	return area;
 }
+
+template <class T>
+bool hasInside(const std::vector<T>& poly1, const std::vector<T>& poly2) {
+	int n = (int)poly2.size();
+	for (int i = 0; i < n; i++) {
+		auto& P = poly2[i];
+		if (isPointInside2(poly1, P)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// check if two poly is intersect
+// return -1 if two poly is not intersect
+// return 0 of they are just touch to each other
+// return 1 if they have a common zone
+template <class T>
+int checkIntersect2d(const std::vector<T>& poly1, const std::vector<T>& poly2) {
+	int m = (int)poly1.size();
+	int n = (int)poly2.size();
+
+	// count number of inside point
+	if (hasInside(poly1, poly2)) {
+		return 1;
+	}
+	if (hasInside(poly2, poly1)) {
+		return 1;
+	}
+
+	bool isTouched = false;
+	// check if any segment of two polygon intersect
+	float t1, t2;
+	for (int i = 0; i < m; i++) {
+		auto& v11 = poly1[i];
+		auto& v12 = poly1[(i + 1) % m];
+		auto u1 = v12 - v11;
+
+
+		for (int j = 0; j < n; j++) {
+			auto& v21 = poly2[j];
+			auto& v22 = poly2[(j + 1) % n];
+			auto u2 = v22 - v21;
+
+			// two segment must be intersect at the middle of each other
+			if (Intersect2D_Lines(v11, u1, v21, u2, &t1, &t2)) {
+				// intersect at middle of each line, don't count for intersection
+				// at two construct points of the segment
+				if ((t1 > 0.0f && t1 < 1.0f) && (t2 > 0.0f && t2 < 1.0f)) {
+					// if two edges are intersect at middle, it means they have common area
+					return 1;
+				}
+				else if ((t1 == 0.0f || t1 == 1.0f) && (t2 >= 0.0f && t2 <= 1.0f)) {
+					isTouched = true;
+				}
+				else if ((t2 == 0.0f || t2 == 1.0f) && (t1 >= 0.0f && t1 <= 1.0f)) {
+					isTouched = true;
+				}
+			}
+			else {
+				// now two lines are parallel or overlap
+				if (compute(v11, u1, v21) == 0) {
+					// now two lines are overlap
+					// compute parameter t of v21, v22 on segment 1
+					if (u1.x || u1.y) {
+						// check if v21 is in middle of segment 1
+						auto t = computeT(u1, v21 - v11);
+						if (t >= 0.0f && t <= 1.0f) {
+							isTouched = true;
+						}
+
+						// check if v22 is in middle of segment 1
+						t = computeT(u1, v22 - v11);
+						if (t >= 0.0f && t <= 1.0f) {
+							isTouched = true;
+						}
+					}
+
+					// compute parameter t of v11, v12 on segment 2
+					if (u2.x || u2.y) {
+						// check if v11 is in middle of segment 2
+						auto t = computeT(u2, v11 - v21);
+						if (t >= 0.0f && t <= 1.0f) {
+							isTouched = true;
+						}
+
+						// check if v12 is in middle of segment 2
+						t = computeT(u2, v12 - v21);
+						if (t >= 0.0f && t <= 1.0f) {
+							isTouched = true;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return isTouched ? 0 : -1;
+}

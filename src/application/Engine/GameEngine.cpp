@@ -102,7 +102,34 @@ void GameEngine::doUpdate() {
 					for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
 						currentCollision = it->object;
 						convexPoly.resize(0);
-						if (_collisionDetector->checkCollision2d(*it->boundingPoly, boundingPolyStatic, convexPoly)) {
+						auto& dynamicBound = *it->boundingPoly;
+						if (_collisionDetector->checkCollision2d(dynamicBound, boundingPolyStatic) >= 0) {
+							if (_lastUpdate > 0) {
+								// restore the state of object if it available before the current update occur
+								auto prevTransform = currentCollision->getPreviousTransformation();
+
+								// update back to previous frame
+								currentCollision->update(_lastUpdate);
+								// ensure the tranformation is same as previous frame
+								currentCollision->setTransformation(prevTransform.first);
+
+								auto collideTime = _collisionDetector->findEarliestCollideTime(_lastUpdate, it->availableTime, boundingPolyStatic, dynamicBound, currentCollision);
+
+								// update to new frame
+								currentCollision->update(collideTime);
+								// keep the updated tranformation and collideTime
+								auto colliedTimeTransform = currentCollision->getTransformation();
+								// update the object's state to the current time
+								currentCollision->update(t);
+								// keep the tranformation at collied time
+								currentCollision->setTransformation(colliedTimeTransform);
+								// update the buffer bounding polygon for lastest state of the object
+								currentCollision->getBoundingPoly(dynamicBound);
+
+								// update time when the dynamic object cannot move anymore because of current collision
+								it->availableTime = collideTime;
+							}
+
 							// set lastest collide object
 							it->colliedObject = drawableObject;
 						}

@@ -53,7 +53,7 @@ void Tank::setSize(const ci::vec2& size) {
 	ci::vec2 barrelPivot((tankBound.x1 + tankBound.x2) / 2, tankBound.y2 - barrelSize.y + barrelPivotLocal.y);
 
 	// tank boundary
-	setBound(tankBound);
+	//setBound(tankBound);
 
 	// body boundary
 	ci::Rectf bodyBound(tankBound.x1, tankBound.y1, tankBound.x2, tankBound.y1 + bodySize.y);
@@ -64,7 +64,8 @@ void Tank::setSize(const ci::vec2& size) {
 	_barrel.setBound(barrelBound);
 
 	// set pivots
-	setPivot(ci::vec3(bodyBound.getCenter(), 0));
+	//setPivot(ci::vec3(bodyBound.getCenter(), 0));
+	setBound(bodyBound);
 	_barrel.setPivot(ci::vec3(barrelPivot, 0));
 }
 
