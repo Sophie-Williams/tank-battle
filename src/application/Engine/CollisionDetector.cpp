@@ -395,13 +395,16 @@ int CollisionDetector::checkCollision2d(const std::vector<ci::vec2>& poly1, cons
 // smallest check duration is 1/32 of 
 constexpr float smallestDuration = 1.0f / 60 / 32;
 
-float CollisionDetector::findEarliestCollideTime(float beginTime, float colliedTime,
+std::pair<float, float> CollisionDetector::findEarliestCollideTime(float beginTime, float colliedTime,
 	const std::vector<ci::vec2>& staticBound, std::vector<ci::vec2>& dynamicBoundBuffer, DrawableObject* dynamicObject) {
-	float tStart = beginTime;
-	float tEnd = colliedTime;
-	float t, duration;
 
-	t = beginTime;
+	std::pair<float, float> collisionTimeRange;
+	auto& tStart = collisionTimeRange.first;
+	auto& tEnd = collisionTimeRange.second;
+
+	tStart = beginTime;
+	tEnd = colliedTime;
+	float t, duration;
 
 	// backup transformation
 	auto backupTransform = dynamicObject->getTransformation();
@@ -424,13 +427,10 @@ float CollisionDetector::findEarliestCollideTime(float beginTime, float colliedT
 		else if (checkResult == 1) {
 			// collided, try to find ealier time
 			tEnd = t;
-			t = tStart;
 		}
 		else {
 			// not collide, try to find collide time
 			tStart = t;
-			// save the collied time to t incase the loop breaks
-			//t = tEnd;
 		}
 
 		// restore transformation
@@ -438,5 +438,5 @@ float CollisionDetector::findEarliestCollideTime(float beginTime, float colliedT
 		dynamicObject->setTransformation(backupTransform);
 	}
 
-	return t;
+	return collisionTimeRange;
 }

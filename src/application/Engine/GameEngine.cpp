@@ -47,6 +47,17 @@ void GameEngine::run() {
 void GameEngine::stop() {
 }
 
+inline void updateTranformForCollision(DrawableObject* object, float availableTime, float currentTime) {
+	// update to new frame at the exepected time
+	object->update(availableTime);
+	// keep the tranformation at the exepected time
+	auto backupTransform = object->getTransformation();
+	// update the object's state to the current time
+	object->update(currentTime);
+	// restore transforam at expected time
+	object->setTransformation(backupTransform);
+}
+
 void GameEngine::doUpdate() {
 	float t = getCurrentTime();
 	if (_gameScene) {
@@ -58,15 +69,20 @@ void GameEngine::doUpdate() {
 			struct CollisionCheckInfo {
 				// object need to be check
 				DrawableObject* object;
-				DrawableObjectRef colliedObject;
 
-				// lastest time before collision occur
-				float availableTime;
+				mat4 previousMat;
+
+				// the time that the the object's states was updated
+				float objectStateTime;
+
+				// collision time range
+				// start at very last time that collision does not occur
+				// end at very first time that collision occurs
+				std::pair<float, float> collisionTimeRange;
 
 				std::shared_ptr<std::vector<ci::vec2>> boundingPoly;
-
 				// objects that have collide with the object
-				//std::shared_ptr<std::list<CollisionCheckInfo*>> colliedObjects;
+				std::shared_ptr<std::list<DrawableObjectRef>> colliedObjects;
 			};
 			std::list<CollisionCheckInfo> collisionCheckList;
 
@@ -77,7 +93,10 @@ void GameEngine::doUpdate() {
 				if (drawableObject->isStaticObject() == false) {
 					CollisionCheckInfo collisionCheckInfo;
 					collisionCheckInfo.object = drawableObject;
-					collisionCheckInfo.availableTime = t;
+					collisionCheckInfo.previousMat = drawableObject->getPreviousTransformation().first;
+					collisionCheckInfo.objectStateTime = t;
+					collisionCheckInfo.collisionTimeRange.first = t;
+					collisionCheckInfo.collisionTimeRange.second = t;
 					collisionCheckInfo.boundingPoly = std::make_shared<std::vector<ci::vec2>>(4);
 					drawableObject->getBoundingPoly(*collisionCheckInfo.boundingPoly);
 
@@ -96,7 +115,14 @@ void GameEngine::doUpdate() {
 
 			for (auto jt = drawableObjects.begin(); jt != drawableObjects.end(); jt++) {
 				auto& drawableObject = *jt;
-				if (drawableObject->isStaticObject() && drawableObject->canBeWentThrough() == false && drawableObject->isAvailable()) {
+				if (drawableObject->isAvailable() == false) {
+					continue;
+				}
+				if (drawableObject->canBeWentThrough() && drawableObject->getCollisionHandler() == nullptr) {
+					continue;
+				}
+
+				if (drawableObject->isStaticObject()) {
 					drawableObject->getBoundingPoly(boundingPolyStatic);
 
 					for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
@@ -106,85 +132,87 @@ void GameEngine::doUpdate() {
 						if (_collisionDetector->checkCollision2d(dynamicBound, boundingPolyStatic) >= 0) {
 							if (_lastUpdate > 0) {
 								// restore the state of object if it available before the current update occur
-								auto prevTransform = currentCollision->getPreviousTransformation();
-
 								// update back to previous frame
 								currentCollision->update(_lastUpdate);
 								// ensure the tranformation is same as previous frame
-								currentCollision->setTransformation(prevTransform.first);
+								currentCollision->setTransformation(it->previousMat);
 
-								auto collideTime = _collisionDetector->findEarliestCollideTime(_lastUpdate, it->availableTime, boundingPolyStatic, dynamicBound, currentCollision);
+								auto collideTimeRange = _collisionDetector->findEarliestCollideTime(_lastUpdate, it->objectStateTime, boundingPolyStatic, dynamicBound, currentCollision);
 
-								// update to new frame
-								currentCollision->update(collideTime);
-								// keep the updated tranformation and collideTime
-								auto colliedTimeTransform = currentCollision->getTransformation();
-								// update the object's state to the current time
-								currentCollision->update(t);
-								// keep the tranformation at collied time
-								currentCollision->setTransformation(colliedTimeTransform);
+								if (drawableObject->canBeWentThrough() || currentCollision->canBeWentThrough()) {
+									// update the object's state to the state
+									updateTranformForCollision(currentCollision, it->objectStateTime, t);
+
+									collideTimeRange.first = std::min(it->collisionTimeRange.first, it->objectStateTime);
+								}
+								else {
+									// update to new frame at collide time
+									updateTranformForCollision(currentCollision, collideTimeRange.second, t);
+
+									it->objectStateTime = collideTimeRange.second;
+								}
 								// update the buffer bounding polygon for lastest state of the object
 								currentCollision->getBoundingPoly(dynamicBound);
-
 								// update time when the dynamic object cannot move anymore because of current collision
-								it->availableTime = collideTime;
+								it->collisionTimeRange = collideTimeRange;
 							}
 
 							// set lastest collide object
-							it->colliedObject = drawableObject;
+							auto& collidedObjects = it->colliedObjects;
+							if (collidedObjects == nullptr) {
+								collidedObjects = make_shared<std::list<DrawableObjectRef>>();
+							}
+							collidedObjects->push_back(drawableObject);
 						}
 					}
 				}
 			}
+			// recheck and remove out-of-date collision
+			// update the transforms to the very last time before collision occur
+			for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
+				auto& colliedObjects = it->colliedObjects;
+				
+				if (colliedObjects) {
+					auto& object = it->object;
+					auto& dynamicBound = *it->boundingPoly;
+
+					// recheck and remove out-of-date collision
+					for (auto kt = colliedObjects->begin(); kt != colliedObjects->end();) {
+						(*kt)->getBoundingPoly(boundingPolyStatic);
+						if (_collisionDetector->checkCollision2d(dynamicBound, boundingPolyStatic) < 0) {
+							auto ktTemp = kt;
+							kt++;
+							colliedObjects->erase(ktTemp);
+						}
+						else {
+							kt++;
+						}
+					}
+					// update the transforms to the very last time before collision occur
+					// restore the state of object if it available before the current update occur
+					// update back to previous frame
+					object->update(_lastUpdate);
+					// ensure the tranformation is same as previous frame
+					object->setTransformation(it->previousMat);
+
+					updateTranformForCollision(object, it->collisionTimeRange.first, t);
+				}
+			}
+
 			// call collision event handler
 			for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
-				if (it->colliedObject) {
-					currentCollision = it->object;
-					auto kt = std::find_if(_monitoredObjects.begin(), _monitoredObjects.end(), compareToCurrentCollision);
-					if (kt != _monitoredObjects.end()) {
-						(kt->second)(it->colliedObject);
-
-						if (kt->first->isAvailable()) {
-							_monitoredObjects.erase(kt);
+				auto& colliedObjects = it->colliedObjects;
+				auto& object = it->object;
+				if (colliedObjects) {
+					auto& collisionHandler = object->getCollisionHandler();
+					if (collisionHandler) {
+						for (auto kt = colliedObjects->begin(); kt != colliedObjects->end(); kt++) {
+							collisionHandler(*kt, it->collisionTimeRange.first);
 						}
 					}
 				}
 			}
 		}
-
-		// check collision after the scene is updated
-		//auto& objects = _gameScene->getDrawableObjects();
-		//for (auto it = objects.begin(); it != objects.end();) {
-		//	auto& obj2 = *it;
-		//	if (obj2->isAvailable()) {
-		//		if (obj2->canBeWentThrough() == false) {
-		//			for (auto jt = _monitoredObjects.begin(); jt != _monitoredObjects.end();) {
-		//				auto& obj1 = jt->first;
-
-		//				if (obj1.get() != obj2.get() && _collisionDetector->checkCollision(obj1.get(), obj2.get(), t)) {
-		//					(jt->second)(obj2);
-		//				}
-
-		//				if (obj1->isAvailable()) {
-		//					jt++;
-		//				}
-		//				else {
-		//					auto itTemp = jt;
-		//					jt++;
-		//					_monitoredObjects.erase(itTemp);
-		//				}
-		//			}
-		//		}
-		//	}
-		//	if (it->get()->isAvailable()) {
-		//		it++;
-		//	}
-		//	else {
-		//		auto itTemp = it;
-		//		it++;
-		//		objects.erase(itTemp);
-		//	}
-		//}
 		
 		// remove game object that not available
 		{
@@ -220,30 +248,30 @@ void GameEngine::doUpdate() {
 	// must be executed before exit this function
 	_lastUpdate = t;
 }
-
-void GameEngine::registerCollisionDetection(DrawableObjectRef object, CollisionDetectedHandler&& hander) {
-	std::pair<DrawableObjectRef, CollisionDetectedHandler> detectionElement;
-	detectionElement.first = object;
-	detectionElement.second = hander;
-
-	_monitoredObjects.push_back(detectionElement);
-}
-
-bool GameEngine::unregisterCollisionDetection(DrawableObjectRef object) {
-	auto it = std::find_if(_monitoredObjects.begin(), _monitoredObjects.end(),
-		[&object](const std::pair<DrawableObjectRef, CollisionDetectedHandler>& monitoredObject) {
-		if (monitoredObject.first.get() == object.get()) {
-			return true;
-		}
-
-		return false;
-	});
-
-	if (it == _monitoredObjects.end()) {
-		return false;
-	}
-
-	_monitoredObjects.erase(it);
-
-	return true;
-}
+//
+//void GameEngine::registerCollisionDetection(DrawableObjectRef object, CollisionDetectedHandler&& hander) {
+//	std::pair<DrawableObjectRef, CollisionDetectedHandler> detectionElement;
+//	detectionElement.first = object;
+//	detectionElement.second = hander;
+//
+//	_monitoredObjects.push_back(detectionElement);
+//}
+//
+//bool GameEngine::unregisterCollisionDetection(DrawableObjectRef object) {
+//	auto it = std::find_if(_monitoredObjects.begin(), _monitoredObjects.end(),
+//		[&object](const std::pair<DrawableObjectRef, CollisionDetectedHandler>& monitoredObject) {
+//		if (monitoredObject.first.get() == object.get()) {
+//			return true;
+//		}
+//
+//		return false;
+//	});
+//
+//	if (it == _monitoredObjects.end()) {
+//		return false;
+//	}
+//
+//	_monitoredObjects.erase(it);
+//
+//	return true;
+//}

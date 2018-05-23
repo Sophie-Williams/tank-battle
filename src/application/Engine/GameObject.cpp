@@ -14,7 +14,7 @@ void GameObject::setAvailable(bool flag) {
 	_available = flag;
 }
 
-void GameObject::destroy() {
+void GameObject::destroy(float t) {
 	setAvailable(false);
 }
 

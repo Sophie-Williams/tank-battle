@@ -9,7 +9,7 @@ LifeTimeControlComponent::~LifeTimeControlComponent() {
 
 void LifeTimeControlComponent::update(float t) {
 	if (_lifeTime <= (t - _startTime)) {
-		_owner->destroy();
+		_owner->destroy(t);
 	}
 }
 

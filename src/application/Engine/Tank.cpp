@@ -143,13 +143,13 @@ void Tank::fire(float at) {
 			currentScene->addDrawbleObject(bullet);
 
 			// ensure that the bullet destroy automatically after 5 seconds
-			auto bulletLifeTimeControl = std::make_shared<LifeTimeControlComponent>(1.0f);
+			auto bulletLifeTimeControl = std::make_shared<LifeTimeControlComponent>(5.0f);
 			bulletLifeTimeControl->startLifeTimeCountDown(at);
 			bullet->addComponent(bulletLifeTimeControl);
 
 			auto onCollisionDetected = std::bind(&GameController::OnBulletCollisionDetected,
-				GameController::getInstance(), bullet, std::placeholders::_1);
-			GameEngine::getInstance()->registerCollisionDetection(bullet, onCollisionDetected);
+				GameController::getInstance(), bullet, std::placeholders::_1, std::placeholders::_2);
+			bullet->setCollisionHandler(onCollisionDetected);
 
 			bullet->setOwner(currentScene->findObjectRef(this));
 

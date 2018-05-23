@@ -87,6 +87,14 @@ bool DrawableObject::isStaticObject() const {
 	return _staticObject;
 }
 
+const CollisionDetectedHandler& DrawableObject::getCollisionHandler() const {
+	return _collisionHandler;
+}
+
+void DrawableObject::setCollisionHandler(CollisionDetectedHandler&& handler) {
+	_collisionHandler = handler;
+}
+
 void DrawableObject::drawInternal() {
 #ifdef SHOW_OBJECT_BOUNDARY
 	gl::ScopedColor foreGroundColor(1, 0, 0);

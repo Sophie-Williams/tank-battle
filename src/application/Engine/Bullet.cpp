@@ -57,13 +57,13 @@ float Bullet::getDamage() const {
 	return _damaged;
 }
 
-void Bullet::destroy() {
-	TexturedObject::destroy();
+void Bullet::destroy(float t) {
+	if (isAvailable() == false) return;
+
+	TexturedObject::destroy(t);
 	auto explosion = std::make_shared<Animation>();
 	Scene::getCurrentScene()->addDrawbleObject(explosion);
 	
-	auto t = GameEngine::getInstance()->getCurrentTime();
-
 	// setup animation
 	explosion->setTexture(GameResource::getInstance()->getTexture(TEX_ID_EXPLOSION));
 	explosion->setFrameSize(ivec2(128, 128));

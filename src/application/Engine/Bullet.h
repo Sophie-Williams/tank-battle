@@ -27,5 +27,5 @@ public:
 	void setDamage(float damage);
 	float getDamage() const;
 
-	void destroy();
+	void destroy(float t);
 };

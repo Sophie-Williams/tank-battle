@@ -3,6 +3,11 @@
 #include "cinder/gl/gl.h"
 #include <vector>
 
+class DrawableObject;
+typedef std::shared_ptr<DrawableObject> DrawableObjectRef;
+
+typedef std::function<void(DrawableObjectRef, float)> CollisionDetectedHandler;
+
 class DrawableObject : public GameObject
 {
 protected:
@@ -15,6 +20,8 @@ protected:
 	// transformation matrix of previous frame
 	std::pair<glm::mat4, float> _previousMatFrame;
 	ci::vec3 _pivot;
+
+	CollisionDetectedHandler _collisionHandler;
 
 protected:
 	virtual void drawInternal();
@@ -47,6 +54,7 @@ public:
 
 	void setObjectStaticFlag(bool staticFlag);
 	bool isStaticObject() const;
-};
 
-typedef std::shared_ptr<DrawableObject> DrawableObjectRef;
+	const CollisionDetectedHandler& getCollisionHandler() const;
+	void setCollisionHandler(CollisionDetectedHandler&&);
+};

@@ -16,7 +16,7 @@ GameController::GameController() {
 GameController::~GameController() {
 }
 
-void GameController::OnBulletCollisionDetected(GameObjectRef bullet, GameObjectRef other) {
+void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObjectRef other, float t) {
 	auto pBullet = dynamic_cast<Bullet*>(bullet.get());
 	if (pBullet) {
 		// the bullet is not impact to its owner
@@ -30,7 +30,9 @@ void GameController::OnBulletCollisionDetected(GameObjectRef bullet, GameObjectR
 			// make it hurt
 			liveObject->takeDamage(pBullet->getDamage());
 		}
-		// destroy bullet
-		bullet->destroy();
+		if (other->canBeWentThrough() == false) {
+			// destroy bullet
+			bullet->destroy(t);
+		}
 	}
 }

@@ -17,7 +17,7 @@ public:
 	
 	virtual bool isAvailable() const;
 	virtual void setAvailable(bool flag);
-	virtual void destroy();
+	virtual void destroy(float t);
 	virtual void addComponent(const GameComponentRef& component);
 };
 
