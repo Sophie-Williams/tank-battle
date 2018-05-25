@@ -21,10 +21,11 @@ public:
 	std::pair<float,float> findEarliestCollideTime(float beginTime, float colliedTime,
 		const std::vector<ci::vec2>& staticBound, std::vector<ci::vec2>& dynamicBoundBuffer, DrawableObject* dynamicObject);
 	std::pair<float, float> findCollideTime(
-		float beginTime, float colliedTime,
+		float beginTime, float endTime,
 		std::vector<ci::vec2>& dynamicBoundBuffer1, DrawableObject* dynamicObject1,
 		std::vector<ci::vec2>& dynamicBoundBuffer2, DrawableObject* dynamicObject2);
 
+	void resolveCollisions_old(std::list<DrawableObjectRef>& objects, float t);
 	void resolveCollisions(std::list<DrawableObjectRef>& objects, float t);
 
 	static void transform(std::vector<ci::vec2>& points, const glm::mat4& m);
