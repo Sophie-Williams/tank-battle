@@ -41,7 +41,7 @@ public:
 	virtual void update(float t);
 	virtual void draw();
 
-	virtual void move(const ci::vec3& offset);
+	virtual void translate(const ci::vec3& offset);
 	virtual void rotate(const float& angle);
 
 	virtual void setTransformation(const glm::mat4& tMat);
@@ -51,6 +51,7 @@ public:
 
 	virtual bool canBeWentThrough() const;
 	virtual void allowGoThrough(bool allowGoThrough);
+	virtual bool canBeWentThrough(DrawableObject* other) const;
 
 	void setObjectStaticFlag(bool staticFlag);
 	bool isStaticObject() const;

@@ -23,13 +23,18 @@ void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObj
 		if (pBullet->getOwner().get() == other.get()) {
 			return;
 		}
-		
+		if (dynamic_cast<Bullet*>(other.get()) != nullptr) {
+			// does not allow bullet hit together
+			return;
+		}
+
 		// check if the bullet hit a lived object
 		auto liveObject = dynamic_cast<LiveObject*>(other.get());
 		if (liveObject) {
 			// make it hurt
 			liveObject->takeDamage(pBullet->getDamage());
 		}
+		
 		if (other->canBeWentThrough() == false) {
 			// destroy bullet
 			bullet->destroy(t);

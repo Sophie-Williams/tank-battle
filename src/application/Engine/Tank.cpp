@@ -15,7 +15,8 @@ Tank::Tank() :
 	_lastMovingAt(-1),
 	_lastRotatingAt(-1),
 	_lastRotatingBarrelAt(-1),
-	_lastFireTime(-1)
+	_lastFireTime(-1),
+	_color(1,1,1)
 {
 	_movingSpeed = 10; // 10 metter per second
 	_rotateSpeed = glm::pi<float>()/ 5;
@@ -25,6 +26,9 @@ Tank::Tank() :
 	allowGoThrough(false);
 	setObjectStaticFlag(false);
 	setComponentTextures();
+
+	setShield(5);
+	setHealth(50);
 }
 
 Tank::~Tank() {}
@@ -93,13 +97,26 @@ void Tank::updateInternal(float t) {
 		auto delta = t - _lastMovingAt;
 		ci::vec3 movingDir(0, 1, 0);
 		movingDir *= _movingDir*_movingSpeed*delta;
-		DrawableObject::move(movingDir);
+		translate(movingDir);
 		_lastMovingAt = t;
 	}
 }
 
 void Tank::drawInternal() {
 	_body.draw();
+
+	auto pivot = _body.getPivot();
+
+	auto bodyBound = _body.getBound();
+	auto w = bodyBound.getWidth() / 2;
+	auto h = bodyBound.getHeight();
+
+	Rectf identityRect(pivot.x - w/2, pivot.y - h /2, pivot.x + w/2, pivot.y + h/2);
+	{
+		gl::ScopedColor scopeColor(_color);
+		gl::drawSolidRect(identityRect);
+	}
+
 	_barrel.draw();
 }
 
@@ -170,7 +187,7 @@ void Tank::fire(float at) {
 			// now we move it to bullet out position by offset the transformation matrix by translation vector of
 			// pivot and bullet out position
 			auto v = ci::vec3(bulletOutPosition, 0) - pivot;
-			bullet->move(v);
+			bullet->translate(v);
 
 			// bullet speed is 5 times faster than tank's moving speed
 			bullet->setSpeed(_movingSpeed * 5);
@@ -186,4 +203,8 @@ void Tank::fire(float at) {
 			_lastFireTime = at;
 		}
 	}
+}
+
+void Tank::setColor(const ci::Colorf& color) {
+	_color = color;
 }

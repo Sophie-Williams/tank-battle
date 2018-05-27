@@ -28,6 +28,7 @@ public:
 protected:
 	TankBody _body;
 	TankBarrel _barrel;
+	ci::Colorf _color;
 	float _rotateSpeed;
 	float _movingSpeed;
 	float _rotateBarrelSpeed;
@@ -56,4 +57,5 @@ public:
 	void turn(char direction, float at);
 	void spinBarrel(char direction, float at);
 	void fire(float at);
+	void setColor(const ci::Colorf& color);
 };

@@ -75,6 +75,8 @@ SET (UI_SRC
 SET (CONTROLLERS_SRC
     Controllers/PlayerControllerUI.h
     Controllers/PlayerControllerUI.cpp
+    Controllers/PlayerControllerTest.h
+    Controllers/PlayerControllerTest.cpp
 )
 
 SET (MAIN_SOURCES

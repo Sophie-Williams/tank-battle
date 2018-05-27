@@ -28,4 +28,5 @@ public:
 	float getDamage() const;
 
 	void destroy(float t);
+	bool canBeWentThrough(DrawableObject* other) const;
 };

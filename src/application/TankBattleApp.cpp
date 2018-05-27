@@ -31,6 +31,7 @@ using namespace std;
 #include "Engine/Barrier.h"
 #include "Controllers/PlayerControllerUI.h"
 #include "Engine/GameResource.h"
+#include "Controllers/PlayerControllerTest.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -59,8 +60,6 @@ class BasicApp : public App {
 	
 	shared_ptr<GameEngine> _gameEngine;
 	shared_ptr<GameResource> _gameResource;
-
-	shared_ptr<PlayerControllerUI> _playerControllerUI;
 	
 	bool _runFlag;
 	LogAdapter* _logAdapter;
@@ -245,16 +244,40 @@ void BasicApp::setupGame() {
 
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
 
-	auto tank1 = make_shared<Tank>();
-	tank1->setSize(vec2(5.7f, 6.6f));
-
 	const float sceneWidth = 70;
 	const float sceneHeight = 70;
 
-	Rectf gameArea(-sceneWidth/2, -sceneHeight/2, sceneWidth/2, sceneHeight/2);
+	Rectf gameArea(-sceneWidth / 2, -sceneHeight / 2, sceneWidth / 2, sceneHeight / 2);
 	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
 	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
-	gameScene->addDrawbleObject(tank1);
+
+	auto tank1 = make_shared<Tank>();
+	tank1->setSize(vec2(5.7f, 6.6f));
+	auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
+	//auto playerController = make_shared<PlayerControllerTest>();
+	tank1->addComponent(playerController);
+	tank1->translate(vec3(0, sceneHeight /2 - tank1->getBound().getHeight() - 7, 0));
+	tank1->rotate(glm::pi<float>());
+
+	auto tank2 = make_shared<Tank>();
+	tank2->setSize(vec2(5.7f, 6.6f));
+	auto playerController1 = make_shared<PlayerControllerTest>();
+	tank2->addComponent(playerController1);
+	tank2->translate(vec3(0, -sceneHeight / 2 + tank1->getBound().getHeight() + 7, 0));
+
+	auto tank3 = make_shared<Tank>();
+	tank3->setSize(vec2(5.7f, 6.6f));
+	auto playerController3 = make_shared<PlayerControllerTest>();
+	tank3->addComponent(playerController3);
+	tank3->translate(vec3(-sceneWidth / 2 + tank1->getBound().getWidth() + 7, 0, 0));
+	tank3->rotate(-glm::pi<float>() / 2);
+
+	auto tank4 = make_shared<Tank>();
+	tank4->setSize(vec2(5.7f, 6.6f));
+	auto playerController4 = make_shared<PlayerControllerTest>();
+	tank4->addComponent(playerController4);
+	tank4->translate(vec3(sceneWidth / 2 - tank1->getBound().getWidth() - 7, 0, 0));
+	tank4->rotate(glm::pi<float>() / 2);
 
 	auto barrier1 = std::make_shared<Barrier>();
 	auto barrier2 = std::make_shared<Barrier>();
@@ -273,12 +296,27 @@ void BasicApp::setupGame() {
 	gameScene->addDrawbleObject(barrier2);
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
+	gameScene->addDrawbleObject(tank1);
+	gameScene->addDrawbleObject(tank2);
+	//gameScene->addDrawbleObject(tank3);
+	//gameScene->addDrawbleObject(tank4);
+
+	Colorf tankColors[] = { 
+		{ 0,0,1 },
+		{ 0,1,0 },
+		{ 1,0,0 },
+		{ 1,1,0 },
+	};
+
+	int i = 0;
+	tank1->setColor(tankColors[i++]);
+	tank2->setColor(tankColors[i++]);
+	tank3->setColor(tankColors[i++]);
+	tank4->setColor(tankColors[i++]);
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
-
-	_playerControllerUI = std::make_shared<PlayerControllerUI>(tank1, getWindow());
 }
 
 void BasicApp::startServices() {

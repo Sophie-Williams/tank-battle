@@ -10,7 +10,7 @@ using namespace ci;
 Bullet::Bullet(float t) : _lastUpdate(t), _movingSpeed(100), _damaged(20) {
 	setTexture(GameResource::getInstance()->getTexture(TEX_ID_BULLET));
 	setSize(8, 14);
-	allowGoThrough(false);
+	allowGoThrough(true);
 	setObjectStaticFlag(false);
 }
 
@@ -33,7 +33,7 @@ void Bullet::updateInternal(float t) {
 
 	// compute moving vector since last update time
 	auto v = movingDir * _movingSpeed * delta;
-	move(v);
+	translate(v);
 }
 
 void Bullet::setSize(const float& w, const float& h) {
@@ -88,4 +88,16 @@ void Bullet::destroy(float t) {
 	explosion->addComponent(animLifeTimeControl);
 
 	explosion->start(t);
+}
+
+bool Bullet::canBeWentThrough(DrawableObject* other) const {
+	if (DrawableObject::canBeWentThrough(other)) {
+		return true;
+	}
+
+	if (dynamic_cast<Bullet*>(other) != nullptr) {
+		return true;
+	}
+
+	return (_owner.get() == other);
 }

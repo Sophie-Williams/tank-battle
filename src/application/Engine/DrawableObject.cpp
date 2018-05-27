@@ -46,7 +46,7 @@ const ci::vec3& DrawableObject::getPivot() const {
 	return _pivot;
 }
 
-void DrawableObject::move(const ci::vec3& offset) {
+void DrawableObject::translate(const ci::vec3& offset) {
 	_tMat = glm::translate(_tMat, offset);
 }
 
@@ -85,6 +85,10 @@ void DrawableObject::setObjectStaticFlag(bool staticFlag) {
 
 bool DrawableObject::isStaticObject() const {
 	return _staticObject;
+}
+
+bool DrawableObject::canBeWentThrough(DrawableObject* other) const {
+	return (canBeWentThrough() || other->canBeWentThrough());
 }
 
 const CollisionDetectedHandler& DrawableObject::getCollisionHandler() const {

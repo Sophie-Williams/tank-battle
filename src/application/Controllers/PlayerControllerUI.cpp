@@ -1,15 +1,22 @@
 #include "PlayerControllerUI.h"
 #include "../Engine/GameEngine.h"
+#include "Engine/Tank.h"
 using namespace ci;
 
-PlayerControllerUI::PlayerControllerUI(std::shared_ptr<Tank> player, ci::app::WindowRef inputWindow) : PlayerController(player) {
-	inputWindow->getSignalKeyDown().connect(std::bind(&PlayerControllerUI::onKeyDown, this, std::placeholders::_1));
-	inputWindow->getSignalKeyUp().connect(std::bind(&PlayerControllerUI::onKeyUp, this, std::placeholders::_1));
+PlayerControllerUI::PlayerControllerUI(ci::app::WindowRef inputWindow) {
+	_keyDown = inputWindow->getSignalKeyDown().connect(std::bind(&PlayerControllerUI::onKeyDown, this, std::placeholders::_1));
+	_keyUp = inputWindow->getSignalKeyUp().connect(std::bind(&PlayerControllerUI::onKeyUp, this, std::placeholders::_1));
 }
 
-PlayerControllerUI::~PlayerControllerUI() {}
+PlayerControllerUI::~PlayerControllerUI() {
+	_keyDown.disconnect();
+	_keyUp.disconnect();
+}
 
 void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
+	auto pTank = dynamic_cast<Tank*>(_owner);
+	if (pTank == nullptr) return;
+
 	float t = GameEngine::getInstance()->getCurrentTime();
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = true;
@@ -30,12 +37,13 @@ void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
 		_keyXDown = true;
 	}
 	else if (e.getCode() == app::KeyEvent::KEY_SPACE) {
-		_player->fire(t);
+		pTank->fire(t);
 	}
 	makeAction(t);
 }
 
 void PlayerControllerUI::onKeyUp(ci::app::KeyEvent& e) {
+
 	float t = GameEngine::getInstance()->getCurrentTime();
 
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
@@ -61,6 +69,9 @@ void PlayerControllerUI::onKeyUp(ci::app::KeyEvent& e) {
 
 
 void PlayerControllerUI::makeAction(float t) {
+	auto pTank = dynamic_cast<Tank*>(_owner);
+	if (pTank == nullptr) return;
+
 	char movingDir = 0;
 	char rotateDir = 0;
 	char spinBarrelDir = 0;
@@ -84,7 +95,10 @@ void PlayerControllerUI::makeAction(float t) {
 		spinBarrelDir--;
 	}
 
-	_player->move(movingDir, t);
-	_player->turn(rotateDir, t);
-	_player->spinBarrel(spinBarrelDir, t);
+	pTank->move(movingDir, t);
+	pTank->turn(rotateDir, t);
+	pTank->spinBarrel(spinBarrelDir, t);
+}
+
+void PlayerControllerUI::update(float t) {
 }

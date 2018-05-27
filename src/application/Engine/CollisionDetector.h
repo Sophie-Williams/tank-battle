@@ -18,10 +18,10 @@ public:
 
 	int checkCollision2d(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2);
 
-	std::pair<float,float> findEarliestCollideTime(float beginTime, float colliedTime,
+	std::pair<float,float> findCollideTime(float beginTime, float colliedTime,
 		const std::vector<ci::vec2>& staticBound, std::vector<ci::vec2>& dynamicBoundBuffer, DrawableObject* dynamicObject);
 	std::pair<float, float> findCollideTime(
-		float beginTime, float endTime,
+		float beginTime, float objectState1, float objectState2,
 		std::vector<ci::vec2>& dynamicBoundBuffer1, DrawableObject* dynamicObject1,
 		std::vector<ci::vec2>& dynamicBoundBuffer2, DrawableObject* dynamicObject2);
 

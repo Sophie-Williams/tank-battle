@@ -1,9 +1,9 @@
 #pragma once
-#include "Engine/PlayerController.h"
+#include "Engine/GameComponent.h"
 #include "cinder/gl/gl.h"
 #include "cinder/app/App.h"
 
-class PlayerControllerUI : public PlayerController
+class PlayerControllerUI : public GameComponent
 {
 	bool _keyLeftDown = false;
 	bool _keyRightDown = false;
@@ -11,11 +11,14 @@ class PlayerControllerUI : public PlayerController
 	bool _keyDownDown = false;
 	bool _keyZDown = false;
 	bool _keyXDown = false;
+	ci::signals::Connection _keyDown;
+	ci::signals::Connection _keyUp;
 private:
 	void onKeyUp(ci::app::KeyEvent& e);
 	void onKeyDown(ci::app::KeyEvent& e);
 public:
-	PlayerControllerUI(std::shared_ptr<Tank> player, ci::app::WindowRef inputWindow);
+	PlayerControllerUI(ci::app::WindowRef inputWindow);
 	virtual ~PlayerControllerUI();
 	virtual void makeAction(float t);
+	virtual void update(float t);
 };
