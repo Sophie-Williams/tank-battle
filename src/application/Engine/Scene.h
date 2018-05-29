@@ -33,6 +33,7 @@ public:
 	std::list<GameObjectRef>& getObjects();
 	const std::list<DrawableObjectRef>& getDrawableObjects() const;
 	std::list<DrawableObjectRef>& getDrawableObjects();
+	const ci::Rectf& getSceneArea() const;
 
 	// current, the engine is allow create only one scene during game time
 	static Scene* createScene(const ci::Rectf& area);

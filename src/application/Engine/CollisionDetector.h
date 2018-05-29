@@ -29,5 +29,6 @@ public:
 	void resolveCollisions(std::list<DrawableObjectRef>& objects, float t);
 
 	static void transform(std::vector<ci::vec2>& points, const glm::mat4& m);
+	static void rayClipPolygon(const ci::vec2& P, const ci::vec2& u, const std::vector<ci::vec2>& poly, std::vector<ci::vec2>& polyOut);
 };
 

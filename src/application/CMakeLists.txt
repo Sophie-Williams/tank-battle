@@ -79,6 +79,17 @@ SET (CONTROLLERS_SRC
     Controllers/PlayerControllerTest.cpp
 )
 
+SET (BATTLE_SRC
+    Battle/BattlePlatform.cpp
+    Battle/BattlePlatform.h
+    Battle/GameInterface.cpp
+    Battle/GameInterface.h
+    Battle/Radar.cpp
+    Battle/Radar.h
+    Battle/TankController.cpp
+    Battle/TankController.h
+)
+
 SET (MAIN_SOURCES
     TankBattleApp.cpp
     TankBattle.h
@@ -90,6 +101,7 @@ SET (MAIN_SOURCES
     ${ENGINE_SRC}
     ${COMMON_SRC}
     ${CONTROLLERS_SRC}
+    ${BATTLE_SRC}
 )
 
 SET (SOURCES ${MAIN_SOURCES})
@@ -99,6 +111,7 @@ if(MSVC)
     source_group(Common FILES ${COMMON_SRC})
     source_group(Engine FILES ${ENGINE_SRC})
     source_group(Controllers FILES ${CONTROLLERS_SRC})
+    source_group(Battle FILES ${BATTLE_SRC})
 endif()
 
 # define project's build target with project's source files

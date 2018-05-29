@@ -1002,3 +1002,35 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 	// must be executed before exit this function
 	_lastUpdate = t;
 }
+
+void CollisionDetector::rayClipPolygon(const ci::vec2& P, const ci::vec2& u, const std::vector<ci::vec2>& poly, std::vector<ci::vec2>& polyOut) {
+	// an zero direction vector is invalid
+	if (u.x == 0.0f && u.y == 0.0f) {
+		return;
+	}
+	int n = (int)poly.size();
+	float t1, t2;
+	for (int i = 0; i < n; i++) {
+		auto& Q1 = poly[i];
+		auto& Q2 = poly[(i + 1)%n];
+		auto v = Q2 - Q1;
+		if (Intersect2D_Lines(P, u, Q1, v, &t1, &t2)) {
+
+		}
+		else {
+			// now two lines are parallel or overlap
+			if (compute(P, u, Q1) == 0) {
+				// now two lines are overlap
+				// compute parameter t of Q1, Q2 on the ray
+				// if any of Q1, Q2 is in nagative direction of the ray
+				// it means the ray cannot clip the poly
+				auto t1 = computeT(u, Q1 - P);
+				auto t2 = computeT(u, Q2 - P);
+				if (t1 < 0.0f || t2 < 0) {
+					polyOut.clear();
+					return;
+				}
+			}
+		}
+	}
+}

@@ -17,7 +17,12 @@ void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
 	auto pTank = dynamic_cast<Tank*>(_owner);
 	if (pTank == nullptr) return;
 
-	float t = GameEngine::getInstance()->getCurrentTime();
+	auto gameEngine = GameEngine::getInstance();
+	if (gameEngine->isPausing()) {
+		return;
+	}
+	float t = gameEngine->getCurrentTime();
+
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = true;
 	}
@@ -43,8 +48,11 @@ void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
 }
 
 void PlayerControllerUI::onKeyUp(ci::app::KeyEvent& e) {
-
-	float t = GameEngine::getInstance()->getCurrentTime();
+	auto gameEngine = GameEngine::getInstance();
+	if (gameEngine->isPausing()) {
+		return;
+	}
+	float t = gameEngine->getCurrentTime();
 
 	if (e.getCode() == app::KeyEvent::KEY_DOWN) {
 		_keyDownDown = false;

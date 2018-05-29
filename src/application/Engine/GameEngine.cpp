@@ -26,15 +26,22 @@ GameEngine* GameEngine::getInstance() {
 	return s_Instance;
 }
 
-GameEngine::GameEngine(const char* configFile) : _runFlag(false) {
+GameEngine::GameEngine(const char* configFile) : _runFlag(false), _pauseDuration(0), _pauseTime(-1) {
 	_collisionDetector = std::make_shared<CollisionDetector>();
 }
 
 GameEngine::~GameEngine() {
 }
 
-float GameEngine::getCurrentTime() const {
+inline float getNativeTime() {
 	return (float)ci::app::App::get()->getElapsedSeconds();
+}
+
+float GameEngine::getCurrentTime() const {
+	if (isPausing()) {
+		return _pauseTime - _pauseDuration;
+	}
+	return getNativeTime() - _pauseDuration;
 }
 
 void GameEngine::setScene(std::shared_ptr<Scene> scene) {
@@ -45,6 +52,19 @@ void GameEngine::run() {
 }
 
 void GameEngine::stop() {
+}
+
+void GameEngine::pause() {
+	_pauseTime = getNativeTime();
+}
+
+void GameEngine::resume() {
+	_pauseDuration += getNativeTime() - _pauseTime;
+	_pauseTime = -1;
+}
+
+bool GameEngine::isPausing() const {
+	return (_pauseTime >= 0);
 }
 
 void GameEngine::doUpdate() {

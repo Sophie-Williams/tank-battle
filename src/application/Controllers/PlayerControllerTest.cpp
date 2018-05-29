@@ -78,6 +78,6 @@ void PlayerControllerTest::moveDownStrategy(float t) {
 }
 
 void PlayerControllerTest::update(float t) {
-	//randomStrategy(t);
-	moveDownStrategy(t);
+	randomStrategy(t);
+	//moveDownStrategy(t);
 }

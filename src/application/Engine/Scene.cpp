@@ -100,6 +100,10 @@ std::list<DrawableObjectRef>& Scene::getDrawableObjects() {
 	return _drawableObjects;
 }
 
+const ci::Rectf& Scene::getSceneArea() const {
+	return _sceneArea;
+}
+
 Scene* Scene::createScene(const ci::Rectf& area) {
 	if (s_currentScene == nullptr) {
 		return new Scene(area);

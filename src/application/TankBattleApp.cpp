@@ -32,6 +32,7 @@ using namespace std;
 #include "Controllers/PlayerControllerUI.h"
 #include "Engine/GameResource.h"
 #include "Controllers/PlayerControllerTest.h"
+#include "battle/BattlePlatform.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -60,6 +61,7 @@ class BasicApp : public App {
 	
 	shared_ptr<GameEngine> _gameEngine;
 	shared_ptr<GameResource> _gameResource;
+	shared_ptr<BattlePlatform> _battlePlatform;
 	
 	bool _runFlag;
 	LogAdapter* _logAdapter;
@@ -198,6 +200,18 @@ void BasicApp::setup()
 		_runFlag = false;
 	});
 
+	getWindow()->getSignalKeyDown().connect([this](ci::app::KeyEvent& e) {
+		if (e.getCode() == app::KeyEvent::KEY_p) {
+			auto gameEngine = GameEngine::getInstance();
+			if (gameEngine->isPausing()) {
+				gameEngine->resume();
+			}
+			else {
+				gameEngine->pause();
+			}
+		}
+	});
+
 	_controlBoard->setOnStartStopButtonClickHandler([this](Widget*) {
 		if (StartState::NOT_STARTED == _startStopButtonState) {
 			setSSButtonState(StartState::STARTING);
@@ -233,30 +247,17 @@ void BasicApp::setup()
 	setupGame();
 }
 
-void BasicApp::setupGame() {
-	addAssetDirectory("E:/Projects/tank-battle/src/application/assets");
-	_gameResource = std::shared_ptr<GameResource>(GameResource::createInstance());
-	_gameResource->setTexture(TEX_ID_BULLET, "bulletBlue1_outline.png");
-	_gameResource->setTexture(TEX_ID_EXPLOSION, "explosion.png");
-	_gameResource->setTexture(TEX_ID_TANKBODY, "tankBody.png");
-	_gameResource->setTexture(TEX_ID_TANKBARREL, "tankBarrel.png");
-	_gameResource->setTexture(TEX_ID_TANKSHOT, "shotLarge.png");
-
-	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
-
-	const float sceneWidth = 70;
-	const float sceneHeight = 70;
-
-	Rectf gameArea(-sceneWidth / 2, -sceneHeight / 2, sceneWidth / 2, sceneHeight / 2);
-	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
-	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
+void generateTanks1(Scene* scene) {
+	auto& sceneArea = scene->getSceneArea();
+	auto sceneHeight = sceneArea.getHeight();
+	auto sceneWidth = sceneArea.getWidth();
 
 	auto tank1 = make_shared<Tank>();
 	tank1->setSize(vec2(5.7f, 6.6f));
 	auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
 	//auto playerController = make_shared<PlayerControllerTest>();
 	tank1->addComponent(playerController);
-	tank1->translate(vec3(0, sceneHeight /2 - tank1->getBound().getHeight() - 7, 0));
+	tank1->translate(vec3(0, sceneHeight / 2 - tank1->getBound().getHeight() - 7, 0));
 	tank1->rotate(glm::pi<float>());
 
 	auto tank2 = make_shared<Tank>();
@@ -279,6 +280,114 @@ void BasicApp::setupGame() {
 	tank4->translate(vec3(sceneWidth / 2 - tank1->getBound().getWidth() - 7, 0, 0));
 	tank4->rotate(glm::pi<float>() / 2);
 
+	Colorf tankColors[] = {
+		{ 0,0,1 },
+		{ 0,1,0 },
+		{ 1,0,0 },
+		{ 1,1,0 },
+	};
+
+	int i = 0;
+	tank1->setColor(tankColors[i++]);
+	tank2->setColor(tankColors[i++]);
+	tank3->setColor(tankColors[i++]);
+	tank4->setColor(tankColors[i++]);
+
+	scene->addDrawbleObject(tank1);
+	scene->addDrawbleObject(tank2);
+	scene->addDrawbleObject(tank3);
+	scene->addDrawbleObject(tank4);
+}
+
+void generateTanks2(Scene* scene) {
+	float padding = 8;
+
+	auto& sceneArea = scene->getSceneArea();
+	auto sceneHeight = sceneArea.getHeight() - padding * 2;
+	auto sceneWidth = sceneArea.getWidth() - padding * 2;
+
+	Colorf tankColors[] = {
+		{ 0,0,1 },
+		{ 0,1,0 },
+		{ 1,0,0 },
+		{ 1,1,0 },
+	};
+
+	constexpr int tankColorCount = sizeof(tankColors) / sizeof(tankColors[0]);
+	
+	vec2 tankSize(5.7f, 6.6f);
+	int colMax = (int)(sceneWidth / tankSize.x / 2);
+	int rowMax = (int)(sceneHeight / tankSize.y / 2);
+	int tankMaxCount = colMax * rowMax;
+
+	int expectedTank = 10;
+	int tankCount = std::min(expectedTank, tankMaxCount);
+	if (tankCount <= 0) return;
+
+	Rand randomizer( (uint32_t) (GameEngine::getInstance()->getCurrentTime() * 10000) );
+
+	float rowW = sceneHeight / colMax;
+	float colW = sceneWidth / rowMax;
+
+	auto baseCoordinateOfScene = sceneArea.getUpperLeft();
+
+	std::map<int, bool> generatedPos;
+	std::vector<Tank*> tanks(tankCount);
+
+	for (int i = 0; i < tankCount; i++) {
+		auto iPos = randomizer.nextInt(0, tankMaxCount);
+		while (generatedPos.find(iPos) != generatedPos.end())
+		{
+			iPos = randomizer.nextInt(0, tankMaxCount);
+		}
+		generatedPos[iPos] = true;
+		ci::vec3 tankPos((iPos % colMax) * colW + colW/2 + baseCoordinateOfScene.x + padding, (iPos / rowMax) * rowW + rowW/2 + baseCoordinateOfScene.y + padding, 0);
+		auto tank = make_shared<Tank>();
+		tank->setSize(tankSize);
+		tank->translate(tankPos);
+		tank->rotate(glm::half_pi<float>() * randomizer.nextInt(0, 4));
+
+		if (i >= tankColorCount) {
+			tank->setColor(tankColors[tankColorCount - 1]);
+		}
+		else {
+			tank->setColor(tankColors[i]);
+		}
+
+		scene->addDrawbleObject(tank);
+		tanks[i] = tank.get();
+	}
+
+	//auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
+	auto playerController = std::make_shared<PlayerControllerTest>();
+	tanks[0]->addComponent(playerController);
+	for (int i = 1; i < tankCount; i++) {
+		auto playerController = make_shared<PlayerControllerTest>();
+		tanks[i]->addComponent(playerController);
+	}
+}
+
+
+void BasicApp::setupGame() {
+	addAssetDirectory("E:/Projects/tank-battle/src/application/assets");
+	_gameResource = std::shared_ptr<GameResource>(GameResource::createInstance());
+	_gameResource->setTexture(TEX_ID_BULLET, "bulletBlue1_outline.png");
+	_gameResource->setTexture(TEX_ID_EXPLOSION, "explosion.png");
+	_gameResource->setTexture(TEX_ID_TANKBODY, "tankBody.png");
+	_gameResource->setTexture(TEX_ID_TANKBARREL, "tankBarrel.png");
+	_gameResource->setTexture(TEX_ID_TANKSHOT, "shotLarge.png");
+
+	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
+
+	const float sceneWidth = 70;
+	const float sceneHeight = 70;
+
+	_battlePlatform = make_shared<BattlePlatform>(sceneWidth, sceneHeight);
+
+	auto& gameArea = _battlePlatform->getMapArea();
+	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
+	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
+
 	auto barrier1 = std::make_shared<Barrier>();
 	auto barrier2 = std::make_shared<Barrier>();
 	auto barrier3 = std::make_shared<Barrier>();
@@ -296,23 +405,8 @@ void BasicApp::setupGame() {
 	gameScene->addDrawbleObject(barrier2);
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
-	gameScene->addDrawbleObject(tank1);
-	gameScene->addDrawbleObject(tank2);
-	//gameScene->addDrawbleObject(tank3);
-	//gameScene->addDrawbleObject(tank4);
 
-	Colorf tankColors[] = { 
-		{ 0,0,1 },
-		{ 0,1,0 },
-		{ 1,0,0 },
-		{ 1,1,0 },
-	};
-
-	int i = 0;
-	tank1->setColor(tankColors[i++]);
-	tank2->setColor(tankColors[i++]);
-	tank3->setColor(tankColors[i++]);
-	tank4->setColor(tankColors[i++]);
+	generateTanks2(gameScene.get());
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);

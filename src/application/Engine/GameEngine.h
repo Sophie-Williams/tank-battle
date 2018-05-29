@@ -17,6 +17,8 @@ class GameEngine
 {
 private:
 	bool _runFlag;
+	float _pauseTime;
+	float _pauseDuration;
 private:
 	std::shared_ptr<Scene> _gameScene;
 	std::shared_ptr<CollisionDetector> _collisionDetector;
@@ -33,6 +35,9 @@ public:
 
 	void run();
 	void stop();
+	void pause();
+	void resume();
+	bool isPausing() const;
 	void doUpdate();
 };
 

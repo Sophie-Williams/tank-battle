@@ -8,6 +8,7 @@ class WxGameView : public CiWidget
 {
 protected:
 	ci::Area _viewPort;
+	ci::Area _radarViewPort;
 	float _expectedRatio;
 	std::shared_ptr<Scene> _gameScene;
 	ci::app::WindowRef _parent;
