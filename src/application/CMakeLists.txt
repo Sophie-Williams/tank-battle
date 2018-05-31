@@ -70,6 +70,8 @@ SET (UI_SRC
     UI/WxPlayerInfo.cpp
     UI/WxGameView.h
     UI/WxGameView.cpp
+    UI/WxRadarView.h
+    UI/WxRadarView.cpp
 )
 
 SET (CONTROLLERS_SRC

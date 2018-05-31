@@ -8,11 +8,10 @@ class WxGameView : public CiWidget
 {
 protected:
 	ci::Area _viewPort;
-	ci::Area _radarViewPort;
 	float _expectedRatio;
 	std::shared_ptr<Scene> _gameScene;
 	ci::app::WindowRef _parent;
-
+	std::shared_ptr<Widget> _radarView;
 protected:
 	bool updateViewPort();
 public:
@@ -26,6 +25,7 @@ public:
 	void setPos(float x, float y);
 
 	void setScene(std::shared_ptr<Scene> gameScene);
+	void setRadarView(const std::shared_ptr<Widget>& radarView);
 	// scene view ratio width per height
 	// default is 1:1
 	void setSceneViewRatio(float ratio);

@@ -42,7 +42,10 @@ bool WxGameView::updateViewPort() {
 
 	radaH = radaW = std::min({ radaH, radaW, maxRadaWidth });
 
-	_radarViewPort.set(_viewPort.x2 + padding, padding, _viewPort.x2 + padding + radaW, padding + radaH);
+	if (_radarView) {
+		_radarView->setPos(_viewPort.x2 + padding, padding);
+		_radarView->setSize(radaW, radaH);
+	}
 
 	return true;
 }
@@ -70,7 +73,14 @@ void WxGameView::setScene(std::shared_ptr<Scene> gameScene) {
 	_gameScene = gameScene;
 }
 
+void WxGameView::setRadarView(const std::shared_ptr<Widget>& radarView) {
+	_radarView = radarView;
+}
+
 void WxGameView::update() {
+	if (_radarView) {
+		_radarView->update();
+	}
 }
 
 void WxGameView::draw() {
@@ -78,23 +88,14 @@ void WxGameView::draw() {
 		auto h = _parent->getHeight();
 		// mapping scene to view port area
 		gl::ScopedViewport scopeViewPort(_viewPort.x1, h - _viewPort.y1 - _viewPort.getHeight(), _viewPort.getWidth(), _viewPort.getHeight());
-
 		if (_gameScene) {
 			_gameScene->draw();
 		}
 	}
-	if (_radarViewPort.x1 < _radarViewPort.x2 - 20 && _radarViewPort.y1 < _radarViewPort.y2 - 20) {
-		auto h = _parent->getHeight();
-		gl::ScopedViewport scopeViewPort(_radarViewPort.x1, h - _radarViewPort.y1 - _radarViewPort.getHeight(), _radarViewPort.getWidth(), _radarViewPort.getHeight());
-
-		CameraOrtho orthoCam;
-		orthoCam.setOrtho(-100, 100, -100, 100, 1, -1);
-		gl::ScopedProjectionMatrix scopeMatrices;
-		gl::setProjectionMatrix(orthoCam.getProjectionMatrix());
-
-		gl::ScopedColor radarBackgroundColorScope (0.4f, 0.4f, 0.4f, 1);
-		gl::drawSolidCircle(vec2(0, 0), 100);
+	if(_radarView) {
+		_radarView->draw();
 	}
+
 	{
 		static float lastStartCountTime = -1;
 		static int frameCount = 0;

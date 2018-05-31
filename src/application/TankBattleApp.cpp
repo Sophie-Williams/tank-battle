@@ -33,6 +33,7 @@ using namespace std;
 #include "Engine/GameResource.h"
 #include "Controllers/PlayerControllerTest.h"
 #include "battle/BattlePlatform.h"
+#include "UI/WxRadarView.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -411,6 +412,19 @@ void BasicApp::setupGame() {
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
+
+	auto radarView = make_shared<WxRadarView>(getWindow());
+
+	try {
+		auto shaderBlur = gl::GlslProg::create(loadAsset("blur.vert"), loadAsset("blur.frag"));
+		auto shaderRadar = gl::GlslProg::create(loadAsset("radar.vert"), loadAsset("radar.frag"));
+		radarView->setShaders(shaderBlur, shaderRadar);
+	}
+	catch (const std::exception &e) {
+		quit();
+	}
+
+	_gameView->setRadarView(radarView);
 }
 
 void BasicApp::startServices() {
@@ -473,4 +487,4 @@ void BasicApp::draw()
 	_controlBoard->draw();
 }
 
-CINDER_APP(BasicApp, RendererGl( RendererGl::Options().msaa( 8 ) ), BasicApp::intializeApp)
+CINDER_APP(BasicApp, RendererGl( RendererGl::Options().msaa( 16 ) ), BasicApp::intializeApp)
