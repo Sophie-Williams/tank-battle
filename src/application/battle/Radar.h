@@ -21,9 +21,8 @@ protected:
 	DrawableObjectRef _ownerObject;
 	std::list<ScannedObject> _detectedObjects;
 	float _scanSpeed;
-	float _range;
-	float _rayAngle;
 	float _startScanAt;
+	glm::vec2 _scanRaySegment;
 public:
 	Radar(const DrawableObjectRef& installedInObject, float scanSpeed = glm::half_pi<float>());
 	~Radar();
@@ -31,5 +30,5 @@ public:
 	float getRange() const;
 
 	void update(float t);
-	void draw();
+	const glm::vec2& getRay() const;
 };

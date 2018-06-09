@@ -1,7 +1,6 @@
 #include "Radar.h"
 
-Radar::Radar(const DrawableObjectRef& installedInObject, float scanSpeed) : _startScanAt(-1), _range(100), _rayAngle(0), _scanSpeed(scanSpeed),_ownerObject(installedInObject) {
-
+Radar::Radar(const DrawableObjectRef& installedInObject, float scanSpeed) : _startScanAt(-1), _scanRaySegment(0, 100), _scanSpeed(scanSpeed),_ownerObject(installedInObject) {
 }
 
 Radar::~Radar() {
@@ -9,11 +8,11 @@ Radar::~Radar() {
 }
 
 void Radar::setRange(float range) {
-	_range = range;
+	_scanRaySegment = glm::normalize(_scanRaySegment) * range;
 }
 
 float Radar::getRange() const {
-	return _range;
+	return sqrtf (_scanRaySegment.x*_scanRaySegment.x + _scanRaySegment.y*_scanRaySegment.y);
 }
 
 void Radar::update(float t) {
@@ -26,15 +25,18 @@ void Radar::update(float t) {
 		_startScanAt = t;
 	}
 
-	_rayAngle += (t - _startScanAt) * _scanSpeed;
+	auto angle = (t - _startScanAt) * _scanSpeed;
+	auto cosAngle = cos(angle);
+	auto sinAngle = sin(angle);
 
-	float x = cos(_rayAngle);
-	float y = cos(_rayAngle);
+	// roate ray around origin
+	float x = _scanRaySegment.x * cosAngle - _scanRaySegment.y * sinAngle;
+	float y = _scanRaySegment.y * cosAngle + _scanRaySegment.x * sinAngle;
+
+	_scanRaySegment.x = x;
+	_scanRaySegment.y = y;
 }
 
-void Radar::draw() {
-	ci::gl::ScopedColor color(1.0f, 1.0f, 1.0f);
-	for (auto it = _detectedObjects.begin(); it != _detectedObjects.end(); it++) {
-
-	}
+const glm::vec2& Radar::getRay() const {
+	return _scanRaySegment;
 }

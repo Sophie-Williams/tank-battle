@@ -12,6 +12,7 @@ protected:
 	// it can be null
 	GameObjectRef _owner;
 protected:
+	virtual void drawInternal();
 	virtual void updateInternal(float t);
 public:
 	// constructor of a bullet need to know that time it is created

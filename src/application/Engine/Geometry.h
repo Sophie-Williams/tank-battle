@@ -107,6 +107,24 @@ auto compute(const T& P, const T& u, const T& Q) {
 	return A * Q.x + B * Q.y + C;
 }
 
+template <class T>
+struct GeneralLine {
+	T A;
+	T B;
+	T C;
+
+	template <class Pt>
+	void build(const Pt& P, const Pt& u) {
+		A = -u.y;
+		B = u.x;
+		C = -A * P.x - B * P.y;
+	}
+
+	template <class Pt>
+	auto compute(const Pt& Q) const {
+		return A * Q.x + B * Q.y + C;
+	}
+};
 
 template <class T>
 inline bool checkPoint(const T& p, int width, int height) {
@@ -256,6 +274,39 @@ bool isPointInside2(const std::vector<T>& poly, const T& Q) {
 	}
 
 	return j == n;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+/// check if sign of a point over generalines is same
+/// if the point lies on a line, the function return line index
+/// if sign of the point is different, the function return a nagative number of 
+/// index of the line that sign of the point on that line is different than sign of the point on preivous line
+/// if sign of the point is same, the function return 0
+///////////////////////////////////////////////////////////////////////////////////
+template <class T, class Pt>
+int checkPointSign(const std::vector<GeneralLine<T>>& cachedPoly, const Pt& Q) {
+	float prevVal = 0;
+	int n = (int)cachedPoly.size();
+	for (int j = 0; j < n; j++) {
+		auto& generalLine = cachedPoly[j];
+		float currVal = generalLine.compute(Q);
+
+		// check if the point lies on current edge
+		// then the point is in the polygon
+		if (currVal == 0) {
+			return j;
+		}
+
+		// if the previous value and current value is opposite of sign
+		// it means the point is out side of the polygon
+		if (prevVal * currVal < 0) {
+			return -j;
+			break;
+		}
+		prevVal = currVal;
+	}
+
+	return 0;
 }
 
 

@@ -36,6 +36,11 @@ void Bullet::updateInternal(float t) {
 	translate(v);
 }
 
+void Bullet::drawInternal() {
+	gl::ScopedColor bulletColor(0.0f, 1.0f, 0, 1);
+	TexturedObject::drawInternal();
+}
+
 void Bullet::setSize(const float& w, const float& h) {
 	Rectf boundRect(-w / 2, -h / 2, w / 2, h / 2);
 	setBound(boundRect);

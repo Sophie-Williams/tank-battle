@@ -1003,34 +1003,713 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 	_lastUpdate = t;
 }
 
+inline int next(int i, int nSub1) {
+	return i == nSub1 ? 0 : i + 1;
+}
+
+inline int back(int i, int nSub1) {
+	return i == 0 ? nSub1 : i - 1;
+}
+
+inline int next(int i, int dir, int nSub1) {
+	return dir > 0 ? next(i, nSub1) : back(i, nSub1);
+}
+
 void CollisionDetector::rayClipPolygon(const ci::vec2& P, const ci::vec2& u, const std::vector<ci::vec2>& poly, std::vector<ci::vec2>& polyOut) {
 	// an zero direction vector is invalid
 	if (u.x == 0.0f && u.y == 0.0f) {
 		return;
 	}
+	if (poly.size() <= 2) return;
+
 	int n = (int)poly.size();
 	float t1, t2;
-	for (int i = 0; i < n; i++) {
-		auto& Q1 = poly[i];
-		auto& Q2 = poly[(i + 1)%n];
-		auto v = Q2 - Q1;
-		if (Intersect2D_Lines(P, u, Q1, v, &t1, &t2)) {
+	int i = 0;
+	int nextI, backI, nSub1;
+	int dir = 0;
 
+	nSub1 = n - 1;
+
+	GeneralLine<float> rayLine;
+	rayLine.build(P, u);
+
+	// find the first intersection point between the ray and an edge of polygon
+	for (i = 0; i < n; i++) {
+		nextI = next(i, nSub1);
+		auto& Q = poly[i];
+		auto& nextOfQ = poly[nextI];
+		auto v = nextOfQ - Q;
+		// check if two lines are intersect
+		if (Intersect2D_Lines(P, u, Q, v, &t1, &t2)) {
+			// check if the intersection point is in the right side of the ray
+			// and at midle of the edge
+			if (t1 >= 0 && 0 <= t2 && t2 <= 1) {
+				// check if intersect at Q
+				if (t2 == 0) {
+					do
+					{
+						auto& nextOfQ = poly[nextI];
+						t2 = rayLine.compute(nextOfQ);
+						nextI = next(nextI, nSub1);
+					} while (t2 == 0 && nextI != i);
+					
+					dir = t2 == 0 ? 0 : (t2 > 0 ? 1 : -1);
+					if (dir > 0) {
+						// next turn check at next of i
+						i = next(i, nSub1);
+					}
+					else {
+						// next turn check at back of i
+						i = back(i, nSub1);
+					}
+				}
+				// check if intersect at next of Q
+				else if (t2 == 1) {
+					// back of next of Q
+					backI = i;
+					do
+					{
+						auto& backOfQ = poly[backI];
+						t2 = rayLine.compute(backOfQ);
+						backI = back(backI, nSub1);
+					} while (t2 == 0 && backI != i);
+
+					dir = t2 == 0 ? 0 : (t2 < 0 ? 1 : -1);
+					if (dir > 0) {
+						// next turn check at next of next of i
+						i = next(nextI, nSub1);
+					}
+					else {
+						// next turn check at i, not change i
+					}
+				}
+				else {
+					t2 = rayLine.compute(nextOfQ);
+					// t2 is alway different than 0
+					dir = (t2 > 0 ? 1 : -1);
+					if (dir > 0) {
+						// next turn check at next of i
+						i = nextI;
+					}
+					else {
+						// next turn check at i, not change i
+					}
+				}
+				if (dir) {
+					polyOut.push_back(P + u * t1);
+				}
+				break;
+			}
+		}
+	}
+
+	if (dir == 0) {
+		// cannot find the direction
+		polyOut.clear();
+	}
+
+	// find the second intersection point between the ray and an edge of polygon
+	int j = i;
+	bool detectLoop = false;
+	do {
+		auto& Q = poly[j];
+		t2 = rayLine.compute(Q);
+
+		if (t2 < 0) {
+			// go through the direction should not find point is bellow the ray
+			break;
+		}
+		polyOut.push_back(Q);
+		j = next(j, dir, nSub1);
+		auto& nextOfQ = poly[j];
+		auto v = nextOfQ - Q;
+
+		if (Intersect2D_Lines(P, u, Q, v, &t1, &t2)) {
+			// check if the intersection point is in the right side of the ray
+			// and at midle of the edge
+			if (t1 >= 0 && 0 <= t2 && t2 <= 1) {
+				// find second intersection point, that means the poly is completed
+				polyOut.push_back(P + u * t1);
+				detectLoop = true;
+				break;
+			}
+		}
+
+	} while (j != i);
+
+	if (detectLoop == false) {
+		// cannot find the loop
+		polyOut.clear();
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+/// find intersection of a segment with a polygon
+/// return the index of segment of polygon that intersect with the segment
+/// output the location of intersection in parameter of each segment.
+///
+/////////////////////////////////////////////////////////////////////////
+template <class T>
+int findIntersect(const T& P, const T& u, const std::vector<T>& poly, float& t1, float& t2) {
+	if (poly.size() == 0) return -1;
+
+	int nSub1 = (int)poly.size() - 1;
+	for (int i = 0; i <= nSub1; i++) {
+		auto& Q = poly[i];
+		auto& v = poly[next(i, nSub1)] - Q;
+		if (Intersect2D_Lines(P, u, Q, v, &t1, &t2) && t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+template <class T>
+int findIntersect(const T& P, const T& u, const T* poly, int nSub1, int start, int end, float& t1, float& t2) {
+	if (nSub1 < 1) return -1;
+	int nextI;
+	
+	int i = start;
+	do {
+		auto& Q = poly[i];
+		nextI = next(i, nSub1);
+		auto& v = poly[nextI] - Q;
+		if (Intersect2D_Lines(P, u, Q, v, &t1, &t2) && t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+			return i;
+		}
+		i = nextI;
+	} while (i != end);
+
+	return -1;
+}
+
+void CollisionDetector::polyIntersect(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2, std::vector<ci::vec2>& polyOut) {
+	if (poly1.size() < 3 || poly2.size() < 3) {
+		return;
+	}
+	int n1Sub1 = (int)poly1.size() - 1;
+	int n2Sub1 = (int)poly2.size() - 1;
+
+	// count intersect point on each edge of polygon 1
+	std::vector<char> poly1SegmentsIntersectionCounter(poly1.size(),  0);
+	// count intersect point on each edge of polygon 2
+	std::vector<char> poly2SegmentsIntersectionCounter(poly2.size(), 0);
+
+	std::vector<char> poly1VerticesFlags(poly1.size(), 0);
+	std::vector<char> poly2VerticesFlags(poly2.size(), 0);
+
+	struct PolygonInfoSet
+	{
+		const ci::vec2* pointData;
+		char* segmentsIntersectionCounter;
+		char* verticesFlags;
+		int maxIndex;
+	};
+
+	PolygonInfoSet polygonSets[] = {
+		{ poly1.data(),  poly1SegmentsIntersectionCounter.data(), poly1VerticesFlags.data(),  n1Sub1 },
+		{ poly2.data(),  poly2SegmentsIntersectionCounter.data(), poly1VerticesFlags.data(),  n2Sub1 },
+	};
+
+	int res;
+
+	// cache polygon 1 information use for geometry calculation
+	std::vector<GeneralLine<float>> cachedPoly1(poly1.size());
+	for (int i = 0; i <= n1Sub1; i++) {
+		auto& P = poly1[i];
+		auto& Q = poly1[ next(i, n1Sub1) ];
+
+		cachedPoly1[i].build(P, Q - P);
+	}
+
+	// cache polygon 2 information use for geometry calculation
+	std::vector<GeneralLine<float>> cachedPoly2(poly2.size());
+	for (int i = 0; i <= n2Sub1; i++) {
+		auto& P = poly2[i];
+		auto& Q = poly2[next(i, n2Sub1)];
+
+		cachedPoly2[i].build(P, Q - P);
+	}
+	auto verticesFlags1 = polygonSets[0].verticesFlags;
+	// find vertices of polygon 1 that inside the polygon 2
+	for (int i = 0; i <= n1Sub1; i++) {
+		auto& P1 = poly1[i];
+		res = checkPointSign(cachedPoly2, P1);
+		if (res == 0) {
+			// the current vertex is inside of polygon 2
+			verticesFlags1[i] = 1;
+		}
+		else if (res > 0) {
+			// P1 is lies on a line of polygon 2 that has index is value of 'res'
+
+			// get corresponding segment of the line
+			auto& P2 = poly2[res];
+			auto& Q2 = poly2[next(res, n2Sub1)];
+			auto t = computeT(Q2 - P2, P1 - P2);
+			// check if P1 is on the segment
+			if (t >= 0 && t <= 1) {
+				// the current vertex is inside of polygon 2
+				verticesFlags1[i] = 1;
+			}
+			else {
+				// P1 is outside of polygon 2
+				break;
+			}
 		}
 		else {
-			// now two lines are parallel or overlap
-			if (compute(P, u, Q1) == 0) {
-				// now two lines are overlap
-				// compute parameter t of Q1, Q2 on the ray
-				// if any of Q1, Q2 is in nagative direction of the ray
-				// it means the ray cannot clip the poly
-				auto t1 = computeT(u, Q1 - P);
-				auto t2 = computeT(u, Q2 - P);
-				if (t1 < 0.0f || t2 < 0) {
-					polyOut.clear();
-					return;
+			// P1 is outside of polygon 2
+			break;
+		}
+	}
+
+	auto verticesFlags2 = polygonSets[1].verticesFlags;
+	// find vertices of polygon 2 that inside the polygon 1
+	for (int i = 0; i <= n2Sub1; i++) {
+		auto& P2 = poly2[i];
+		res = checkPointSign(cachedPoly1, P2);
+		if (res == 0) {
+			// the current vertex is inside of polygon 1
+			verticesFlags2[i] = 1;
+		}
+		else if (res > 0) {
+			// P2 is lies on a line of polygon 1 that has index is value of 'res'
+
+			// get corresponding segment of the line
+			auto& P1 = poly1[res];
+			auto& Q1 = poly1[next(res, n1Sub1)];
+			auto t = computeT(Q1 - P1, P2 - P1);
+			// check if P2 is on the segment
+			if (t >= 0 && t <= 1) {
+				// the current vertex is inside of polygon 2
+				verticesFlags2[i] = 1;
+			}
+			else {
+				// P2 is outside of polygon 1
+				break;
+			}
+		}
+		else {
+			// P2 is outside of polygon 1
+			break;
+		}
+	}
+
+	int vertexIdx = 0;
+	int polyIdx = 0;
+	int theOtherPolyIdx, nextVertex, intersectEdgeIdx;
+	float t1, t2;
+	while (true)
+	{
+		auto& currentPolySet = polygonSets[polyIdx];
+		auto currentPoly = currentPolySet.pointData;
+		theOtherPolyIdx = ((~polyIdx) & 1);
+		nextVertex = next(vertexIdx, currentPolySet.maxIndex);
+
+		auto& theOtherPolySet = polygonSets[theOtherPolyIdx];
+		auto theOtherPoly = theOtherPolySet.pointData;
+
+		auto&P = currentPoly[vertexIdx];
+		auto currentVerticesFlags = currentPolySet.verticesFlags;
+
+		// check if the vertex of current polygon is inside the other polygon
+		if (currentVerticesFlags[vertexIdx]) {
+			polyOut.push_back(P);
+			// check if the next vertex of current polygon is also inside the other polygon
+			if (currentVerticesFlags[nextVertex]) {
+				vertexIdx = nextVertex;
+			}
+			else {
+				auto u = currentPoly[nextVertex] - P;
+				intersectEdgeIdx = findIntersect(P, u, theOtherPoly, theOtherPolySet.maxIndex + 1, 0, 0, t1, t2);
+				if (intersectEdgeIdx >= 0) {
+					// change routine to other polyon
+					polyIdx = theOtherPolyIdx;
+
+					// find the next vertext on other polygon
+				}
+				else {
+					// cannot find the connection
+					break;
+				}
+			}
+		}
+		else {
+			// find intersection of current segment over segments of the other polygon
+			auto u = currentPoly[nextVertex] - P;
+
+			intersectEdgeIdx = findIntersect(P, u, theOtherPoly, theOtherPolySet.maxIndex + 1, 0, 0, t1, t2);
+			if (intersectEdgeIdx >= 0) {
+				auto& segment1IntersectionCounter = currentPolySet.segmentsIntersectionCounter[polyIdx];
+				auto& segment2IntersectionCounter = theOtherPolySet.segmentsIntersectionCounter[intersectEdgeIdx];
+				segment1IntersectionCounter++;
+				segment2IntersectionCounter++;
+
+				// check if the next vertex of current polygon is inside the other polygon
+				if (currentVerticesFlags[nextVertex]) {
+					vertexIdx = nextVertex;
+				}
+				else if(segment2IntersectionCounter >= 2 && segment1IntersectionCounter >= 2){
+					// both segment have enough intersect, it is sign of output polygon is completed
+					break;
+				}
+				else {
+					intersectEdgeIdx = findIntersect(P, u, theOtherPoly, theOtherPolySet.maxIndex + 1, intersectEdgeIdx + 1, intersectEdgeIdx, t1, t2);
+				}
+			}
+			else {
+				// no intersect, move to check the next vertex
+				vertexIdx = nextVertex;
+				// check if no intersection found after go through all edge of the polygon
+				if (true) {
+					break;
 				}
 			}
 		}
 	}
+
+	//// check if polygon 2 is inside polygon 1
+	//for (int i = 0; i <= nSub2; i++) {
+	//	auto& P2 = poly2[i];
+	//	res = checkPointSign(cachedPoly1, P2);
+	//	if (res == 0) {
+	//		polyOut.push_back(P2);
+	//	}
+	//	else if (res > 0) {
+	//		// P2 is lies on a line of polygon 1 that has index is value of 'res'
+
+	//		// get corresponding segment of the line
+	//		auto& P1 = poly1[res];
+	//		auto& Q1 = poly1[next(res, nSub1)];
+	//		auto t = computeT(Q1 - P1, P2 - P1);
+	//		// check if P2 is on the segment
+	//		if (t >= 0 && t <= 1) {
+	//			polyOut.push_back(P2);
+	//		}
+	//		else {
+	//			// P2 is outside of polygon 1
+	//			break;
+	//		}
+	//	}
+	//	else {
+	//		// P2 is outside of polygon 1
+	//		break;
+	//	}
+	//}
+
+	//// if number of outout polygon is same as polygon 2
+	//// it means the polygon 2 is totally inside the polygon 1
+	//if (polyOut.size() == poly2.size()) {
+	//	return;
+	//}
+
+	polyOut.clear();
+
+	// find intersection of segments of polygon 1 over polygon 2
+	for (int i = 0; i <= n1Sub1; i++) {
+		auto& P1 = poly1[i];
+		auto& Q1 = poly1[next(i, n1Sub1)];
+
+		auto intersectionAtEdgeIdx = findIntersect(P1, Q1 - P1, poly2, t1, t2);
+		if (intersectionAtEdgeIdx >= 0) {
+			if (t1 == 0) {
+				// intersect at P1
+			}
+			else if(t1 == 1) {
+				// intersect at Q1
+			}
+			else {
+				// intersect at middle of P1 and Q1
+			}
+		}
+		else {
+			res = checkPointSign(cachedPoly2, P1);
+			if (res == 0) {
+				// vertex #i of polygon 1 is inside polygon 2
+			}
+			else {
+				// when the code reach here, vertex #i of polygon 1 cannot be lied on any edge of polygon 2
+				// because the segment of this vertex does not intersect with other segment of polygon 2 at t1 == 0.
+				// So, now vertex #i of polygon 1 is outside of polygon 2
+			}
+		}
+	}
+}
+
+
+template <class Pt>
+void buildGeneralLines(GeneralLine<float>* cachedPoly, Pt* poly, int nSub1) {
+	for (int i = 0; i <= nSub1; i++) {
+		auto& P = poly[i];
+		auto& Q = poly[next(i, nSub1)];
+
+		cachedPoly[i].build(P, Q - P);
+	}
+}
+template<class Pt>
+struct _ConnectionNode {
+	const Pt* pCoord;
+	_ConnectionNode* node1;
+	_ConnectionNode* node2;
+};
+
+template<class Pt>
+struct _Segment {
+	_ConnectionNode<Pt>* node1;
+	_ConnectionNode<Pt>* node2;
+};
+
+template<class Pt>
+void addNode(_Segment<Pt>& segment, _ConnectionNode<Pt>* node) {
+	if (segment.node1 == nullptr) {
+		segment.node1 = node;
+	}
+	else if (segment.node2 == nullptr) {
+		auto existNode = segment.node1;
+		node->node1 = existNode;
+		if (existNode->node1 == nullptr) {
+			existNode->node1 = node;
+		}
+		else if (existNode->node2 == nullptr) {
+			existNode->node2 = node;
+		}
+		else {
+			throw std::runtime_error("node is already link fully");
+		}
+
+		segment.node2 = node;
+	}
+	else {
+		throw std::runtime_error("segment is full");
+	}
+};
+
+bool polyIntersect(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2, std::vector<ci::vec2>& polyOut) {
+	if (poly1.size() < 3 || poly2.size() < 3) {
+		return false;
+	}
+	int n1Sub1 = (int)poly1.size() - 1;
+	int n2Sub1 = (int)poly2.size() - 1;
+
+	typedef ci::vec2 Pt;
+	typedef _ConnectionNode<Pt> ConnectionNode;
+	typedef _Segment<Pt> Segment;
+
+	std::vector<Segment> segmentMap(poly1.size() + poly2.size(), {nullptr, nullptr});
+
+	// cache polygon 1 information use for geometry calculation
+	std::vector<GeneralLine<float>> cachedPoly1(poly1.size());
+	buildGeneralLines(cachedPoly1.data(), poly1.data(), n1Sub1);
+
+	// cache polygon 2 information use for geometry calculation
+	std::vector<GeneralLine<float>> cachedPoly2(poly2.size());
+	buildGeneralLines(cachedPoly2.data(), poly2.data(), n2Sub1);
+
+	std::list<ConnectionNode> connectionNodes;
+	auto buildConnectionFromInsidePoints = [&connectionNodes, &segmentMap](const Pt* poly, int nSub1, const std::vector<GeneralLine<float>>& otherCachedPoly, int baseMapIdx) {
+		int res;
+		for (int i = 0; i <= nSub1; i++) {
+			auto& P = poly[i];
+			res = checkPointSign(otherCachedPoly, P);
+			if (res == 0) {
+				// the current vertex is inside of polygon 2
+				ConnectionNode connectionNode = { &P, nullptr, nullptr };
+				connectionNodes.push_back(connectionNode);
+
+				auto pNewNode = &connectionNodes.back();
+				addNode(segmentMap[i + baseMapIdx], pNewNode);
+				addNode(segmentMap[back(i + baseMapIdx, nSub1)], pNewNode);
+			}
+		}
+	};
+
+	buildConnectionFromInsidePoints(poly1.data(), n1Sub1, cachedPoly2, 0);
+	if (connectionNodes.size() == poly1.size()) {
+		// polygon 1 is inside polygon 2
+		polyOut = poly1;
+		return true;
+	}
+	auto step1ConnectionCount = connectionNodes.size();
+	buildConnectionFromInsidePoints(poly2.data(), n2Sub1, cachedPoly2, (int)poly1.size());
+	if (connectionNodes.size() == step1ConnectionCount + poly2.size()) {
+		// polygon 2 is inside polygon 1
+		polyOut = poly2;
+		return true;
+	}
+
+	float t1, t2;
+	// find intersection of segments between polygon 1 and polygon 2
+	std::list<Pt> intersectionPoints;
+	for (int i = 0; i <= n1Sub1; i++) {
+		auto& P1 = poly1[i];
+		auto& Q1 = poly1[next(i, n1Sub1)];
+		auto u1 = Q1 - P1;
+
+		for (int j = 0; j <= n2Sub1; j++) {
+			auto& P2 = poly2[j];
+			auto& Q2 = poly2[next(j, n2Sub1)];
+			auto u2 = Q2 - P2;
+
+			if (Intersect2D_Lines(P1, u1, P2, u2, &t1, &t2)) {
+				if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+					// intersect at middle of each segment
+					if (t1 > 0 && t1 < 1 && t2 > 0 && t2 < 1) {
+
+						auto P = P1 + u1 * t1;
+						intersectionPoints.push_back(P);
+
+						ConnectionNode connectionNode = { &intersectionPoints.back(), nullptr, nullptr };
+						connectionNodes.push_back(connectionNode);
+						auto pNewNode = &connectionNodes.back();
+
+						// add node to segment #i of polygon 1
+						addNode(segmentMap[i], pNewNode);
+
+						// add node to segment #j of polygon 2
+						addNode(segmentMap[j + poly1.size()], pNewNode);
+					}
+					else if (t1 == 0 && t2 > 0 && t2 < 1) {
+
+						ConnectionNode connectionNode = { &P1, nullptr, nullptr };
+						connectionNodes.push_back(connectionNode);
+						auto pNewNode = &connectionNodes.back();
+
+						// add node to segment #i of polygon 1
+						addNode(segmentMap[i], pNewNode);
+						// add node to previous segment of segment #i of polygon 1
+						addNode(segmentMap[back(i, n1Sub1)], pNewNode);
+
+						// add node to segment of polygon 2
+						addNode(segmentMap[j + poly1.size()], pNewNode);
+					}
+					else if (t2 == 0 && t1 > 0 && t1 < 1) {
+
+						ConnectionNode connectionNode = { &P2, nullptr, nullptr };
+						connectionNodes.push_back(connectionNode);
+						auto pNewNode = &connectionNodes.back();
+
+						// add node to segment #i of polygon 1
+						addNode(segmentMap[i], pNewNode);
+
+						// add node to segment of polygon 2
+						addNode(segmentMap[j + poly1.size()], pNewNode);
+						// add node to previous segment of segment #j of polygon 2
+						addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode);
+					}
+					else if (t1 == 0 && t2 == 0) {
+
+						ConnectionNode connectionNode = { &P1, nullptr, nullptr };
+						connectionNodes.push_back(connectionNode);
+						auto pNewNode = &connectionNodes.back();
+
+						// add node to segment #i of polygon 1
+						addNode(segmentMap[i], pNewNode);
+						// add node to previous segment of segment #i of polygon 1
+						addNode(segmentMap[back(i, n1Sub1)], pNewNode);
+
+						// add node to segment of polygon 2
+						addNode(segmentMap[j + poly1.size()], pNewNode);
+						// add node to previous segment of segment #j of polygon 2
+						addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode);
+					}
+				}
+			}
+			else {
+				// now two lines are parallel or overlap
+				// continue to check if P2 is lies on segment #i of polygon 1 by using general line
+				if (cachedPoly1[i].compute(P2) == 0) {
+					// now two lines are overlap
+					// check if P2 is in middle of segment 1
+					t1 = computeT(u1, P2 - P1);
+					if (t1 >= 0 && t1 <= 1) {
+						if (t1 > 0 && t1 < 1) {
+							ConnectionNode connectionNode = { &P2, nullptr, nullptr };
+							connectionNodes.push_back(connectionNode);
+							auto pNewNode = &connectionNodes.back();
+
+							// add node to segment #i of polygon 1
+							addNode(segmentMap[i], pNewNode);
+
+							// add node to segment of polygon 2
+							addNode(segmentMap[j + poly1.size()], pNewNode);
+							// add node to previous segment of segment #j of polygon 2
+							addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode);
+						}
+						else if (t1 == 0) {
+							ConnectionNode connectionNode = { &P1, nullptr, nullptr };
+							connectionNodes.push_back(connectionNode);
+							auto pNewNode = &connectionNodes.back();
+
+							// add node to segment #i of polygon 1
+							addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addNode(segmentMap[back(i, n1Sub1)], pNewNode);
+
+							// add node to segment of polygon 2
+							addNode(segmentMap[j + poly1.size()], pNewNode);
+							// add node to previous segment of segment #j of polygon 2
+							addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode);
+						}
+					}
+					else {
+						// check if P1 is in middle of segment 2
+						t2 = computeT(u2, P1 - P2);
+						if (t2 > 0 && t2 < 1) {
+							ConnectionNode connectionNode = { &P1, nullptr, nullptr };
+							connectionNodes.push_back(connectionNode);
+							auto pNewNode = &connectionNodes.back();
+
+							// add node to segment #i of polygon 1
+							addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addNode(segmentMap[back(i, n1Sub1)], pNewNode);
+
+							// add node to segment of polygon 2
+							addNode(segmentMap[j + poly1.size()], pNewNode);
+						}
+						else if (t2 == 0) {
+							ConnectionNode connectionNode = { &P1, nullptr, nullptr };
+							connectionNodes.push_back(connectionNode);
+							auto pNewNode = &connectionNodes.back();
+
+							// add node to segment #i of polygon 1
+							addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addNode(segmentMap[back(i, n1Sub1)], pNewNode);
+
+							// add node to segment of polygon 2
+							addNode(segmentMap[j + poly1.size()], pNewNode);
+							// add node to previous segment of segment #j of polygon 2
+							addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (connectionNodes.size() < 3) {
+		return false;
+	}
+	auto pConnectionNode = &connectionNodes.front();
+	auto pStartNode = pConnectionNode;
+	decltype(pConnectionNode) previousNode = nullptr;
+	do
+	{
+		polyOut.push_back(*pConnectionNode->pCoord);
+
+		if (pConnectionNode->node1 != previousNode) {
+			previousNode = pConnectionNode;
+			pConnectionNode = pConnectionNode->node1;
+		}
+		else {
+			previousNode = pConnectionNode;
+			pConnectionNode = pConnectionNode->node2;
+		}
+		if (pConnectionNode == nullptr) {
+			break;
+		}
+	} while (pConnectionNode != pStartNode);
+
+	return pConnectionNode == nullptr;
 }
