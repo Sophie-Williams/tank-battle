@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <memory>
 #include <algorithm>
 #include <cmath>
 
@@ -112,17 +113,24 @@ struct GeneralLine {
 	T A;
 	T B;
 	T C;
+	T vectorLength;
 
 	template <class Pt>
 	void build(const Pt& P, const Pt& u) {
 		A = -u.y;
 		B = u.x;
 		C = -A * P.x - B * P.y;
+
+		vectorLength = sqrt(A * A + B * B);
 	}
 
 	template <class Pt>
 	auto compute(const Pt& Q) const {
 		return A * Q.x + B * Q.y + C;
+	}
+	template <class Pt>
+	auto directionalDistance(const Pt& Q) const {
+		return compute(Q)/ vectorLength;
 	}
 };
 
@@ -289,18 +297,18 @@ int checkPointSign(const std::vector<GeneralLine<T>>& cachedPoly, const Pt& Q) {
 	int n = (int)cachedPoly.size();
 	for (int j = 0; j < n; j++) {
 		auto& generalLine = cachedPoly[j];
-		float currVal = generalLine.compute(Q);
+		float currVal = generalLine.directionalDistance(Q);
 
 		// check if the point lies on current edge
 		// then the point is in the polygon
-		if (currVal == 0) {
-			return j;
+		if (std::abs(currVal) <= GEOMETRY_EPSILON) {
+			return (j + 1);
 		}
 
 		// if the previous value and current value is opposite of sign
 		// it means the point is out side of the polygon
 		if (prevVal * currVal < 0) {
-			return -j;
+			return -(j + 1);
 			break;
 		}
 		prevVal = currVal;
@@ -434,4 +442,377 @@ int checkIntersect2d(const std::vector<T>& poly1, const std::vector<T>& poly2) {
 	}
 
 	return isTouched ? 0 : -1;
+}
+
+inline int next(int i, int nSub1) {
+	return i == nSub1 ? 0 : i + 1;
+}
+
+inline int back(int i, int nSub1) {
+	return i == 0 ? nSub1 : i - 1;
+}
+
+inline int next(int i, int dir, int nSub1) {
+	return dir > 0 ? next(i, nSub1) : back(i, nSub1);
+}
+
+namespace geometry {
+
+	template <class Pt>
+	void buildGeneralLines(GeneralLine<float>* cachedPoly, Pt* poly, int nSub1) {
+		for (int i = 0; i <= nSub1; i++) {
+			auto& P = poly[i];
+			auto& Q = poly[next(i, nSub1)];
+
+			cachedPoly[i].build(P, Q - P);
+		}
+	}
+	template<class Pt>
+	struct _ConnectionNode {
+		const Pt* pCoord;
+		_ConnectionNode* node1;
+		_ConnectionNode* node2;
+
+		_ConnectionNode(const Pt* p) {
+			pCoord = p;
+			node1 = nullptr;
+			node2 = nullptr;
+		}
+	};
+
+	template<class Pt>
+	struct _Segment {
+		_ConnectionNode<Pt>* node1;
+		_ConnectionNode<Pt>* node2;
+	};
+
+	template<class Pt>
+	void inline linkNode(_ConnectionNode<Pt>* from, _ConnectionNode<Pt>* to) {
+		if (from->node1 == nullptr) {
+			from->node1 = to;
+		}
+		else if (from->node2 == nullptr) {
+			if (from->node1 == to) {
+				return;
+			}
+			from->node2 = to;
+		}
+		else {
+			if (from->node1 == to || from->node2 == to) {
+				return;
+			}
+			// a node has only two connection
+			// if the program reach here, it mean there is something wrong in caller side
+			throw std::runtime_error("node is already link fully");
+		}
+	}
+
+	template<class Pt>
+	bool inline addNode(_Segment<Pt>& segment, _ConnectionNode<Pt>* node) {
+		if (segment.node1 == nullptr) {
+			segment.node1 = node;
+		}
+		else if (segment.node2 == nullptr) {
+			auto existNode = segment.node1;
+			if (existNode->pCoord == node->pCoord) return false;
+
+			linkNode(node, existNode);
+			linkNode(existNode, node);
+
+			segment.node2 = node;
+		}
+		else {
+			if (segment.node1->pCoord == node->pCoord ||
+				segment.node2->pCoord == node->pCoord) return false;
+			throw std::runtime_error("segment is full");
+		}
+
+		return true;
+	}
+
+	template <class Pt>
+	bool polyIntersect(const std::vector<Pt>& poly1, const std::vector<Pt>& poly2, std::vector<Pt>& polyOut) {
+		if (poly1.size() < 3 || poly2.size() < 3) {
+			throw std::runtime_error("invalid polygon");
+		}
+		int n1Sub1 = (int)poly1.size() - 1;
+		int n2Sub1 = (int)poly2.size() - 1;
+
+		typedef _ConnectionNode<Pt> ConnectionNode;
+		typedef _Segment<Pt> Segment;
+
+		std::vector<Segment> segmentMap(poly1.size() + poly2.size(), { nullptr, nullptr });
+
+		// cache polygon 1 information use for geometry calculation
+		std::vector<GeneralLine<float>> cachedPoly1(poly1.size());
+		buildGeneralLines(cachedPoly1.data(), poly1.data(), n1Sub1);
+
+		// cache polygon 2 information use for geometry calculation
+		std::vector<GeneralLine<float>> cachedPoly2(poly2.size());
+		buildGeneralLines(cachedPoly2.data(), poly2.data(), n2Sub1);
+
+		typedef std::shared_ptr<ConnectionNode> ConnectionNodeRef;
+
+		std::list<ConnectionNodeRef> connectionNodes;
+		auto buildConnectionFromInsidePoints = [&connectionNodes, &segmentMap](const Pt* poly, int nSub1, const std::vector<GeneralLine<float>>& otherCachedPoly, int baseMapIdx) {
+			int res;
+			bool addedNode;
+			for (int i = 0; i <= nSub1; i++) {
+				auto& P = poly[i];
+				res = checkPointSign(otherCachedPoly, P);
+				if (res == 0) {
+					// the current vertex is inside of polygon 2
+					auto connectionNode = std::make_shared<ConnectionNode>( &P );
+
+					auto pNewNode = connectionNode.get();
+					addedNode = addNode(segmentMap[i + baseMapIdx], pNewNode);
+					addedNode = addNode(segmentMap[back(i, nSub1) + baseMapIdx], pNewNode) || addedNode;
+					if (addedNode) connectionNodes.push_back(connectionNode);
+				}
+			}
+		};
+
+		buildConnectionFromInsidePoints(poly1.data(), n1Sub1, cachedPoly2, 0);
+		if (connectionNodes.size() == poly1.size()) {
+			// polygon 1 is inside polygon 2
+			polyOut = poly1;
+			return true;
+		}
+		auto step1ConnectionCount = connectionNodes.size();
+		buildConnectionFromInsidePoints(poly2.data(), n2Sub1, cachedPoly1, (int)poly1.size());
+		if (connectionNodes.size() == step1ConnectionCount + poly2.size()) {
+			// polygon 2 is inside polygon 1
+			polyOut = poly2;
+			return true;
+		}
+
+		float t1, t2, l1, l2;
+		bool addedNode;
+		// find intersection of segments between polygon 1 and polygon 2
+		std::list<Pt> intersectionPoints;
+		for (int i = 0; i <= n1Sub1; i++) {
+			auto& P1 = poly1[i];
+			auto& Q1 = poly1[next(i, n1Sub1)];
+			auto u1 = Q1 - P1;
+			const auto& u1Length = cachedPoly1[i].vectorLength;
+
+			for (int j = 0; j <= n2Sub1; j++) {
+				auto& P2 = poly2[j];
+				auto& Q2 = poly2[next(j, n2Sub1)];
+				auto u2 = Q2 - P2;
+				const auto& u2Length = cachedPoly2[j].vectorLength;
+
+				if (Intersect2D_Lines(P1, u1, P2, u2, &t1, &t2)) {
+					l1 = t1 * u1Length;
+					l2 = t2 * u2Length;
+
+					if (l1 >= -GEOMETRY_EPSILON && l1 < u1Length - GEOMETRY_EPSILON && l2 >= -GEOMETRY_EPSILON && l2 < u2Length - GEOMETRY_EPSILON) {
+						// intersect at middle of each segment
+						if (l1 > GEOMETRY_EPSILON && l1 < u1Length && l2 > GEOMETRY_EPSILON && l2 < u2Length) {
+
+							auto P = P1 + u1 * t1;
+							intersectionPoints.push_back(P);
+							auto connectionNode = std::make_shared<ConnectionNode>(&intersectionPoints.back());
+							auto pNewNode = connectionNode.get();
+
+							// add node to segment #i of polygon 1
+							addedNode = addNode(segmentMap[i], pNewNode);
+
+							// add node to segment #j of polygon 2
+							addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+
+							if (addedNode) connectionNodes.push_back(connectionNode);
+						}
+						else if (std::abs(l1) <= GEOMETRY_EPSILON && l2 > GEOMETRY_EPSILON && l2 < u2Length) {
+
+							auto connectionNode = std::make_shared<ConnectionNode>(&P1);
+							auto pNewNode = connectionNode.get();
+
+							// add node to segment #i of polygon 1
+							addedNode = addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addedNode = addNode(segmentMap[back(i, n1Sub1)], pNewNode) || addedNode;
+
+							// add node to segment of polygon 2
+							addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+
+							if (addedNode) connectionNodes.push_back(connectionNode);
+						}
+						else if (std::abs(l2) <= GEOMETRY_EPSILON && l1 > GEOMETRY_EPSILON && l1 < u1Length) {
+
+							auto connectionNode = std::make_shared<ConnectionNode>(&P2 );
+							auto pNewNode = connectionNode.get();
+
+							// add node to segment #i of polygon 1
+							addedNode = addNode(segmentMap[i], pNewNode);
+
+							// add node to segment of polygon 2
+							addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+							// add node to previous segment of segment #j of polygon 2
+							addedNode = addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode) || addedNode;
+
+							if (addedNode) connectionNodes.push_back(connectionNode);
+						}
+						else if (std::abs(l1) <= GEOMETRY_EPSILON && std::abs(l2) <= GEOMETRY_EPSILON){
+
+							auto connectionNode = std::make_shared<ConnectionNode>(&P1 );
+							auto pNewNode = connectionNode.get();
+
+							// add node to segment #i of polygon 1
+							addedNode = addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addedNode = addNode(segmentMap[back(i, n1Sub1)], pNewNode) || addedNode;
+
+							// add node to segment of polygon 2
+							addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+							// add node to previous segment of segment #j of polygon 2
+							addedNode = addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode) || addedNode;
+
+							if (addedNode) connectionNodes.push_back(connectionNode);
+						}
+					}
+				}
+				else {
+					// now two lines are parallel or overlap
+					// continue to check if P2 is lies on segment #i of polygon 1 by using general line
+					if (std::abs(cachedPoly1[i].directionalDistance(P2)) <= GEOMETRY_EPSILON) {
+						// now two lines are overlap
+						// check if P2 is in middle of segment 1
+						t1 = computeT(u1, P2 - P1);
+						l1 = t1 * u1Length;
+						if (l1 >= -GEOMETRY_EPSILON && l1 < u1Length - GEOMETRY_EPSILON) {
+							if (l1 > GEOMETRY_EPSILON && l1 < u1Length) {
+								auto connectionNode = std::make_shared<ConnectionNode>(&P2 );
+								auto pNewNode = connectionNode.get();
+
+								// add node to segment #i of polygon 1
+								addedNode = addNode(segmentMap[i], pNewNode);
+
+								// add node to segment of polygon 2
+								addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+								// add node to previous segment of segment #j of polygon 2
+								addedNode = addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode) || addedNode;
+
+								if (addedNode) connectionNodes.push_back(connectionNode);
+							}
+							else if (std::abs(l1) <= GEOMETRY_EPSILON) {
+								auto connectionNode = std::make_shared<ConnectionNode>(&P1 );
+								auto pNewNode = connectionNode.get();
+
+								// add node to segment #i of polygon 1
+								addedNode = addNode(segmentMap[i], pNewNode);
+								// add node to previous segment of segment #i of polygon 1
+								addedNode = addNode(segmentMap[back(i, n1Sub1)], pNewNode) || addedNode;
+
+								// add node to segment of polygon 2
+								addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+								// add node to previous segment of segment #j of polygon 2
+								addedNode = addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode) || addedNode;
+
+								if (addedNode) connectionNodes.push_back(connectionNode);
+							}
+						}
+						
+						// check if P1 is in middle of segment 2
+						t2 = computeT(u2, P1 - P2);
+						l2 = t2 * u2Length;
+						if (l2 > GEOMETRY_EPSILON && l2 < u2Length - GEOMETRY_EPSILON) {
+							auto connectionNode = std::make_shared<ConnectionNode>(&P1 );
+							auto pNewNode = connectionNode.get();
+
+							// add node to segment #i of polygon 1
+							addedNode = addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addedNode = addNode(segmentMap[back(i, n1Sub1)], pNewNode) || addedNode;
+
+							// add node to segment of polygon 2
+							addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+
+							if (addedNode) connectionNodes.push_back(connectionNode);
+						}
+						else if (std::abs(l2) <= GEOMETRY_EPSILON) {
+							auto connectionNode = std::make_shared<ConnectionNode>(&P1 );
+							auto pNewNode = connectionNode.get();
+
+							// add node to segment #i of polygon 1
+							addedNode = addNode(segmentMap[i], pNewNode);
+							// add node to previous segment of segment #i of polygon 1
+							addedNode = addNode(segmentMap[back(i, n1Sub1)], pNewNode) || addedNode;
+
+							// add node to segment of polygon 2
+							addedNode = addNode(segmentMap[j + poly1.size()], pNewNode) || addedNode;
+							// add node to previous segment of segment #j of polygon 2
+							addedNode = addNode(segmentMap[back(j, n2Sub1) + poly1.size()], pNewNode) || addedNode;
+
+							if (addedNode) connectionNodes.push_back(connectionNode);
+						}
+					}
+				}
+			}
+		}
+
+		if (connectionNodes.size() == 0) {
+			return false;
+		}
+
+		auto pConnectionNode = connectionNodes.front().get();
+		if (connectionNodes.size() == 1) {
+			polyOut.push_back(*pConnectionNode->pCoord);
+			return true;
+		}
+		if (connectionNodes.size() == 2) {
+			polyOut.push_back(*pConnectionNode->pCoord);
+			polyOut.push_back(*pConnectionNode->node1->pCoord);
+			return true;
+		}
+		
+		auto pStartNode = pConnectionNode;
+		decltype(pConnectionNode) previousNode = nullptr;
+		do
+		{
+			polyOut.push_back(*pConnectionNode->pCoord);
+
+			if (pConnectionNode->node1 != previousNode) {
+				previousNode = pConnectionNode;
+				pConnectionNode = pConnectionNode->node1;
+			}
+			else {
+				previousNode = pConnectionNode;
+				pConnectionNode = pConnectionNode->node2;
+			}
+			if (pConnectionNode == nullptr) {
+				break;
+			}
+		} while (pConnectionNode != pStartNode);
+
+		return pConnectionNode != nullptr;
+	}
+
+	template <class Pt>
+	void merge(std::vector<Pt>& poly, float epsilonDistance) {
+		int nSub1 = (int)poly.size() - 1;
+
+		if (nSub1 > 0) {
+			if (sqrt(lengthSquared(poly[0] - poly[nSub1])) <= epsilonDistance) {
+				nSub1--;
+			}
+		}
+
+		int j = 0;
+		for (int i = j + 1; i <= nSub1; i++) {
+			if (sqrt(lengthSquared(poly[j] - poly[i])) > epsilonDistance) {
+				j++;
+				if (i > j) {
+					poly[j] = poly[i];
+				}
+			}
+		}
+
+		if (nSub1 >= 0) {
+			// make j become number of point
+			j++;
+		}
+
+		poly.resize(j);
+	}
 }
