@@ -20,6 +20,7 @@ class Radar : public GameObject {
 protected:
 	DrawableObjectRef _ownerObject;
 	std::list<ScannedObject> _detectedObjects;
+	std::list<std::shared_ptr<SnapshotObject>> _modelViewObjects;
 	float _scanSpeed;
 	float _startScanAt;
 	glm::vec2 _scanRaySegment;
@@ -30,5 +31,6 @@ public:
 	float getRange() const;
 
 	void update(float t);
+	void draw();
 	const glm::vec2& getRay() const;
 };

@@ -49,16 +49,12 @@ void WxRadarView::draw() {
 		// clear the frame buffer
 		gl::clear(Color(0.2f, 0.2f, 0.3f));
 
-		// set ortho camera at center of radar area
-		CameraOrtho cam;
-		cam.setOrtho(-100, 100, -100, 100, 1, -1);
-		gl::ScopedProjectionMatrix scopeMatrices;
-		gl::setProjectionMatrix(cam.getProjectionMatrix());
-
-		// render the scene
-		renderScene();
+		if (_radar) {
+			_radar->draw();
+		}
 	}
 
+	constexpr float attenuation = 1.5f;
 	// bind the blur shader
 	{
 		gl::ScopedGlslProg shader(_glslBlurShader);
@@ -66,7 +62,7 @@ void WxRadarView::draw() {
 
 		// tell the shader to blur horizontally and the size of 1 pixel
 		_glslBlurShader->uniform("sample_offset", vec2(1.0f / _fboBlur1->getWidth(), 0.0f));
-		_glslBlurShader->uniform("attenuation", 5.0f);
+		_glslBlurShader->uniform("attenuation", attenuation);
 
 		// copy a horizontally blurred version of our scene into the first blur Fbo
 		{
@@ -83,7 +79,7 @@ void WxRadarView::draw() {
 
 		// tell the shader to blur vertically and the size of 1 pixel
 		_glslBlurShader->uniform("sample_offset", vec2(0.0f, 1.0f / _fboBlur2->getHeight()));
-		_glslBlurShader->uniform("attenuation", 5.0f);
+		_glslBlurShader->uniform("attenuation", attenuation);
 
 		// copy a vertically blurred version of our blurred scene into the second blur Fbo
 		{
@@ -108,6 +104,9 @@ void WxRadarView::draw() {
 		gl::ScopedGlslProg shader(_glslFboToScreen);
 		_glslFboToScreen->uniform("uTex0", 0);
 		gl::drawSolidRect(destRect);
+
+		//gl::draw(_fboScene->getColorTexture(), destRect);
+		//gl::draw(_fboBlur2->getColorTexture(), destRect);
 	}
 	{
 		// draw rada coordinate system
@@ -120,4 +119,8 @@ void WxRadarView::draw() {
 void WxRadarView::setShaders(gl::GlslProgRef glslBlurShader, gl::GlslProgRef glslFboToScreen) {
 	_glslBlurShader = glslBlurShader;
 	_glslFboToScreen = glslFboToScreen;
+}
+
+void WxRadarView::setRadar(const std::shared_ptr<Radar> &radar) {
+	_radar = radar;
 }

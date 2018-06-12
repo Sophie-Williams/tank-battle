@@ -4,8 +4,9 @@
 
 class SnapshotObject {
 public:
-	ci::mat4 transform;
-	ci::Rectf tankBoundary;
+	std::vector<ci::vec2> objectBound;
+	DrawableObjectRef _ref;
+	SnapshotObject();
 };
 
 class TankSnapshot : public SnapshotObject {
@@ -20,6 +21,8 @@ public:
 	BattlePlatform(float width, float height);
 	~BattlePlatform();
 
+	static BattlePlatform* getInstance();
+
 	const ci::Rectf& getMapArea() const;
-	const std::list<std::shared_ptr<SnapshotObject>>& getSnapshotObjects();
+	std::list<std::shared_ptr<SnapshotObject>>& getSnapshotObjects();
 };

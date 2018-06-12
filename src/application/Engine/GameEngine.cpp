@@ -44,8 +44,12 @@ float GameEngine::getCurrentTime() const {
 	return getNativeTime() - _pauseDuration;
 }
 
-void GameEngine::setScene(std::shared_ptr<Scene> scene) {
+void GameEngine::setScene(const std::shared_ptr<Scene>& scene) {
 	_gameScene = scene;
+}
+
+const std::shared_ptr<Scene>& GameEngine::getScene() const {
+	return _gameScene;
 }
 
 void GameEngine::run() {

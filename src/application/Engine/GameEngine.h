@@ -30,7 +30,8 @@ public:
 	static GameEngine* getInstance();
 	virtual ~GameEngine();
 
-	void setScene(std::shared_ptr<Scene> scene);
+	void setScene(const std::shared_ptr<Scene>& scene);
+	const std::shared_ptr<Scene>& getScene() const;
 	float getCurrentTime() const;
 
 	void run();

@@ -34,6 +34,7 @@ using namespace std;
 #include "Controllers/PlayerControllerTest.h"
 #include "battle/BattlePlatform.h"
 #include "UI/WxRadarView.h"
+#include "battle/GameCapture.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -300,7 +301,7 @@ void generateTanks1(Scene* scene) {
 	scene->addDrawbleObject(tank4);
 }
 
-void generateTanks2(Scene* scene) {
+std::vector<Tank*> generateTanks2(Scene* scene) {
 	float padding = 8;
 
 	auto& sceneArea = scene->getSceneArea();
@@ -323,7 +324,10 @@ void generateTanks2(Scene* scene) {
 
 	int expectedTank = 10;
 	int tankCount = std::min(expectedTank, tankMaxCount);
-	if (tankCount <= 0) return;
+	if (tankCount <= 0) {
+		std::vector<Tank*> tanks;
+		return tanks;
+	}
 
 	Rand randomizer( (uint32_t) (GameEngine::getInstance()->getCurrentTime() * 10000) );
 
@@ -359,13 +363,15 @@ void generateTanks2(Scene* scene) {
 		tanks[i] = tank.get();
 	}
 
-	//auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
-	auto playerController = std::make_shared<PlayerControllerTest>();
+	auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
+	//auto playerController = std::make_shared<PlayerControllerTest>();
 	tanks[0]->addComponent(playerController);
 	for (int i = 1; i < tankCount; i++) {
 		auto playerController = make_shared<PlayerControllerTest>();
 		tanks[i]->addComponent(playerController);
 	}
+
+	return tanks;
 }
 
 
@@ -384,6 +390,7 @@ void BasicApp::setupGame() {
 	const float sceneHeight = 70;
 
 	_battlePlatform = make_shared<BattlePlatform>(sceneWidth, sceneHeight);
+	auto gameCapture = make_shared<GameCapture>();
 
 	auto& gameArea = _battlePlatform->getMapArea();
 	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
@@ -398,20 +405,22 @@ void BasicApp::setupGame() {
 	float wallDepth2 = 5;
 
 	barrier1->setBound(Rectf(gameArea.x1, gameArea.y1, gameArea.x2, gameArea.y1 + wallDepth1));
-	barrier2->setBound(Rectf(gameArea.x2 - wallDepth2, gameArea.y1, gameArea.x2, gameArea.y2));
+	barrier2->setBound(Rectf(gameArea.x2 - wallDepth2, gameArea.y1 + wallDepth1, gameArea.x2, gameArea.y2 - wallDepth1));
 	barrier3->setBound(Rectf(gameArea.x1, gameArea.y2 - wallDepth1, gameArea.x2, gameArea.y2));
-	barrier4->setBound(Rectf(gameArea.x1, gameArea.y1, gameArea.x1 + wallDepth2, gameArea.y2));
+	barrier4->setBound(Rectf(gameArea.x1, gameArea.y1 + wallDepth1, gameArea.x1 + wallDepth2, gameArea.y2 - wallDepth1));
 
 	gameScene->addDrawbleObject(barrier1);
 	gameScene->addDrawbleObject(barrier2);
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
 
-	generateTanks2(gameScene.get());
+	auto tanks = generateTanks2(gameScene.get());
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
+
+	gameScene->addGameObject(gameCapture);
 
 	auto radarView = make_shared<WxRadarView>(getWindow());
 
@@ -423,6 +432,14 @@ void BasicApp::setupGame() {
 	catch (const std::exception &e) {
 		quit();
 	}
+
+	auto tankRef = dynamic_pointer_cast<DrawableObject>(gameScene->findObjectRef(tanks[0]));
+	auto radar = make_shared<Radar>(tankRef);
+	radar->setRange(std::min(gameArea.getWidth(), gameArea.getHeight()));
+
+	radarView->setRadar(radar);
+
+	gameScene->addGameObject(radar);
 
 	_gameView->setRadarView(radarView);
 }

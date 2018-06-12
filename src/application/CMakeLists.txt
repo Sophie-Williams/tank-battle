@@ -90,6 +90,8 @@ SET (BATTLE_SRC
     Battle/Radar.h
     Battle/TankController.cpp
     Battle/TankController.h
+    Battle/GameCapture.h
+    Battle/GameCapture.cpp
 )
 
 SET (MAIN_SOURCES
