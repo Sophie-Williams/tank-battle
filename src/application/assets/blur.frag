@@ -10,7 +10,9 @@ out vec4 oColor;
 
 void main()
 { 
-	vec3 sum = vec3( 0.0, 0.0, 0.0 );	
+	vec3 sum = vec3( 0.0, 0.0, 0.0 );
+    vec4 texColor = texture( tex0, vTexCoord0 );
+    
 	sum += texture( tex0, vTexCoord0 + -10.0 * sample_offset ).rgb * 0.009167927656011385;
 	sum += texture( tex0, vTexCoord0 +  -9.0 * sample_offset ).rgb * 0.014053461291849008;
 	sum += texture( tex0, vTexCoord0 +  -8.0 * sample_offset ).rgb * 0.020595286319257878;
@@ -34,5 +36,5 @@ void main()
 	sum += texture( tex0, vTexCoord0 + +10.0 * sample_offset ).rgb * 0.009167927656011385;
 
 	oColor.rgb = attenuation * sum;
-	oColor.a = 1.0;
+	oColor.a = texColor.a;
 }

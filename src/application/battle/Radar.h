@@ -3,27 +3,26 @@
 #include "battle/BattlePlatform.h"
 
 class ScannedObject {
-protected:
-	GameObject* _ref;
 public:
-	enum Type {
-		Unknown,
-		Barrier,
-		Tank,
-	};
-
-	std::vector<ci::vec2> boundingPoly;
+	std::vector<ci::vec2> scannedPart;
 	float detectedTime;
 };
+
+typedef std::list<std::shared_ptr<ScannedObject>> ScannedObjectGroup;
+typedef std::shared_ptr<ScannedObjectGroup> ScannedObjectGroupRef;
 
 class Radar : public GameObject {
 protected:
 	DrawableObjectRef _ownerObject;
-	std::list<ScannedObject> _detectedObjects;
-	std::list<std::shared_ptr<SnapshotObject>> _modelViewObjects;
+	std::map<DrawableObjectRef, ScannedObjectGroupRef> _detectedGroupObjects;
+	//std::list<std::shared_ptr<SnapshotObject>> _modelViewObjects;
 	float _scanSpeed;
-	float _startScanAt;
+	float _lastScanAt;
 	glm::vec2 _scanRaySegment;
+
+	float _angle;
+	float _lastScanAngle;
+	glm::vec2 _lastScanRaySegment;
 public:
 	Radar(const DrawableObjectRef& installedInObject, float scanSpeed = glm::half_pi<float>());
 	~Radar();

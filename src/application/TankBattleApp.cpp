@@ -434,7 +434,7 @@ void BasicApp::setupGame() {
 	}
 
 	auto tankRef = dynamic_pointer_cast<DrawableObject>(gameScene->findObjectRef(tanks[0]));
-	auto radar = make_shared<Radar>(tankRef);
+	auto radar = make_shared<Radar>(tankRef, glm::pi<float>());
 	radar->setRange(std::min(gameArea.getWidth(), gameArea.getHeight()));
 
 	radarView->setRadar(radar);

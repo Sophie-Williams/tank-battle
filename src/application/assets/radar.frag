@@ -16,7 +16,7 @@ vec4 checker(vec4 Color, vec2 uv)
     }
 
     v = sqrt(v);
-    vec4 end = vec4(0, 0, 0, 1);
+    vec4 end = vec4(0, 0, 0, Color.a);
     vec4 u = end - Color;
     float k = (v - keepColorInRange) / (radius - keepColorInRange);
     if (k > 1.0) {

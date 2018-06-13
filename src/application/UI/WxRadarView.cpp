@@ -110,9 +110,21 @@ void WxRadarView::draw() {
 	}
 	{
 		// draw rada coordinate system
-		gl::ScopedColor lineColorScope(0.2f, 0.2f, 0.3f);
-		gl::drawLine((destRect.getUpperLeft() + destRect.getUpperRight()) / 2.0f, (destRect.getLowerLeft() + destRect.getLowerRight()) / 2.0f );
-		gl::drawLine((destRect.getUpperLeft() + destRect.getLowerLeft()) / 2.0f, (destRect.getUpperRight() + destRect.getLowerRight()) / 2.0f);
+		{
+			gl::ScopedColor lineColorScope(0.2f, 0.2f, 0.3f);
+			gl::drawLine((destRect.getUpperLeft() + destRect.getUpperRight()) / 2.0f, (destRect.getLowerLeft() + destRect.getLowerRight()) / 2.0f);
+			gl::drawLine((destRect.getUpperLeft() + destRect.getLowerLeft()) / 2.0f, (destRect.getUpperRight() + destRect.getLowerRight()) / 2.0f);
+		}
+
+		gl::ScopedColor lineColorScope(1.f, 1.f, 1.f);
+		auto radarCenter = destRect.getCenter();
+		auto ray = _radar->getRay();
+		ray.x *= 2;
+		ray.y *= -2;
+		ray.x += radarCenter.x;
+		ray.y += radarCenter.y;
+
+		gl::drawLine(radarCenter, ray);
 	}
 }
 
