@@ -877,5 +877,44 @@ namespace UnitTest
 				return L"should intersect";
 			});
 		}
+
+		/////////////////////////////////////////////////////////////////////
+		///
+		/// two polygons are same
+		///
+		/////////////////////////////////////////////////////////////////////
+		TEST_METHOD(PolyIntersection_RealCase1)
+		{
+			vector<vec2> poly1 = {
+				{ 0, 0 },
+				{ -49.4974747f,85.7321396f },
+				{ 49.4974747,85.7321396 },
+			};
+
+			vector<vec2> poly2 = {
+				{ -10.6499968f,31.5000019f },
+				{ -16.3499966,31.5000038 },
+				{ -16.3499985,26.1000023 },
+				{ -10.6499977,26.1000023 },
+			};
+			vector<vec2> expectedIntersection = {
+				{ -10.6499968f,31.5000019f },
+				{ -16.3499966,31.5000038 },
+				{-16.34999772, 28.31925176},
+				{-15.06872363, 26.10000230},
+				{ -10.6499977,26.1000023 },
+			};
+
+			RunPolyIntersectionUnitTestSet(poly1, poly2, [&expectedIntersection](const vector<vec2>& polyRes, bool res) -> std::wstring {
+				if (res) {
+					if (compare(expectedIntersection, polyRes, EPSILON_DISTANCE)) {
+						return L"";
+					}
+					return L"wrong intersection result";
+				}
+
+				return L"should intersect";
+			});
+		}
 	};
 }

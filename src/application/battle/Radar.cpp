@@ -1,13 +1,13 @@
 #include "Radar.h"
-#include "BattlePlatform.h"
 #include "Engine/Barrier.h"
 #include "Engine/Geometry.h"
 #include "Engine/GameEngine.h"
 
-Radar::Radar(const DrawableObjectRef& installedInObject, float scanSpeed) : _lastScanAt(-1), _scanRaySegment(0, 100), _scanSpeed(scanSpeed),_ownerObject(installedInObject) {
-	_lastScanRaySegment = _scanRaySegment;
+Radar::Radar(const std::shared_ptr<ObjectViewContainer>& objectViewContainer, float scanSpeed) : _lastScanAt(-1), _range(100), _scanSpeed(scanSpeed), _objectViewContainer(objectViewContainer) {
 	_lastScanAngle = 0;
 	_angle = 0;
+
+	_lastRay = _ray = ci::vec2(0, _range);
 }
 
 Radar::~Radar() {
@@ -15,18 +15,19 @@ Radar::~Radar() {
 }
 
 void Radar::setRange(float range) {
-	_scanRaySegment = glm::normalize(_scanRaySegment) * range;
+	_range = range;
 }
 
 float Radar::getRange() const {
-	return sqrtf (_scanRaySegment.x*_scanRaySegment.x + _scanRaySegment.y*_scanRaySegment.y);
+	return _range;
 }
 
-extern ci::vec2 transform(const ci::vec2& point, const glm::mat4& m);
+inline ci::vec2 computeRay(const float& range, const float& angle) {
+	return ci::vec2(-range * sin(angle), range *  cos(angle));
+}
 
 void Radar::update(float t) {
-	if (_ownerObject->isAvailable() == false) {
-		this->destroy(t);
+	if (_objectViewContainer->getOwner()->isAvailable() == false) {
 		return;
 	}
 
@@ -35,22 +36,12 @@ void Radar::update(float t) {
 	}
 
 	auto angle = (t - _lastScanAt) * _scanSpeed;
+	_lastScanAt = t;
 	_angle += angle;
 
-	auto cosAngle = cos(angle);
-	auto sinAngle = sin(angle);
+	_ray = computeRay(_range, _angle);
 
-	// roate ray around origin
-	float x = _scanRaySegment.x * cosAngle - _scanRaySegment.y * sinAngle;
-	float y = _scanRaySegment.y * cosAngle + _scanRaySegment.x * sinAngle;
-
-	// convert object from world space to viewspace
-	//_modelViewObjects.clear();
-
-	ci::mat4 inverseMatrix;
-	if (_ownerObject) {
-		inverseMatrix = glm::inverse(_ownerObject->getTransformation());
-	}
+	constexpr float scanMinAngle = glm::pi<float>() / 24;
 
 	// update the detected object list during time event
 	auto expiredTime = 2 * glm::pi<float>() / _scanSpeed;
@@ -79,61 +70,50 @@ void Radar::update(float t) {
 		}
 	}
 
-	auto rangeFromLastScan = _angle > _lastScanAngle ? _angle - _lastScanAngle : _angle + 2 * glm::pi<float>() - _lastScanAngle;
+	if (_angle == _lastScanAngle) return;
+	auto rangeFromLastScan = std::min(std::abs(_angle - _lastScanAngle), std::abs(_angle + 2 * glm::pi<float>() - _lastScanAngle));
 	if (_angle > 2 * glm::pi<float>()) {
-		_angle = 2 * glm::pi<float>() - _angle;
+		_angle -= 2 * glm::pi<float>();
 	}
 
-	auto battlePlatform = BattlePlatform::getInstance();
-	if (battlePlatform && rangeFromLastScan >= glm::pi<float>()/36) {
-		_lastScanAngle = _angle;
+	if (rangeFromLastScan >= scanMinAngle) {
+		// roate ray around origin
+		auto& rayStart = _lastRay;
+		auto& rayEnd = _ray;
 
 		std::vector<ci::vec2> rayArea = {
 			{ 0, 0 }, // origin
-			{ _lastScanRaySegment.x,  _lastScanRaySegment.y }, // last end point of ray's
-			{ x,  y }, // current end point of ray's
+			{ rayStart.x,  rayStart.y }, // last end point of ray's
+			{ rayEnd.x,  rayEnd.y }, // current end point of ray's
 		};
 
-		_lastScanRaySegment.x = x;
-		_lastScanRaySegment.y = y;
+		_lastScanAngle = _angle;
+		_lastRay = _ray;
 
-		auto& objects = battlePlatform->getSnapshotObjects();
+		auto& objects = _objectViewContainer->getModelViewObjects();
 
-		std::vector<ci::vec2> viewModelObjectPoly;
 		for (auto it = objects.begin(); it != objects.end(); it++) {
-			if ((*it)->_ref.get() != _ownerObject.get()) {
-				const auto& worldModelObjectPoly = (*it)->objectBound;
-				viewModelObjectPoly.resize(worldModelObjectPoly.size());
+			const auto& viewModelObjectPoly = (*it)->objectBound;
 
-				auto kt = viewModelObjectPoly.begin();
-				for (auto jt = worldModelObjectPoly.begin(); jt != worldModelObjectPoly.end(); jt++, kt++) {
-					*kt = transform(*jt, inverseMatrix);
+			auto scannedObject = std::make_shared<ScannedObject>();
+			if (geometry::polyIntersect(rayArea, viewModelObjectPoly, scannedObject->scannedPart) && scannedObject->scannedPart.size() > 2) {
+				scannedObject->detectedTime = t;
+
+				ScannedObjectGroupRef dummy;
+				auto groupObject = std::make_pair((*it)->_ref, dummy);
+				auto lt = _detectedGroupObjects.insert(groupObject);
+				if (lt.second == true) {
+					lt.first->second = std::make_shared<ScannedObjectGroup>();
 				}
-				auto scannedObject = std::make_shared<ScannedObject>();
-				if (geometry::polyIntersect(rayArea, viewModelObjectPoly, scannedObject->scannedPart) && scannedObject->scannedPart.size() > 2) {
-					scannedObject->detectedTime = t;
 
-					ScannedObjectGroupRef dummy;
-					auto groupObject = std::make_pair((*it)->_ref, dummy);
-					auto lt = _detectedGroupObjects.insert(groupObject);
-					if (lt.second == true) {
-						lt.first->second = std::make_shared<ScannedObjectGroup>();
-					}
-
-					lt.first->second->push_back(scannedObject);
-				}
+				lt.first->second->push_back(scannedObject);
 			}
 		}
 	}
-
-	// update new ray vector
-	_scanRaySegment.x = x;
-	_scanRaySegment.y = y;
-	_lastScanAt = t;
 }
 
-const glm::vec2& Radar::getRay() const {
-	return _scanRaySegment;
+glm::vec2 Radar::getRay() const {
+	return _ray;
 }
 
 void drawSolidPolygon(const std::vector<ci::vec2>& poly) {
@@ -147,7 +127,7 @@ void drawSolidPolygon(const std::vector<ci::vec2>& poly) {
 void Radar::draw() {
 	ci::CameraOrtho cam;
 	auto range = getRange();
-	cam.setOrtho(-range/2, range/2, -range/2, range/2, 1, -1);
+	cam.setOrtho(-range, range, -range, range, 1, -1);
 	ci::gl::ScopedProjectionMatrix scopeMatrices;
 	ci::gl::setProjectionMatrix(cam.getProjectionMatrix());
 	ci::ColorAf color;

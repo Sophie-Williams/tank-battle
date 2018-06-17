@@ -72,6 +72,8 @@ SET (UI_SRC
     UI/WxGameView.cpp
     UI/WxRadarView.h
     UI/WxRadarView.cpp
+    UI/WxTankPeripheralsView.h
+    UI/WxTankPeripheralsView.cpp
 )
 
 SET (CONTROLLERS_SRC
@@ -92,6 +94,10 @@ SET (BATTLE_SRC
     Battle/TankController.h
     Battle/GameCapture.h
     Battle/GameCapture.cpp
+    Battle/ObjectViewContainer.cpp
+    Battle/ObjectViewContainer.h
+    Battle/TankCamera.cpp
+    Battle/TankCamera.h
 )
 
 SET (MAIN_SOURCES

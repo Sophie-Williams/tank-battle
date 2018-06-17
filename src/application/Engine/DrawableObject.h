@@ -58,4 +58,6 @@ public:
 
 	const CollisionDetectedHandler& getCollisionHandler() const;
 	void setCollisionHandler(CollisionDetectedHandler&&);
+
+	static ci::vec2 transform(const ci::vec2& point, const glm::mat4& m);
 };

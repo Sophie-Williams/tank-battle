@@ -9,6 +9,12 @@ public:
 	SnapshotObject();
 };
 
+class ScannedObject {
+public:
+	std::vector<ci::vec2> scannedPart;
+	float detectedTime;
+};
+
 class TankSnapshot : public SnapshotObject {
 public:
 	ci::vec3 gunVector;

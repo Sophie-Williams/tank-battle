@@ -208,3 +208,16 @@ void Tank::fire(float at) {
 void Tank::setColor(const ci::Colorf& color) {
 	_color = color;
 }
+
+ci::vec4 Tank::getGun() const {
+	auto& barelBound = _barrel.getBound();
+	auto& pivot3 = _barrel.getPivot();
+	
+	ci::vec2 pivot(pivot3.x, pivot3.y);
+	ci::vec2 topGun = (barelBound.getLowerLeft() + barelBound.getLowerRight()) / 2.0f;
+
+	pivot = transform(pivot, _barrel.getTransformation());
+	topGun = transform(topGun, _barrel.getTransformation());
+
+	return ci::vec4(pivot.x, pivot.y, topGun.x, topGun.y);
+}

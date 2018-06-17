@@ -2,7 +2,7 @@
 #include "Engine/GameEngine.h"
 #include "BattlePlatform.h"
 
-GameCapture::GameCapture(){}
+GameCapture::GameCapture() : _lastUpdate(0) {}
 GameCapture::~GameCapture(){}
 
 void GameCapture::update(float t) {
@@ -11,6 +11,11 @@ void GameCapture::update(float t) {
 	BattlePlatform* battlePlatform = BattlePlatform::getInstance();
 
 	if (battlePlatform == nullptr) return;
+
+	constexpr float updateInterval = 1.0f / 10;
+	if (t - _lastUpdate < updateInterval) {
+		return;
+	}
 
 	auto& snapShotObjects = battlePlatform->getSnapshotObjects();
 	snapShotObjects.clear();
@@ -25,4 +30,5 @@ void GameCapture::update(float t) {
 			snapShotObjects.push_back(snapshotObject);
 		}
 	}
+	_lastUpdate = t;
 }

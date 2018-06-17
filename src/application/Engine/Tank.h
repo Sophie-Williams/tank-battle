@@ -58,4 +58,7 @@ public:
 	void spinBarrel(char direction, float at);
 	void fire(float at);
 	void setColor(const ci::Colorf& color);
+
+	/// gun segment on tank's model view
+	ci::vec4 getGun() const;
 };

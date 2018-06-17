@@ -33,7 +33,7 @@ using namespace std;
 #include "Engine/GameResource.h"
 #include "Controllers/PlayerControllerTest.h"
 #include "battle/BattlePlatform.h"
-#include "UI/WxRadarView.h"
+#include "UI/WxTankPeripheralsView.h"
 #include "battle/GameCapture.h"
 
 using namespace ci;
@@ -152,6 +152,7 @@ void BasicApp::setup()
 	using namespace std::placeholders;
 	ui::Options uiOptions;
 	ui::initialize(uiOptions);
+	setFrameRate(60);
 
 	getWindow()->setTitle("Tank Battle");
 	getWindow()->getSignalResize().connect(std::bind(&BasicApp::onWindowSizeChanged, this));
@@ -422,26 +423,30 @@ void BasicApp::setupGame() {
 
 	gameScene->addGameObject(gameCapture);
 
-	auto radarView = make_shared<WxRadarView>(getWindow());
+	auto tankRef = dynamic_pointer_cast<DrawableObject>(gameScene->findObjectRef(tanks[0]));
+
+	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
+
+	auto radar = make_shared<Radar>(objectViewContainer, glm::pi<float>());
+	radar->setRange(std::max(gameArea.getWidth(), gameArea.getHeight())/2);
+
+	auto camera = make_shared<TankCamera>(objectViewContainer, glm::pi<float>()*2.0f/3);
+	camera->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
+
+	tankRef->addComponent(objectViewContainer);
+	tankRef->addComponent(radar);
+	tankRef->addComponent(camera);
+
+	auto peripheralsview = make_shared<WxTankPeripheralsView>(getWindow());
 
 	try {
-		auto shaderBlur = gl::GlslProg::create(loadAsset("blur.vert"), loadAsset("blur.frag"));
-		auto shaderRadar = gl::GlslProg::create(loadAsset("radar.vert"), loadAsset("radar.frag"));
-		radarView->setShaders(shaderBlur, shaderRadar);
+		peripheralsview->setupPeripherals(camera, radar);
 	}
-	catch (const std::exception &e) {
+	catch (...) {
 		quit();
 	}
 
-	auto tankRef = dynamic_pointer_cast<DrawableObject>(gameScene->findObjectRef(tanks[0]));
-	auto radar = make_shared<Radar>(tankRef, glm::pi<float>());
-	radar->setRange(std::min(gameArea.getWidth(), gameArea.getHeight()));
-
-	radarView->setRadar(radar);
-
-	gameScene->addGameObject(radar);
-
-	_gameView->setRadarView(radarView);
+	_gameView->setTankView(peripheralsview);
 }
 
 void BasicApp::startServices() {

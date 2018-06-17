@@ -42,9 +42,9 @@ bool WxGameView::updateViewPort() {
 
 	radaH = radaW = std::min({ radaH, radaW, maxRadaWidth });
 
-	if (_radarView) {
-		_radarView->setPos(_viewPort.x2 + padding, padding);
-		_radarView->setSize(radaW, radaH);
+	if (_tankView) {
+		_tankView->setPos(_viewPort.x2 + padding, padding);
+		_tankView->setSize(radaW, radaH);
 	}
 
 	return true;
@@ -73,13 +73,13 @@ void WxGameView::setScene(std::shared_ptr<Scene> gameScene) {
 	_gameScene = gameScene;
 }
 
-void WxGameView::setRadarView(const std::shared_ptr<Widget>& radarView) {
-	_radarView = radarView;
+void WxGameView::setTankView(const std::shared_ptr<Widget>& tankView) {
+	_tankView = tankView;
 }
 
 void WxGameView::update() {
-	if (_radarView) {
-		_radarView->update();
+	if (_tankView) {
+		_tankView->update();
 	}
 }
 
@@ -92,32 +92,18 @@ void WxGameView::draw() {
 			_gameScene->draw();
 		}
 	}
-	if(_radarView) {
-		_radarView->draw();
+	if(_tankView) {
+		_tankView->draw();
 	}
 
 	{
-		static float lastStartCountTime = -1;
-		static int frameCount = 0;
-		// measure at least for last 3 seconds
 		constexpr float measureDuration = 3.0f;
 		auto currentTime = ci::app::getElapsedSeconds();
+		auto frameCount = ci::app::getElapsedFrames();
 
-		if (lastStartCountTime == -1) {
-			lastStartCountTime = currentTime;
-			frameCount = 0;
-		}
-
-		frameCount++;
-
-		auto fs = frameCount / (currentTime - lastStartCountTime);
+		auto fs = frameCount / currentTime;
 		auto fsStr = std::to_string((int)fs);
 		fsStr.append(" fps");
 		gl::drawString(fsStr, _viewPort.getUL());
-
-		if (currentTime - lastStartCountTime > measureDuration) {
-			lastStartCountTime = currentTime;
-			frameCount = 1;
-		}
 	}
 }

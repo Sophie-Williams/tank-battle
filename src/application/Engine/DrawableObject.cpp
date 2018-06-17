@@ -22,7 +22,7 @@ const ci::Rectf& DrawableObject::getBound() const {
 	return _boundRect;
 }
 
-ci::vec2 transform(const ci::vec2& point, const glm::mat4& m) {
+ci::vec2 DrawableObject::transform(const ci::vec2& point, const glm::mat4& m) {
 	glm::mat4::col_type p4(point, 0, 1);
 	p4 = m * p4;
 
