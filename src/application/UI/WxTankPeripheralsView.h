@@ -12,6 +12,8 @@ protected:
 	ci::app::WindowRef _parent;
 	std::shared_ptr<WxRadarView> _radarView;
 	std::shared_ptr<TankCamera> _tankCamera;
+	ci::gl::FboRef _fboScene;
+	ci::gl::GlslProgRef	_glslFboToScreen;
 public:
 	WxTankPeripheralsView(ci::app::WindowRef parent);
 	virtual ~WxTankPeripheralsView();

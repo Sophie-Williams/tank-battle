@@ -55,7 +55,6 @@ float TankCamera::getRange() const {
 	return _range;
 }
 
-extern ci::vec2 transform(const ci::vec2& point, const glm::mat4& m);
 extern void drawSolidPolygon(const std::vector<ci::vec2>& poly);
 
 void TankCamera::update(float t) {
@@ -67,7 +66,7 @@ void TankCamera::update(float t) {
 		_lastScanAt = t;
 	}
 
-	constexpr float updateInterval = 1.0f / 10;
+	constexpr float updateInterval = CAPTURE_REFRESH_RATE;
 	if (t - _lastScanAt < updateInterval) {
 		return;
 	}
@@ -124,6 +123,6 @@ void TankCamera::draw() {
 	}
 }
 
-const DrawableObjectRef TankCamera::getOwner() const {
-	return _objectViewContainer->getOwner();
+const std::shared_ptr<ObjectViewContainer>& TankCamera::getView() const {
+	return _objectViewContainer;
 }

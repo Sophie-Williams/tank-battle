@@ -43,6 +43,8 @@ protected:
 	char _rotateDir;
 	char _rotateBarrelDir;
 
+	ci::vec4 _cahedGun;
+
 protected:
 	virtual void setBound(const ci::Rectf& boundRect);
 	virtual void drawInternal();

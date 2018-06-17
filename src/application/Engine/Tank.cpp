@@ -90,6 +90,18 @@ void Tank::updateInternal(float t) {
 		auto delta = t - _lastRotatingBarrelAt;
 		_barrel.rotate(_rotateBarrelDir * _rotateBarrelSpeed * delta);
 		_lastRotatingBarrelAt = t;
+		
+		// update gun geometry for external use
+		auto& barelBound = _barrel.getBound();
+		auto& pivot3 = _barrel.getPivot();
+
+		ci::vec2 pivot(pivot3.x, pivot3.y);
+		ci::vec2 topGun = (barelBound.getLowerLeft() + barelBound.getLowerRight()) / 2.0f;
+
+		pivot = transform(pivot, _barrel.getTransformation());
+		topGun = transform(topGun, _barrel.getTransformation());
+
+		_cahedGun = vec4(pivot.x, pivot.y, topGun.x, topGun.y);
 	}
 
 	// update tank's position
@@ -210,14 +222,5 @@ void Tank::setColor(const ci::Colorf& color) {
 }
 
 ci::vec4 Tank::getGun() const {
-	auto& barelBound = _barrel.getBound();
-	auto& pivot3 = _barrel.getPivot();
-	
-	ci::vec2 pivot(pivot3.x, pivot3.y);
-	ci::vec2 topGun = (barelBound.getLowerLeft() + barelBound.getLowerRight()) / 2.0f;
-
-	pivot = transform(pivot, _barrel.getTransformation());
-	topGun = transform(topGun, _barrel.getTransformation());
-
-	return ci::vec4(pivot.x, pivot.y, topGun.x, topGun.y);
+	return _cahedGun;
 }

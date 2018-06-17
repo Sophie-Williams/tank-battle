@@ -22,8 +22,8 @@ void WxTankPeripheralsView::setupPeripherals(const std::shared_ptr<TankCamera>& 
 	_radarView = make_shared<WxRadarView>(_parent);
 	auto pApp = app::App::get();
 	auto shaderBlur = gl::GlslProg::create(pApp->loadAsset("blur.vert"), pApp->loadAsset("blur.frag"));
-	auto shaderRadar = gl::GlslProg::create(pApp->loadAsset("radar.vert"), pApp->loadAsset("radar.frag"));
-	_radarView->setShaders(shaderBlur, shaderRadar);
+	_glslFboToScreen = gl::GlslProg::create(pApp->loadAsset("radar.vert"), pApp->loadAsset("radar.frag"));
+	_radarView->setShader(shaderBlur);
 	_radarView->setRadar(tankRadar);
 }
 
@@ -33,6 +33,10 @@ void WxTankPeripheralsView::update() {
 void WxTankPeripheralsView::setSize(float w, float h) {
 	CiWidget::setSize(w, h);
 	_radarView->setSize(w, h);
+
+	gl::Fbo::Format fmt;
+	fmt.setSamples(16);
+	_fboScene = gl::Fbo::create(w, h, fmt);
 }
 
 void WxTankPeripheralsView::setPos(float x, float y) {
@@ -41,27 +45,73 @@ void WxTankPeripheralsView::setPos(float x, float y) {
 }
 
 void WxTankPeripheralsView::draw() {
-	if (_radarView) {
-		_radarView->draw();
-	}
-	if (_tankCamera) {
-		auto h = _parent->getHeight();
-		// mapping scene to view port area
+	auto h = _parent->getHeight();
+	Rectf destRect(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+
+	{
+		// draw view's to frame buffer
 		{
-			gl::ScopedViewport scopeViewPort(getX(), h - getY() - getHeight(), getWidth(), getHeight());
-			_tankCamera->draw();
+			// bind frame buffer to current context
+			gl::ScopedFramebuffer fbo(_fboScene);
+			gl::ScopedViewport    viewport(0, 0, _fboScene->getWidth(), _fboScene->getHeight());
+			// draw radar view
+			if (_radarView) {
+				_radarView->draw();
+			}
+			// draw camera view
+			if (_tankCamera) {
+				_tankCamera->draw();
+			}
 		}
 
-		auto pTank = dynamic_cast<Tank*>( _tankCamera->getOwner().get());
+		// draw frame buffer scene to screen using blur fragment shader
+		{
+			gl::ScopedTextureBind tex0(_fboScene->getColorTexture(), (uint8_t)0);
+			gl::ScopedGlslProg shader(_glslFboToScreen);
+			_glslFboToScreen->uniform("uTex0", 0);
+			gl::drawSolidRect(destRect);
+		}
+	}
+
+	
+	// draw object's view coordinate system
+	{
+		gl::ScopedColor lineColorScope(0.2f, 0.2f, 0.3f);
+		gl::drawLine((destRect.getUpperLeft() + destRect.getUpperRight()) / 2.0f, (destRect.getLowerLeft() + destRect.getLowerRight()) / 2.0f);
+		gl::drawLine((destRect.getUpperLeft() + destRect.getLowerLeft()) / 2.0f, (destRect.getUpperRight() + destRect.getLowerRight()) / 2.0f);
+	}
+
+	// draw radar ray scan
+	{
+		auto& radarRef = _radarView->getRadar();
+		if (radarRef) {
+			gl::ScopedColor lineColorScope(1.f, 1.f, 0.f);
+			auto radarCenter = destRect.getCenter();
+			auto ray = radarRef->getRay();
+			auto range = radarRef->getRange();
+
+			auto sx = destRect.getWidth() / (2 * range);
+			auto sy = destRect.getHeight() / (2 * range);
+			ray.x *= sx;
+			ray.y *= -sy;
+			ray.x += radarCenter.x;
+			ray.y += radarCenter.y;
+
+			gl::drawLine(radarCenter, ray);
+		}
+	}
+
+	// draw tank's gun
+	if (_tankCamera) {
+		auto pTank = dynamic_cast<Tank*>(_tankCamera->getView()->getOwner().get());
 		if (pTank) {
 			auto gunSegment = pTank->getGun();
 			gl::ScopedColor lineColorScope(1, 1, 1);
 			constexpr float demonstrateGunLength = 20;
-			
+
 			vec2 gunStart(gunSegment.x, gunSegment.y);
 			vec2 gunDir(gunSegment.z - gunStart.x, gunSegment.w - gunStart.y);
-			
-			Rectf destRect(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+
 			auto center = destRect.getCenter();
 			gunStart += center;
 			gunDir.x *= 10;

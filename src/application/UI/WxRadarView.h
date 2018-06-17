@@ -10,10 +10,8 @@ class WxRadarView : public CiWidget
 protected:
 	ci::app::WindowRef _parent;
 	ci::gl::GlslProgRef	_glslBlurShader;
-	ci::gl::GlslProgRef	_glslFboToScreen;
 	ci::gl::FboRef _fboScene;
-	ci::gl::FboRef _fboBlur1;
-	ci::gl::FboRef _fboBlur2;
+	ci::gl::FboRef _fboBlur;
 	std::shared_ptr<Radar> _radar;
 
 	void renderScene();
@@ -24,7 +22,8 @@ public:
 	void update();
 	void draw();
 	void setSize(float w, float h);
-	void setShaders(ci::gl::GlslProgRef	glslBlurShader, ci::gl::GlslProgRef	glslSceneToFbo);
+	void setShader(ci::gl::GlslProgRef	glslBlurShader);
 	void setRadar(const std::shared_ptr<Radar> &radar);
+	const std::shared_ptr<Radar> getRadar() const;
 };
 

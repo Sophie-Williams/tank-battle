@@ -12,7 +12,7 @@ void GameCapture::update(float t) {
 
 	if (battlePlatform == nullptr) return;
 
-	constexpr float updateInterval = 1.0f / 10;
+	constexpr float updateInterval = CAPTURE_REFRESH_RATE;
 	if (t - _lastUpdate < updateInterval) {
 		return;
 	}
@@ -23,7 +23,8 @@ void GameCapture::update(float t) {
 	for (auto it = physicalObjects.begin(); it != physicalObjects.end(); it++) {
 		auto& object = *it;
 		if (object->canBeWentThrough() == false) {
-			auto snapshotObject = std::make_shared<SnapshotObject>();
+ 
+			std::shared_ptr<SnapshotObject> snapshotObject = std::make_shared<SnapshotObject>();
 			object->getBoundingPoly(snapshotObject->objectBound);
 			snapshotObject->_ref = object;
 

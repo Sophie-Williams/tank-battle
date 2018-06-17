@@ -3,7 +3,24 @@
 static BattlePlatform* g_currentInstane = nullptr;
 
 SnapshotObject::SnapshotObject() : objectBound(4) {
+}
 
+SnapshotObject::~SnapshotObject() {
+}
+
+SnapshotObject* SnapshotObject::clone() {
+	return new SnapshotObject();
+}
+
+TankSnapshot::TankSnapshot() {
+}
+
+TankSnapshot::~TankSnapshot() {}
+
+SnapshotObject* TankSnapshot::clone() {
+	auto pTankSnapshot =  new TankSnapshot();
+	pTankSnapshot->gun = gun;
+	return pTankSnapshot;
 }
 
 BattlePlatform::BattlePlatform(float width, float height) : 

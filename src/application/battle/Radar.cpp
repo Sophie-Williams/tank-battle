@@ -132,25 +132,6 @@ void Radar::draw() {
 	ci::gl::setProjectionMatrix(cam.getProjectionMatrix());
 	ci::ColorAf color;
 
-	//for (auto it = _modelViewObjects.begin(); it != _modelViewObjects.end(); it++) {
-	//	auto& modelViewSnapshot = *it;
-	//	auto& points = modelViewSnapshot->objectBound;
-
-	//	if (dynamic_cast<Barrier*>(modelViewSnapshot->_ref.get()) != nullptr) {
-	//		color.r = 0.4f;
-	//		color.g = 0.4f;
-	//		color.b = 0.4f;
-	//	}
-	//	else {
-	//		color.r = 1.0f;
-	//		color.g = 0.0f;
-	//		color.b = 0.0f;
-	//	}
-	//	color.a = 1.0f;
-	//	ci::gl::ScopedColor scopeColor(color);
-	//	drawSolidPolygon(points);
-	//}
-
 	auto t = GameEngine::getInstance()->getCurrentTime();
 
 	// update the detected object list during time event

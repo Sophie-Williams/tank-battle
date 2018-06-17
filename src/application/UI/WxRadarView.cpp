@@ -11,8 +11,7 @@ using namespace std;
 WxRadarView::WxRadarView(ci::app::WindowRef parent) : _parent(parent) {
 
 	// setup our blur Fbo's, smaller ones will generate a bigger blur
-	_fboBlur1 = gl::Fbo::create(BLUR_SIZE, BLUR_SIZE);
-	_fboBlur2 = gl::Fbo::create(BLUR_SIZE, BLUR_SIZE);
+	_fboBlur = gl::Fbo::create(BLUR_SIZE, BLUR_SIZE);
 }
 
 WxRadarView::~WxRadarView(){}
@@ -28,7 +27,7 @@ void WxRadarView::setSize(float w, float h) {
 
 	// setup our scene Fbo
 	//_fboScene = gl::Fbo::create((int)w, (int)h, fmt);
-	_fboScene = gl::Fbo::create(512, 512, fmt);
+	_fboScene = gl::Fbo::create(w, h, fmt);
 }
 
 void WxRadarView::renderScene() {
@@ -40,7 +39,6 @@ void WxRadarView::renderScene() {
 void WxRadarView::draw() {
 	if (!_fboScene) return;
 	{
-		gl::ScopedMatrices scopeMatrices;
 		//// render scene into mFboScene using illumination texture
 		{
 			// bind to draw to the frame buffer instead of screen
@@ -62,80 +60,46 @@ void WxRadarView::draw() {
 			_glslBlurShader->uniform("tex0", 0); // use texture unit 0
 
 			// tell the shader to blur horizontally and the size of 1 pixel
-			_glslBlurShader->uniform("sample_offset", vec2(1.0f / _fboBlur1->getWidth(), 0.0f));
+			_glslBlurShader->uniform("sample_offset", vec2(1.0f / _fboBlur->getWidth(), 0.0f));
 			_glslBlurShader->uniform("attenuation", attenuation);
 
 			// copy a horizontally blurred version of our scene into the first blur Fbo
 			{
-				gl::ScopedFramebuffer fbo(_fboBlur1);
-				gl::ScopedViewport    viewport(0, 0, _fboBlur1->getWidth(), _fboBlur1->getHeight());
+				gl::ScopedFramebuffer fbo(_fboBlur);
+				gl::ScopedViewport    viewport(0, 0, _fboBlur->getWidth(), _fboBlur->getHeight());
 
 				gl::ScopedTextureBind tex0(_fboScene->getColorTexture(), (uint8_t)0);
 
-				gl::setMatricesWindow(BLUR_SIZE, BLUR_SIZE);
+				gl::ScopedMatrices scopeMatrices;
+				gl::setMatricesWindow(_fboBlur->getWidth(), _fboBlur->getHeight());
 				gl::clear(Color::black());
 
-				gl::drawSolidRect(_fboBlur1->getBounds());
+				gl::drawSolidRect(_fboBlur->getBounds());
 			}
 
 			// tell the shader to blur vertically and the size of 1 pixel
-			_glslBlurShader->uniform("sample_offset", vec2(0.0f, 1.0f / _fboBlur2->getHeight()));
+			_glslBlurShader->uniform("sample_offset", vec2(0.0f, 1.0f / _fboBlur->getHeight()));
 			_glslBlurShader->uniform("attenuation", attenuation);
 
 			// copy a vertically blurred version of our blurred scene into the second blur Fbo
 			{
-				gl::ScopedFramebuffer fbo(_fboBlur2);
-				gl::ScopedViewport    viewport(0, 0, _fboBlur2->getWidth(), _fboBlur2->getHeight());
-
-				gl::ScopedTextureBind tex0(_fboBlur1->getColorTexture(), (uint8_t)0);
-
-				gl::setMatricesWindow(BLUR_SIZE, BLUR_SIZE);
-				gl::clear(Color::black());
-
-				gl::drawSolidRect(_fboBlur2->getBounds());
+				gl::ScopedTextureBind tex0(_fboBlur->getColorTexture(), (uint8_t)0);
+				gl::ScopedMatrices scopeMatrices;
+				gl::setMatricesWindow(_fboBlur->getWidth(), _fboBlur->getHeight());
+				gl::drawSolidRect(_fboBlur->getBounds());
 			}
 		}
 	}
-	Rectf destRect(getX(), getY(), getX() + getWidth(), getY() + getHeight());
-	{
-		// draw blur scene to screen
-		gl::ScopedTextureBind tex0(_fboBlur2->getColorTexture(), (uint8_t)0);
-		gl::ScopedGlslProg shader(_glslFboToScreen);
-		_glslFboToScreen->uniform("uTex0", 0);
-		gl::drawSolidRect(destRect);
-
-		//gl::draw(_fboScene->getColorTexture(), destRect);
-		//gl::draw(_fboBlur2->getColorTexture(), destRect);
-	}
-	{
-		// draw rada coordinate system
-		{
-			gl::ScopedColor lineColorScope(0.2f, 0.2f, 0.3f);
-			gl::drawLine((destRect.getUpperLeft() + destRect.getUpperRight()) / 2.0f, (destRect.getLowerLeft() + destRect.getLowerRight()) / 2.0f);
-			gl::drawLine((destRect.getUpperLeft() + destRect.getLowerLeft()) / 2.0f, (destRect.getUpperRight() + destRect.getLowerRight()) / 2.0f);
-		}
-
-		gl::ScopedColor lineColorScope(1.f, 1.f, 0.f);
-		auto radarCenter = destRect.getCenter();
-		auto ray = _radar->getRay();
-		auto range = _radar->getRange();
-
-		auto sx = destRect.getWidth() / (2 * range);
-		auto sy = destRect.getHeight() / (2 * range);
-		ray.x *= sx;
-		ray.y *= -sy;
-		ray.x += radarCenter.x;
-		ray.y += radarCenter.y;
-
-		gl::drawLine(radarCenter, ray);
-	}
 }
 
-void WxRadarView::setShaders(gl::GlslProgRef glslBlurShader, gl::GlslProgRef glslFboToScreen) {
+void WxRadarView::setShader(gl::GlslProgRef glslBlurShader) {
 	_glslBlurShader = glslBlurShader;
-	_glslFboToScreen = glslFboToScreen;
 }
 
 void WxRadarView::setRadar(const std::shared_ptr<Radar> &radar) {
 	_radar = radar;
+}
+
+const std::shared_ptr<Radar> WxRadarView::getRadar() const {
+	return _radar;
 }

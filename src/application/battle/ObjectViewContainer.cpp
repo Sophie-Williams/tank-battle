@@ -15,7 +15,7 @@ void ObjectViewContainer::update(float t) {
 	if (_ownerObject->isAvailable() == false) {
 		return;
 	}
-	constexpr float updateInterval = 1.0f / 10;
+	constexpr float updateInterval = CAPTURE_REFRESH_RATE;
 	if (t - _lastUpdate < updateInterval) {
 		return;
 	}
@@ -32,11 +32,12 @@ void ObjectViewContainer::update(float t) {
 		auto& objects = battlePlatform->getSnapshotObjects();
 
 		for (auto it = objects.begin(); it != objects.end(); it++) {
-			if ((*it)->_ref.get() != _ownerObject.get()) {
-				const auto& worldModelObjectPoly = (*it)->objectBound;
+			auto& snapshotRef = (*it);
+			if (snapshotRef->_ref.get() != _ownerObject.get()) {
+				const auto& worldModelObjectPoly = snapshotRef->objectBound;
 
 				auto snapshotObject = std::make_shared<SnapshotObject>();
-				snapshotObject->_ref = (*it)->_ref;
+				snapshotObject->_ref = snapshotRef->_ref;
 
 				auto& viewModelObjectPoly = snapshotObject->objectBound;
 				auto kt = viewModelObjectPoly.begin();

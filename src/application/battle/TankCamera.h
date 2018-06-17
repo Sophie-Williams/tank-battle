@@ -19,5 +19,5 @@ public:
 	void update(float t);
 	void draw();
 
-	const DrawableObjectRef getOwner() const;
+	const std::shared_ptr<ObjectViewContainer>& getView() const;
 };
