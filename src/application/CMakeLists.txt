@@ -47,6 +47,8 @@ SET (ENGINE_SRC
     engine/GameComponent.cpp
     engine/GameResource.h
     engine/GameResource.cpp
+    engine/UIThreadRunner.h
+    engine/UIThreadRunner.cpp
 )
 
 SET (UI_SRC
@@ -86,8 +88,8 @@ SET (CONTROLLERS_SRC
 SET (BATTLE_SRC
     Battle/BattlePlatform.cpp
     Battle/BattlePlatform.h
-    Battle/GameInterface.cpp
-    Battle/GameInterface.h
+    Battle/PlayerContext.cpp
+    Battle/PlayerContext.h
     Battle/Radar.cpp
     Battle/Radar.h
     Battle/TankController.cpp
@@ -98,6 +100,10 @@ SET (BATTLE_SRC
     Battle/ObjectViewContainer.h
     Battle/TankCamera.cpp
     Battle/TankCamera.h
+    Battle/TankControllerWorker.h
+    Battle/TankControllerWorker.cpp
+    Battle/TankCommandsBuilder.h
+    Battle/TankCommandsBuilder.cpp
 )
 
 SET (MAIN_SOURCES

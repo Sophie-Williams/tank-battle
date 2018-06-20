@@ -5,7 +5,7 @@
 
 #include "Scene.h"
 #include "CollisionDetector.h"
-
+#include "UIThreadRunner.h"
 
 #include <future>
 #include <string>
@@ -22,7 +22,7 @@ private:
 private:
 	std::shared_ptr<Scene> _gameScene;
 	std::shared_ptr<CollisionDetector> _collisionDetector;
-
+	UIThreadRunner _uiThreadRunner;
 protected:
 	GameEngine(const char* configFile);
 public:
@@ -40,5 +40,7 @@ public:
 	void resume();
 	bool isPausing() const;
 	void doUpdate();
+
+	void postTask(UpdateTask&& task);
 };
 

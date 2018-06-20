@@ -386,6 +386,10 @@ void BasicApp::setupGame() {
 	_gameResource->setTexture(TEX_ID_TANKSHOT, "shotLarge.png");
 
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
+	_gameEngine->postTask([this](float t) {
+		bool res = this->isFullScreen();
+		res = false;
+	});
 
 	const float sceneWidth = 70;
 	const float sceneHeight = 70;

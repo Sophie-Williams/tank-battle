@@ -73,6 +73,8 @@ bool GameEngine::isPausing() const {
 
 void GameEngine::doUpdate() {
 	float t = getCurrentTime();
+	_uiThreadRunner.executeTasks(t);
+
 	if (_gameScene) {
 		// update the scene
 		_gameScene->update(t);
@@ -113,30 +115,7 @@ void GameEngine::doUpdate() {
 		}
 	}
 }
-//
-//void GameEngine::registerCollisionDetection(DrawableObjectRef object, CollisionDetectedHandler&& hander) {
-//	std::pair<DrawableObjectRef, CollisionDetectedHandler> detectionElement;
-//	detectionElement.first = object;
-//	detectionElement.second = hander;
-//
-//	_monitoredObjects.push_back(detectionElement);
-//}
-//
-//bool GameEngine::unregisterCollisionDetection(DrawableObjectRef object) {
-//	auto it = std::find_if(_monitoredObjects.begin(), _monitoredObjects.end(),
-//		[&object](const std::pair<DrawableObjectRef, CollisionDetectedHandler>& monitoredObject) {
-//		if (monitoredObject.first.get() == object.get()) {
-//			return true;
-//		}
-//
-//		return false;
-//	});
-//
-//	if (it == _monitoredObjects.end()) {
-//		return false;
-//	}
-//
-//	_monitoredObjects.erase(it);
-//
-//	return true;
-//}
+
+void GameEngine::postTask(UpdateTask&& task) {
+	_uiThreadRunner.sendTask(std::move(task));
+}

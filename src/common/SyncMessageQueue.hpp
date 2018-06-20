@@ -66,6 +66,58 @@ public:
 	}
 };
 
+
+template <class T>
+class SemiSyncMessageQueue
+{
+	std::list<T> _messageQueue;
+	std::mutex _messageQueueMutex;
+public:
+	SemiSyncMessageQueue() {}
+	virtual ~SemiSyncMessageQueue() {}
+
+	void pushMessage(const T& message) {
+		std::lock_guard<std::mutex> lk(_messageQueueMutex);
+		_messageQueue.push_back(message);
+	}
+
+	void pushMessage(T&& message) {
+		std::lock_guard<std::mutex> lk(_messageQueueMutex);
+		_messageQueue.push_back(message);
+	}
+
+	void pushMessageFront(const T& message) {
+		std::lock_guard<std::mutex> lk(_messageQueueMutex);
+		_messageQueue.push_front(message);
+	}
+
+	void pushMessageFront(T&& message) {
+		std::lock_guard<std::mutex> lk(_messageQueueMutex);
+		_messageQueue.push_front(message);
+	}
+
+	bool tryPopMessage(T& message) {
+		std::unique_lock<std::mutex> lk(_messageQueueMutex);
+		if (_messageQueue.size() == 0) return false;
+
+		message = _messageQueue.front();
+		_messageQueue.pop_front();
+
+		return true;
+	}
+
+	template <class Fx>
+	void removeMessage(Fx fx) {
+		std::unique_lock<std::mutex> lk(_messageQueueMutex);
+		_messageQueue.remove_if(fx);
+	}
+
+	void clear() {
+		std::unique_lock<std::mutex> lk(_messageQueueMutex);
+		_messageQueue.clear();
+	}
+};
+
 template <class T>
 class Signal
 {
