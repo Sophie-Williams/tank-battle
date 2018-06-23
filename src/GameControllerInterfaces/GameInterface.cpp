@@ -1,12 +1,4 @@
-#include "PlayerContext.h"
-
-PlayerContext::PlayerContext() {
-
-}
-
-PlayerContext::~PlayerContext() {
-
-}
+#include "GameInterface.h"
 
 static GameInterface* s_gameInstance = nullptr;
 

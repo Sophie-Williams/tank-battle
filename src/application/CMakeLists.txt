@@ -88,12 +88,8 @@ SET (CONTROLLERS_SRC
 SET (BATTLE_SRC
     Battle/BattlePlatform.cpp
     Battle/BattlePlatform.h
-    Battle/PlayerContext.cpp
-    Battle/PlayerContext.h
     Battle/Radar.cpp
     Battle/Radar.h
-    Battle/TankController.cpp
-    Battle/TankController.h
     Battle/GameCapture.h
     Battle/GameCapture.cpp
     Battle/ObjectViewContainer.cpp
@@ -102,8 +98,10 @@ SET (BATTLE_SRC
     Battle/TankCamera.h
     Battle/TankControllerWorker.h
     Battle/TankControllerWorker.cpp
-    Battle/TankCommandsBuilder.h
-    Battle/TankCommandsBuilder.cpp
+    Battle/GameInterfaceImpl.cpp
+    Battle/GameInterfaceImpl.h
+    Battle/PlayerContextImpl.cpp
+    Battle/PlayerContextImpl.h
 )
 
 SET (MAIN_SOURCES
@@ -133,7 +131,8 @@ endif()
 # define project's build target with project's source files
 add_executable(${PROJECT_NAME} WIN32  ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${GameControllerInterfaces_SOURCE_DIR})
+target_link_libraries(${PROJECT_NAME} GameControllerInterfaces)
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder.cmake)
 include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder-imgui.cmake)

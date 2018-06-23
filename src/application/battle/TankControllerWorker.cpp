@@ -23,7 +23,7 @@ void TankControllerWorker::run() {
 
 	TankCommands tankCommands = TANK_NULL_COMMAND;
 	GameEngine* gameEngine = GameEngine::getInstance();
-	PlayerContext* playerContext = nullptr;
+	TankPlayerContext* playerContext = nullptr;
 	do
 	{
 
