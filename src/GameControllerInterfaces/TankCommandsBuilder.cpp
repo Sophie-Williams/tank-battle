@@ -1,6 +1,6 @@
 #include "TankCommandsBuilder.h"
 
-TankCommandsBuilder::TankCommandsBuilder(TankCommands& initCommands) : _commands(initCommands)
+TankCommandsBuilder::TankCommandsBuilder(TankOperations& initCommands) : _commands(initCommands)
 {
 }
 
@@ -9,19 +9,19 @@ void TankCommandsBuilder::freeze() {
 }
 
 void TankCommandsBuilder::move(char moveDir) {
-	TankCommands singleCommand = (unsigned char)moveDir;
+	TankOperations singleCommand = (unsigned char)moveDir;
 	_commands = ((0xFFFFFF00 & _commands) | singleCommand);
 }
 
 void TankCommandsBuilder::turn(char turnDir) {
-	TankCommands singleCommand = (unsigned char)turnDir;
+	TankOperations singleCommand = (unsigned char)turnDir;
 	singleCommand <<= 8;
 
 	_commands = ((0xFFFF00FF & _commands) | singleCommand);
 }
 
 void TankCommandsBuilder::spinGun(char spinDir) {
-	TankCommands singleCommand = (unsigned char)spinDir;
+	TankOperations singleCommand = (unsigned char)spinDir;
 	singleCommand <<= 16;
 
 	_commands = ((0xFF00FFFF & _commands) | singleCommand);

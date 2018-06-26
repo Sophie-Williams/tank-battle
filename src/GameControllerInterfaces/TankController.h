@@ -8,5 +8,5 @@ class GAME_CONTROLLER_INTERFACE TankController
 public:
 	TankController();
 	virtual ~TankController();
-	virtual TankCommands giveCommands(TankPlayerContext* player) = 0;
+	virtual TankOperations giveOperations(TankPlayerContext* player) = 0;
 };

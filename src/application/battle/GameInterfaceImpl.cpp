@@ -1,4 +1,11 @@
 #include "GameInterfaceImpl.h"
+#include "BattlePlatform.h"
+#include "Engine/GameEngine.h"
+#include "Engine/Tank.h"
+#include "Engine/Barrier.h"
+#include "Engine/Bullet.h"
+
+static GameInterfaceImpl gameInterface;
 
 GameInterfaceImpl::GameInterfaceImpl() {
 }
@@ -6,30 +13,61 @@ GameInterfaceImpl::GameInterfaceImpl() {
 GameInterfaceImpl::~GameInterfaceImpl() {
 }
 
-float GameInterfaceImpl::getObjectSpeed(GameObjectType) const {
+float GameInterfaceImpl::getObjectSpeed(GameObjectType type) const {
+	if (type == GAME_TYPE_TANK) {
+		return 10; // 10 metter per second
+	}
 	return -1;
 }
 
 float GameInterfaceImpl::getObjectHealth(GameObjectId id) const {
-	return -1;
-}
+	auto gameEngine = GameEngine::getInstance();
+	float health = -1;
 
-// client should use freeRawArray to free array of point after using
-RawArray<RawPoint> GameInterfaceImpl::getWorldBoundary(GameObjectId id) const {
-	RawArray<RawPoint> arr;
-	arr.data = nullptr;
-	arr.elmCount = 0;
-	return arr;
-}
+	gameEngine->sendTask([gameEngine, id, &health](float t) {
+		auto& scene = gameEngine->getScene();
+		auto& objects = scene->getDrawableObjects();
 
-bool GameInterfaceImpl::isAlly(GameObjectId id) const {
-	return false;
-}
+		for (auto it = objects.begin(); it != objects.end(); it++) {
+			auto& object = *it;
+			if (id == object->getId()) {
+				auto liveObject = dynamic_cast<LiveObject*>(object.get());
+				if (liveObject) {
+					health = liveObject->getHealth();
+					break;
+				}
+			}
+		}
+	});
 
-bool GameInterfaceImpl::isEnemy(GameObjectId id) const {
-	return false;
+	return health;
 }
 
 GameObjectType GameInterfaceImpl::getObjectype(GameObjectId id) const {
-	return -1;
+	auto gameEngine = GameEngine::getInstance();
+	GameObjectType type = GAME_TYPE_UNKNOWN;
+
+	gameEngine->sendTask([gameEngine, id, &type](float t) {
+		auto& scene = gameEngine->getScene();
+		auto& objects = scene->getObjects();
+		for (auto it = objects.begin(); it != objects.end(); it++) {
+			auto& object = *it;
+			if (id == object->getId()) {
+				if (dynamic_cast<Tank*>(object.get())) {
+					type = GAME_TYPE_TANK;
+					break;
+				}
+				if (dynamic_cast<Barrier*>(object.get())) {
+					type = GAME_TYPE_BARRIER;
+					break;
+				}
+				if (dynamic_cast<Bullet*>(object.get())) {
+					type = GAME_TYPE_BULLET;
+					break;
+				}
+			}
+		}
+	});
+
+	return type;
 }

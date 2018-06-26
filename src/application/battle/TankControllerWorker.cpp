@@ -21,14 +21,13 @@ void TankControllerWorker::run() {
 	unsigned int timeLeft = 0;
 	bool signal = false;
 
-	TankCommands tankCommands = TANK_NULL_COMMAND;
+	TankOperations tankCommands = TANK_NULL_OPERATION;
 	GameEngine* gameEngine = GameEngine::getInstance();
 	TankPlayerContext* playerContext = nullptr;
 	do
 	{
-
 		auto t1 = getCurrentTimeStamp();
-		tankCommands = _tankController->giveCommands(playerContext);
+		tankCommands = _tankController->giveOperations(playerContext);
 		if (!IS_NULL_COMMAND(tankCommands) && _tank && _tank->isAvailable()) {
 			auto tank = _tank;
 			auto task = [tank, tankCommands](float t) {

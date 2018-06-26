@@ -5,6 +5,7 @@
 #include "GameController.h"
 #include "LifeTimeControlComponent.h"
 #include "GameResource.h"
+#include "../battle/GameInterfaceImpl.h"
 
 using namespace ci;
 
@@ -18,7 +19,7 @@ Tank::Tank() :
 	_lastFireTime(-1),
 	_color(1,1,1)
 {
-	_movingSpeed = 10; // 10 metter per second
+	_movingSpeed = GameInterface::getInstance()->getObjectSpeed(GAME_TYPE_TANK);
 	_rotateSpeed = glm::pi<float>()/ 5;
 	_fireSpeed = 60; // 60 bullets can be fired in one minute
 	_rotateBarrelSpeed = glm::half_pi<float>();

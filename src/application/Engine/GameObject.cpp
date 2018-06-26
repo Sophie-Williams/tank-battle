@@ -1,6 +1,10 @@
 #include "GameObject.h"
 
+static int s_globalObjectId = 0;
+
 GameObject::GameObject() : _available(true) {
+	s_globalObjectId++;
+	_objectId = s_globalObjectId;
 }
 
 GameObject::~GameObject() {
@@ -21,6 +25,10 @@ void GameObject::destroy(float t) {
 void GameObject::addComponent(const GameComponentRef& component) {
 	_components.push_back(component);
 	component->_owner = this;
+}
+
+GameObjectId GameObject::getId() const {
+	return _objectId;
 }
 
 void GameObject::update(float t) {

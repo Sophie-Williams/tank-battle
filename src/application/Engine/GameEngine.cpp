@@ -117,5 +117,31 @@ void GameEngine::doUpdate() {
 }
 
 void GameEngine::postTask(UpdateTask&& task) {
-	_uiThreadRunner.sendTask(std::move(task));
+	_uiThreadRunner.postTask(std::move(task));
+}
+
+void GameEngine::sendTask(UpdateTask&& task) {
+	Signal<std::string> executedSignal(false);
+
+	// execute task with signal notification
+	auto taskWrapper = [&executedSignal, task](float t) {
+		try {
+			task(t);
+			executedSignal.sendSignal("");
+		}
+		catch (std::exception& e) {
+			std::string message("executed task failed: ");
+			executedSignal.sendSignal(message + e.what());
+		}
+		catch (...) {
+			executedSignal.sendSignal("executed task failed: unknown error");
+		}
+	};
+
+	// post the task
+	postTask(taskWrapper);
+
+	// wait the task executed
+	std::string msg;
+	executedSignal.waitSignal(msg);
 }

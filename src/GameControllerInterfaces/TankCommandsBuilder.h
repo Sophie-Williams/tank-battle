@@ -1,16 +1,11 @@
 #pragma once
 #include "GameControllerInterfaces.h"
 
-typedef unsigned int TankCommands;
-#define TANK_NULL_COMMAND (0)
-#define FREEZE_COMMAND 0xFF000000
-#define IS_NULL_COMMAND(commands) ((commands & FREEZE_COMMAND) == 0)
-
 class GAME_CONTROLLER_INTERFACE TankCommandsBuilder
 {
-	TankCommands& _commands;
+	TankOperations& _commands;
 public:
-	TankCommandsBuilder(TankCommands& initCommands);
+	TankCommandsBuilder(TankOperations& initCommands);
 
 	void freeze();
 	void move(char moveDir);

@@ -8,16 +8,20 @@ TankPlayerContextImpl::~TankPlayerContextImpl() {
 
 }
 
-const RawArray<GameObjectId>* TankPlayerContextImpl::getRadarSnapshot() const {
+const RawArray<RawPoint>* TankPlayerContextImpl::getRadarSnapshot() const {
 	return nullptr;
 }
 
-const RawArray<GameObjectId>* TankPlayerContextImpl::getCameraSnapshot() const {
+const RawArray<RawPoint>* TankPlayerContextImpl::getCameraSnapshot() const {
 	return nullptr;
 }
 
-const RawArray<RawPoint>* TankPlayerContextImpl::getViewModelBoundary(GameObjectId id) const {
-	return nullptr;
+bool TankPlayerContextImpl::isAlly(GameObjectId id) const {
+	return false;
+}
+
+bool TankPlayerContextImpl::isEnemy(GameObjectId id) const {
+	return false;
 }
 
 RawRay TankPlayerContextImpl::getMyGun() const {
@@ -27,4 +31,8 @@ RawRay TankPlayerContextImpl::getMyGun() const {
 
 float TankPlayerContextImpl::getMyHealth() const {
 	return -1;
+}
+
+TankOperations TankPlayerContextImpl::getCurrentOperations() const {
+	return TANK_NULL_OPERATION;
 }

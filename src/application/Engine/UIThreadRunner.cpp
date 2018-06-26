@@ -6,7 +6,7 @@ UIThreadRunner::UIThreadRunner() {
 UIThreadRunner::~UIThreadRunner() {
 }
 
-void UIThreadRunner::sendTask(UpdateTask&& task) {
+void UIThreadRunner::postTask(UpdateTask&& task) {
 	_tasks.pushMessage(std::move(task));
 }
 

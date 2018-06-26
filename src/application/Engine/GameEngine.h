@@ -42,5 +42,8 @@ public:
 	void doUpdate();
 
 	void postTask(UpdateTask&& task);
+
+	// this function must be called from a thread different than UI thread
+	void sendTask(UpdateTask&& task);
 };
 

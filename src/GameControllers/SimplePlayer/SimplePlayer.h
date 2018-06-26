@@ -9,5 +9,5 @@ class SimplePlayer : public TankController
 public:
 	SimplePlayer();
 	virtual ~SimplePlayer();
-	TankCommands giveCommands(TankPlayerContext* player);
+	TankOperations giveOperations(TankPlayerContext* player);
 };

@@ -16,14 +16,14 @@ SimplePlayer::~SimplePlayer()
 {
 }
 
-TankCommands SimplePlayer::giveCommands(TankPlayerContext* player) {
+TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
 	GameInterface* gameInterface = GameInterface::getInstance();
 	if (gameInterface == nullptr) {
-		return TANK_NULL_COMMAND;
+		return TANK_NULL_OPERATION;
 	}
 
 	auto gunRay = player->getMyGun();
 	auto cameraViewObjects = player->getCameraSnapshot();
 
-	return TANK_NULL_COMMAND;
+	return TANK_NULL_OPERATION;
 }

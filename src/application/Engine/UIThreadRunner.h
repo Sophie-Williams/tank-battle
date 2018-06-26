@@ -12,6 +12,6 @@ public:
 	UIThreadRunner();
 	virtual ~UIThreadRunner();
 
-	void sendTask(UpdateTask&& task);
+	void postTask(UpdateTask&& task);
 	void executeTasks(float t);
 };
