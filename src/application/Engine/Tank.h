@@ -3,6 +3,7 @@
 #include "cinder/gl/gl.h"
 #include "TankBody.h"
 #include "TankBarrel.h"
+#include "TankCommandsBuilder.h"
 
 class Tank : public LiveObject
 {
@@ -60,7 +61,9 @@ public:
 	void spinBarrel(char direction, float at);
 	void fire(float at);
 	void setColor(const ci::Colorf& color);
+	int getGroupId() const;
 
 	/// gun segment on tank's model view
 	ci::vec4 getGun() const;
+	TankOperations getCurrentOperations() const;
 };

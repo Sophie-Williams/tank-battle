@@ -1,5 +1,7 @@
 #pragma once
 #include "GameInterface.h"
+#include "Engine/DrawableObject.h"
+#include <mutex>
 
 enum GameObjectType_ : int {
 	GAME_TYPE_UNKNOWN = -1,
@@ -9,15 +11,17 @@ enum GameObjectType_ : int {
 };
 
 class GameInterfaceImpl : public GameInterface {
-
 private:
-
+	std::map<GameObjectId, DrawableObjectRef> _capturedObjectRefMap;
+	mutable std::mutex _capturedObjectRefMapMutex;
 public:
 	GameInterfaceImpl();
 	virtual ~GameInterfaceImpl();
+	void doUpdate(float t);
 
 	float getObjectSpeed(GameObjectType) const;
 	float getObjectHealth(GameObjectId id) const;
 
 	GameObjectType getObjectype(GameObjectId id) const;
+	DrawableObjectRef getObject(GameObjectId id) const;
 };

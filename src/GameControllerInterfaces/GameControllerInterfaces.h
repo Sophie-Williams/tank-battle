@@ -56,24 +56,29 @@ struct RawObject {
 #pragma pack(pop)
 
 #include <malloc.h>
+
+template <class T>
+void initRawArray(RawArray<T>& arr) {
+	arr.data = 0;
+	arr.elmCount = 0;
+}
+
 template <class T>
 void freeRawArray(RawArray<T>& arr) {
 	if(arr.data) free(arr.data);
 }
 
 template <class T>
-RawArray<T> createRawArray(int n) {
-	RawArray<T> arr = { n, nullptr };
+void recreateRawArray(RawArray<T>& arr, int n) {
 	if (n > 0) {
 		arr.data = (T*)malloc(sizeof(T) * n);
 	}
-	return arr;
 }
 
-template GAME_CONTROLLER_INTERFACE RawArray<RawPoint> createRawArray<RawPoint>(int n);
-template GAME_CONTROLLER_INTERFACE RawArray<RawPoint> createRawArray<RawPoint>(int n);
-template GAME_CONTROLLER_INTERFACE RawArray<GameObjectId> createRawArray<GameObjectId>(int n);
-
-template GAME_CONTROLLER_INTERFACE void freeRawArray<RawObject>(RawArray<RawObject>& arr);
-template GAME_CONTROLLER_INTERFACE void freeRawArray<RawPoint>(RawArray<RawPoint>& arr);
-template GAME_CONTROLLER_INTERFACE void freeRawArray<GameObjectId>(RawArray<GameObjectId>& arr);
+//template GAME_CONTROLLER_INTERFACE RawArray<RawPoint> createRawArray<RawPoint>(int n);
+//template GAME_CONTROLLER_INTERFACE RawArray<RawPoint> createRawArray<RawPoint>(int n);
+//template GAME_CONTROLLER_INTERFACE RawArray<GameObjectId> createRawArray<GameObjectId>(int n);
+//
+//template GAME_CONTROLLER_INTERFACE void freeRawArray<RawObject>(RawArray<RawObject>& arr);
+//template GAME_CONTROLLER_INTERFACE void freeRawArray<RawPoint>(RawArray<RawPoint>& arr);
+//template GAME_CONTROLLER_INTERFACE void freeRawArray<GameObjectId>(RawArray<GameObjectId>& arr);

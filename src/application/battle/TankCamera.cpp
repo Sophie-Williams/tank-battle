@@ -74,6 +74,7 @@ void TankCamera::update(float t) {
 
 	auto& objects = _objectViewContainer->getModelViewObjects();
 
+	std::lock_guard<std::mutex> lk(_seenObjectsWriteMutex);
 	_seenObjects.clear();
 	for (auto it = objects.begin(); it != objects.end(); it++) {
 		const auto& viewModelObjectPoly = (*it)->objectBound;
@@ -125,4 +126,9 @@ void TankCamera::draw() {
 
 const std::shared_ptr<ObjectViewContainer>& TankCamera::getView() const {
 	return _objectViewContainer;
+}
+
+void TankCamera::accessSeenObjects(std::function<void(SnapshotRefObjects&)>&& f) {
+	std::lock_guard<std::mutex> lk(_seenObjectsWriteMutex);
+	f(_seenObjects);
 }

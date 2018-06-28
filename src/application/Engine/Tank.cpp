@@ -225,3 +225,18 @@ void Tank::setColor(const ci::Colorf& color) {
 ci::vec4 Tank::getGun() const {
 	return _cahedGun;
 }
+
+int Tank::getGroupId() const {
+	return 0;
+}
+
+TankOperations Tank::getCurrentOperations() const {
+	TankOperations operations = TANK_NULL_OPERATION;
+	TankCommandsBuilder commandBuilder(operations);
+	commandBuilder.freeze();
+	commandBuilder.move(_movingDir);
+	commandBuilder.turn(_rotateDir);
+	commandBuilder.spinGun(_rotateBarrelDir);
+
+	return operations;
+}

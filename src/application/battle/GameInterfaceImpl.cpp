@@ -20,54 +20,64 @@ float GameInterfaceImpl::getObjectSpeed(GameObjectType type) const {
 	return -1;
 }
 
-float GameInterfaceImpl::getObjectHealth(GameObjectId id) const {
+void GameInterfaceImpl::doUpdate(float t) {
+	std::lock_guard<std::mutex> lk(_capturedObjectRefMapMutex);
+
+	_capturedObjectRefMap.clear();
+
 	auto gameEngine = GameEngine::getInstance();
+	auto& scene = gameEngine->getScene();
+	auto& objects = scene->getDrawableObjects();
+
+	for (auto it = objects.begin(); it != objects.end(); it++) {
+		auto& object = *it;
+		_capturedObjectRefMap[object->getId()] = object;
+	}
+}
+
+float GameInterfaceImpl::getObjectHealth(GameObjectId id) const {
+	std::lock_guard<std::mutex> lk(_capturedObjectRefMapMutex);
+
 	float health = -1;
 
-	gameEngine->sendTask([gameEngine, id, &health](float t) {
-		auto& scene = gameEngine->getScene();
-		auto& objects = scene->getDrawableObjects();
-
-		for (auto it = objects.begin(); it != objects.end(); it++) {
-			auto& object = *it;
-			if (id == object->getId()) {
-				auto liveObject = dynamic_cast<LiveObject*>(object.get());
-				if (liveObject) {
-					health = liveObject->getHealth();
-					break;
-				}
-			}
+	auto it = _capturedObjectRefMap.find(id);
+	if (it != _capturedObjectRefMap.end()) {
+		auto liveObject = dynamic_cast<LiveObject*>(it->second.get());
+		if (liveObject) {
+			health = liveObject->getHealth();
 		}
-	});
+	}
 
 	return health;
 }
 
 GameObjectType GameInterfaceImpl::getObjectype(GameObjectId id) const {
-	auto gameEngine = GameEngine::getInstance();
+	std::lock_guard<std::mutex> lk(_capturedObjectRefMapMutex);
 	GameObjectType type = GAME_TYPE_UNKNOWN;
 
-	gameEngine->sendTask([gameEngine, id, &type](float t) {
-		auto& scene = gameEngine->getScene();
-		auto& objects = scene->getObjects();
-		for (auto it = objects.begin(); it != objects.end(); it++) {
-			auto& object = *it;
-			if (id == object->getId()) {
-				if (dynamic_cast<Tank*>(object.get())) {
-					type = GAME_TYPE_TANK;
-					break;
-				}
-				if (dynamic_cast<Barrier*>(object.get())) {
-					type = GAME_TYPE_BARRIER;
-					break;
-				}
-				if (dynamic_cast<Bullet*>(object.get())) {
-					type = GAME_TYPE_BULLET;
-					break;
-				}
-			}
+	auto it = _capturedObjectRefMap.find(id);
+	if (it != _capturedObjectRefMap.end()) {
+		auto& object = it->second;
+		if (dynamic_cast<Tank*>(object.get())) {
+			type = GAME_TYPE_TANK;
 		}
-	});
+		else if (dynamic_cast<Barrier*>(object.get())) {
+			type = GAME_TYPE_BARRIER;
+		}
+		else if (dynamic_cast<Bullet*>(object.get())) {
+			type = GAME_TYPE_BULLET;
+		}
+	}
 
 	return type;
+}
+
+DrawableObjectRef GameInterfaceImpl::getObject(GameObjectId id) const {
+	std::lock_guard<std::mutex> lk(_capturedObjectRefMapMutex);
+	auto it = _capturedObjectRefMap.find(id);
+	if (it != _capturedObjectRefMap.end()) {
+		return it->second;
+	}
+
+	return nullptr;
 }

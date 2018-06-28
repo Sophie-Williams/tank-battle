@@ -1,6 +1,7 @@
 #include "GameCapture.h"
 #include "Engine/GameEngine.h"
 #include "BattlePlatform.h"
+#include "battle/GameInterfaceImpl.h"
 
 GameCapture::GameCapture() : _lastUpdate(0) {}
 GameCapture::~GameCapture(){}
@@ -31,5 +32,8 @@ void GameCapture::update(float t) {
 			snapShotObjects.push_back(snapshotObject);
 		}
 	}
+
+	((GameInterfaceImpl*)GameInterfaceImpl::getInstance())->doUpdate(t);
+
 	_lastUpdate = t;
 }
