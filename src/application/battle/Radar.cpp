@@ -165,3 +165,12 @@ void Radar::draw() {
 		}
 	}
 }
+
+const std::map<DrawableObjectRef, ScannedObjectGroupRef>& Radar::getGroupObjects() const {
+	return _detectedGroupObjects;
+}
+
+void Radar::accessGrouoObjectsMultithread(const std::function<void(ScannedObjectGroupMap&)>& access) {
+	std::lock_guard<std::mutex> lk(_detectedGroupObjectsMutex);
+	access(_detectedGroupObjects);
+}

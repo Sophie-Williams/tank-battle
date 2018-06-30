@@ -6,11 +6,11 @@
 
 class TankControllerWorker {
 	std::shared_ptr<TankController> _tankController;
-	Signal<bool> _stopSignal;
+	SignalAny _stopSignal;
 	std::shared_ptr<Tank> _tank;
 private:
 public:
-	TankControllerWorker(const std::shared_ptr<TankController>& tankController);
+	TankControllerWorker(const std::shared_ptr<Tank>& tank, const std::shared_ptr<TankController>& tankController);
 	virtual ~TankControllerWorker();
 
 	void run();

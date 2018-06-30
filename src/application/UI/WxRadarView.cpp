@@ -27,7 +27,7 @@ void WxRadarView::setSize(float w, float h) {
 
 	// setup our scene Fbo
 	//_fboScene = gl::Fbo::create((int)w, (int)h, fmt);
-	_fboScene = gl::Fbo::create(w, h, fmt);
+	_fboScene = gl::Fbo::create((int)w, (int)h, fmt);
 }
 
 void WxRadarView::renderScene() {

@@ -43,8 +43,8 @@ bool WxGameView::updateViewPort() {
 	radaH = radaW = std::min({ radaH, radaW, maxRadaWidth });
 
 	if (_tankView) {
-		_tankView->setPos(_viewPort.x2 + padding, padding);
-		_tankView->setSize(radaW, radaH);
+		_tankView->setPos((float)(_viewPort.x2 + padding), (float)padding);
+		_tankView->setSize((float)radaW, (float)radaH);
 	}
 
 	return true;

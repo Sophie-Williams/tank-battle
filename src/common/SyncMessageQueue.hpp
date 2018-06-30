@@ -124,22 +124,27 @@ class Signal
 	T _signal;
 	bool _notifyAll;
 	bool _signalReceived;
-	std::mutex _messageQueueMutex;
+	std::mutex _signalMutex;
 	std::condition_variable _hasMessageCV;
+	std::function<bool()> _checkSignalFunc;
 public:
-	Signal(bool notifyToAll) : _notifyAll(notifyToAll), _signalReceived(false) {}
+	Signal(bool notifyToAll) : _notifyAll(notifyToAll), _signalReceived(false) {
+		_checkSignalFunc = std::bind(&Signal::checkSignal, this);
+	}
 	virtual ~Signal() {}
 
 	void resetState(const T& resetSignalVale) {
-		std::lock_guard<std::mutex> lk(_messageQueueMutex);
+		std::lock_guard<std::mutex> lk(_signalMutex);
 		_signal = resetSignalVale;
 		_signalReceived = false;
 	}
 
 	void sendSignal(const T& signal) {
-		std::lock_guard<std::mutex> lk(_messageQueueMutex);
-		_signal = signal;
-		_signalReceived = true;
+		{
+			std::lock_guard<std::mutex> lk(_signalMutex);
+			_signal = signal;
+			_signalReceived = true;
+		}
 		if (_notifyAll) {
 			_hasMessageCV.notify_all();
 		}
@@ -149,18 +154,11 @@ public:
 	}
 
 	bool waitSignal(T& signal, unsigned int miliseconds) {
-		std::unique_lock<std::mutex> lk(_messageQueueMutex);
+		std::unique_lock<std::mutex> lk(_signalMutex);
 
 		std::chrono::duration<decltype(miliseconds), std::milli> timeout(miliseconds);
 
-		bool res = _hasMessageCV.wait_for(lk, timeout, [this] {
-			if (_signalReceived) {
-				if (!_notifyAll) _signalReceived = false;
-				return true;
-			}
-
-			return false;
-		});
+		bool res = _hasMessageCV.wait_for(lk, timeout, _checkSignalFunc);
 
 		if (res) {
 			signal = _signal;
@@ -169,19 +167,73 @@ public:
 		return res;
 	}
 
-	void waitSignal(T& signal) {
-		std::unique_lock<std::mutex> lk(_messageQueueMutex);
-		_hasMessageCV.wait(lk, [this]() {
-			if (_signalReceived) {
-				if(!_notifyAll) _signalReceived = false;
-				return true;
-			}
+	bool checkSignal() {
+		if (_signalReceived) {
+			if (!_notifyAll) _signalReceived = false;
+			return true;
+		}
 
-			return false;
-		});
+		return false;
+	}
+
+	void waitSignal(T& signal) {
+		std::unique_lock<std::mutex> lk(_signalMutex);
+		_hasMessageCV.wait(lk, _checkSignalFunc);
 
 		signal = _signal;
 	}
 };
 
+class SignalAny
+{
+	bool _notifyAll;
+	bool _signalReceived;
+	std::mutex _signalMutex;
+	std::condition_variable _hasMessageCV;
+	std::function<bool()> _checkSignalFunc;
+public:
+	SignalAny(bool notifyToAll) : _notifyAll(notifyToAll), _signalReceived(false) {
+		_checkSignalFunc = std::bind(&SignalAny::checkSignal, this);
+	}
+	virtual ~SignalAny() {}
 
+	void resetState() {
+		std::lock_guard<std::mutex> lk(_signalMutex);
+		_signalReceived = false;
+	}
+
+	void signal() {
+		{
+			std::lock_guard<std::mutex> lk(_signalMutex);
+			_signalReceived = true;
+		}
+		if (_notifyAll) {
+			_hasMessageCV.notify_all();
+		}
+		else {
+			_hasMessageCV.notify_one();
+		}
+	}
+
+	bool waitSignal(unsigned int miliseconds) {
+		std::unique_lock<std::mutex> lk(_signalMutex);
+
+		std::chrono::duration<decltype(miliseconds), std::milli> timeout(miliseconds);
+
+		return _hasMessageCV.wait_for(lk, timeout, _checkSignalFunc);
+	}
+
+	bool checkSignal() {
+		if (_signalReceived) {
+			if (!_notifyAll) _signalReceived = false;
+			return true;
+		}
+
+		return false;
+	}
+
+	void waitSignal() {
+		std::unique_lock<std::mutex> lk(_signalMutex);
+		_hasMessageCV.wait(lk, _checkSignalFunc);
+	}
+};

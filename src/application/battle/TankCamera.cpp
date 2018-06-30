@@ -128,7 +128,7 @@ const std::shared_ptr<ObjectViewContainer>& TankCamera::getView() const {
 	return _objectViewContainer;
 }
 
-void TankCamera::accessSeenObjects(std::function<void(SnapshotRefObjects&)>&& f) {
+void TankCamera::accessSeenObjects(const std::function<void(SnapshotRefObjects&)>& f) {
 	std::lock_guard<std::mutex> lk(_seenObjectsWriteMutex);
 	f(_seenObjects);
 }

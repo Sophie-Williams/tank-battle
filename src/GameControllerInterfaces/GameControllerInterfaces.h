@@ -53,6 +53,15 @@ struct RawObject {
 	RawArray<RawPoint> shape;
 };
 
+struct RawTimeObject {
+	// object id
+	GameObjectId id;
+	// float detected time
+	float t;
+	// shape of object, defined as polygon
+	RawArray<RawPoint> shape;
+};
+
 #pragma pack(pop)
 
 #include <malloc.h>

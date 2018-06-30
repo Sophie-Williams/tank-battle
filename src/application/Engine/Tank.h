@@ -30,6 +30,9 @@ protected:
 	TankBody _body;
 	TankBarrel _barrel;
 	ci::Colorf _color;
+
+	int _groupId;
+
 	float _rotateSpeed;
 	float _movingSpeed;
 	float _rotateBarrelSpeed;
@@ -62,6 +65,7 @@ public:
 	void fire(float at);
 	void setColor(const ci::Colorf& color);
 	int getGroupId() const;
+	void setGroupId(int groupId);
 
 	/// gun segment on tank's model view
 	ci::vec4 getGun() const;

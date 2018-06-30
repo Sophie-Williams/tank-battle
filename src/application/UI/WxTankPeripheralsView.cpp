@@ -36,7 +36,7 @@ void WxTankPeripheralsView::setSize(float w, float h) {
 
 	gl::Fbo::Format fmt;
 	fmt.setSamples(16);
-	_fboScene = gl::Fbo::create(w, h, fmt);
+	_fboScene = gl::Fbo::create((int)w, (int)h, fmt);
 }
 
 void WxTankPeripheralsView::setPos(float x, float y) {

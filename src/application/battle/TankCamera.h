@@ -24,5 +24,5 @@ public:
 	void draw();
 
 	const std::shared_ptr<ObjectViewContainer>& getView() const;
-	void accessSeenObjects(std::function<void(SnapshotRefObjects&)>&& f);
+	void accessSeenObjects(const std::function<void(SnapshotRefObjects&)>& f);
 };

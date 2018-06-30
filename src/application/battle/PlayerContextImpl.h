@@ -1,25 +1,27 @@
 #pragma once
 #include "PlayerContext.h"
 #include "Engine/Tank.h"
-#include "TankCamera.h"
-#include "Radar.h"
 
 class TankPlayerContextImpl : public TankPlayerContext {
 	std::shared_ptr<Tank> _myTank;
-	std::shared_ptr<TankCamera> _camera;
-	std::shared_ptr<Radar> _radar;
-	mutable SnapshotObjectPoints _cameraSnapshots;
-	mutable SnapshotObjectPoints _radarSnapshots;
+	const SnapshotObjectPoints* _pCameraSnapshots;
+	const SnapshotTimeObjectPoints* _pRadarSnapshots;
 public:
 	TankPlayerContextImpl();
 	virtual ~TankPlayerContextImpl();
 
-	const SnapshotObjectPoints* getRadarSnapshot() const;
+	void setRadarSnapshot(const SnapshotTimeObjectPoints* pCameraSnapshots);
+	void setCameraSnapshot(const SnapshotObjectPoints* pRadarSnapshots);
+
+	const SnapshotTimeObjectPoints* getRadarSnapshot() const;
 	const SnapshotObjectPoints* getCameraSnapshot() const;
+	TankOperations getCurrentOperations() const;
+
 	RawRay getMyGun() const;
 	float getMyHealth() const;
-	TankOperations getCurrentOperations() const;
 
 	bool isAlly(GameObjectId id) const;
 	bool isEnemy(GameObjectId id) const;
 };
+
+typedef std::shared_ptr<TankPlayerContextImpl> TankPlayerContextImplRef;

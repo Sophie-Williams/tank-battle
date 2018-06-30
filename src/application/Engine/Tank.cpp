@@ -30,6 +30,8 @@ Tank::Tank() :
 
 	setShield(5);
 	setHealth(50);
+	// default group id is object id
+	_groupId = getId();
 }
 
 Tank::~Tank() {}
@@ -227,7 +229,11 @@ ci::vec4 Tank::getGun() const {
 }
 
 int Tank::getGroupId() const {
-	return 0;
+	return _groupId;
+}
+
+void Tank::setGroupId(int groupId) {
+	_groupId = groupId;
 }
 
 TankOperations Tank::getCurrentOperations() const {

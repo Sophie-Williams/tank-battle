@@ -2,41 +2,30 @@
 #include "GameInterfaceImpl.h"
 #include "Engine/Tank.h"
 
-TankPlayerContextImpl::TankPlayerContextImpl() {
-	initRawArray(_cameraSnapshots);
-	initRawArray(_radarSnapshots);
+TankPlayerContextImpl::TankPlayerContextImpl() : _pCameraSnapshots(nullptr), _pRadarSnapshots(nullptr) {
 }
 
 TankPlayerContextImpl::~TankPlayerContextImpl() {
-
 }
 
-const SnapshotObjectPoints* TankPlayerContextImpl::getRadarSnapshot() const {
-	freeRawArray(_radarSnapshots);
-	initRawArray(_radarSnapshots);
+void TankPlayerContextImpl::setRadarSnapshot(const SnapshotTimeObjectPoints* pRadarSnapshots) {
+	_pRadarSnapshots = pRadarSnapshots;
+}
 
-	if (_radar) {
-	}
+void TankPlayerContextImpl::setCameraSnapshot(const SnapshotObjectPoints* pCameraSnapshots) {
+	_pCameraSnapshots = pCameraSnapshots;
+}
 
-	return &_radarSnapshots;
+const SnapshotTimeObjectPoints* TankPlayerContextImpl::getRadarSnapshot() const {
+	return _pRadarSnapshots;
 }
 
 const SnapshotObjectPoints* TankPlayerContextImpl::getCameraSnapshot() const {
-	freeRawArray(_cameraSnapshots);
+	return _pCameraSnapshots;
+}
 
-	if (_camera) {
-		_camera->accessSeenObjects([this](const SnapshotRefObjects& snapshotObjects) {
-			recreateRawArray(_cameraSnapshots, (int)snapshotObjects.size());
-			for (auto it = snapshotObjects.begin(); it != snapshotObjects.end(); it++) {
-
-			}
-		});
-	}
-	else {
-		initRawArray(_cameraSnapshots);
-	}
-
-	return &_cameraSnapshots;
+TankOperations TankPlayerContextImpl::getCurrentOperations() const {
+	return _myTank->getCurrentOperations();
 }
 
 bool TankPlayerContextImpl::isAlly(GameObjectId id) const {
@@ -76,8 +65,4 @@ RawRay TankPlayerContextImpl::getMyGun() const {
 
 float TankPlayerContextImpl::getMyHealth() const {
 	return _myTank->getHealth();
-}
-
-TankOperations TankPlayerContextImpl::getCurrentOperations() const {
-	return _myTank->getCurrentOperations();
 }
