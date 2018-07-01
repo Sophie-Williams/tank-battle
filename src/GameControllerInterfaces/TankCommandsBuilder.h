@@ -8,6 +8,7 @@ public:
 	TankCommandsBuilder(TankOperations& initCommands);
 
 	void freeze();
+	void fire();
 	void move(char moveDir);
 	void turn(char turnDir);
 	void spinGun(char spinDir);
@@ -15,4 +16,5 @@ public:
 	char getMovingDir() const;
 	char getTurnDir() const;
 	char getSpinningGunDir() const;
+	bool hasFire() const;
 };

@@ -8,6 +8,14 @@ void TankCommandsBuilder::freeze() {
 	_commands = FREEZE_COMMAND;
 }
 
+void TankCommandsBuilder::fire() {
+	_commands |= 0x01000000;
+}
+
+bool TankCommandsBuilder::hasFire() const {
+	return (_commands & 0x01000000) != 0;
+}
+
 void TankCommandsBuilder::move(char moveDir) {
 	TankOperations singleCommand = (unsigned char)moveDir;
 	_commands = ((0xFFFFFF00 & _commands) | singleCommand);

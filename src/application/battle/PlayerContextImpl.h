@@ -7,7 +7,7 @@ class TankPlayerContextImpl : public TankPlayerContext {
 	const SnapshotObjectPoints* _pCameraSnapshots;
 	const SnapshotTimeObjectPoints* _pRadarSnapshots;
 public:
-	TankPlayerContextImpl();
+	TankPlayerContextImpl(const std::shared_ptr<Tank>& myTank);
 	virtual ~TankPlayerContextImpl();
 
 	void setRadarSnapshot(const SnapshotTimeObjectPoints* pCameraSnapshots);

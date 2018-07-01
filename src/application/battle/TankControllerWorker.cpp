@@ -1,8 +1,6 @@
 #include "TankControllerWorker.h"
 #include "Engine/GameEngine.h"
 #include "PlayerContextImpl.h"
-#include "TankCamera.h"
-#include "Radar.h"
 
 template <class T>
 void freeSnapshotsRaw(T& obj) {
@@ -35,16 +33,32 @@ long long getCurrentTimeStamp() {
 	return now_ms.time_since_epoch().count();
 }
 
+void TankControllerWorker::setUp() {
+	auto& components = _tank->getComponents();
+	for (auto it = components.begin(); it != components.end(); it++) {
+		auto tankCamera = std::dynamic_pointer_cast<TankCamera>(*it);
+		if (tankCamera) {
+			_tankCamera = tankCamera;
+		}
+		else {
+			auto tankRadar = std::dynamic_pointer_cast<Radar>(*it);
+			if (tankRadar) {
+				_radar = tankRadar;
+			}
+		}
+	}
+}
+
 void TankControllerWorker::run() {
 	constexpr unsigned int requestControlInterval = 200;
 	unsigned int timeLeft = 0;
 
 	TankOperations tankCommands = TANK_NULL_OPERATION;
 	GameEngine* gameEngine = GameEngine::getInstance();
-	TankPlayerContextImpl playerContext;
+	TankPlayerContextImpl playerContext(_tank);
 
-	std::shared_ptr<TankCamera> tankCamera;
-	std::shared_ptr<Radar> radar;
+	std::shared_ptr<TankCamera> tankCamera = _tankCamera;
+	std::shared_ptr<Radar> radar = _radar;
 
 	SnapshotObjectPoints cameraSnapshots;
 	SnapshotTimeObjectPoints radarSnapshots;
@@ -165,6 +179,9 @@ void TankControllerWorker::run() {
 				tank->move(commandsBuilder.getMovingDir(), t);
 				tank->turn(commandsBuilder.getTurnDir(), t);
 				tank->spinBarrel(commandsBuilder.getSpinningGunDir(), t);
+				if (commandsBuilder.hasFire()) {
+					tank->fire(t);
+				}
 			};
 
 			gameEngine->postTask(task);

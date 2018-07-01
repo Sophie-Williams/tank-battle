@@ -21,6 +21,7 @@ public:
 	virtual void setAvailable(bool flag);
 	virtual void destroy(float t);
 	virtual void addComponent(const GameComponentRef& component);
+	virtual const std::list<GameComponentRef>& getComponents() const;
 	
 	GameObjectId getId() const;
 };

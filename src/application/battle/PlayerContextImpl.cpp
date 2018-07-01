@@ -2,7 +2,11 @@
 #include "GameInterfaceImpl.h"
 #include "Engine/Tank.h"
 
-TankPlayerContextImpl::TankPlayerContextImpl() : _pCameraSnapshots(nullptr), _pRadarSnapshots(nullptr) {
+TankPlayerContextImpl::TankPlayerContextImpl(const std::shared_ptr<Tank>& myTank) :
+	_pCameraSnapshots(nullptr),
+	_pRadarSnapshots(nullptr),
+	_myTank(myTank)
+	{
 }
 
 TankPlayerContextImpl::~TankPlayerContextImpl() {

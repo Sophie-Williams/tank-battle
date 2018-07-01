@@ -17,7 +17,7 @@ typedef int GameObjectType;
 typedef unsigned int TankOperations;
 
 #define TANK_NULL_OPERATION (0)
-#define FREEZE_COMMAND 0xFF000000
+#define FREEZE_COMMAND 0x80000000
 #define IS_NULL_COMMAND(commands) ((commands & FREEZE_COMMAND) == 0)
 
 //enum class GameObjectType : int

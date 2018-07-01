@@ -36,3 +36,7 @@ void GameObject::update(float t) {
 		it->get()->update(t);
 	}
 }
+
+const std::list<GameComponentRef>& GameObject::getComponents() const {
+	return _components;
+}
