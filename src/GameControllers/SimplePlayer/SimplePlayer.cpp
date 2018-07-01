@@ -24,6 +24,12 @@ TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
 
 	auto gunRay = player->getMyGun();
 	auto cameraViewObjects = player->getCameraSnapshot();
+	if (cameraViewObjects == nullptr || cameraViewObjects->elmCount == 0) {
+		auto radarSnapshots = player->getRadarSnapshot();
+		if (radarSnapshots == nullptr || radarSnapshots->elmCount == 0) {
+			return TANK_NULL_OPERATION;
+		}
+	}
 
 	return TANK_NULL_OPERATION;
 }

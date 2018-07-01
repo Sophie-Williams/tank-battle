@@ -1,7 +1,7 @@
 #include "ObjectViewContainer.h"
 #include "BattlePlatform.h"
 #include "Engine/Barrier.h"
-#include "Engine/Geometry.h"
+#include "../common/Geometry.h"
 #include "Engine/GameEngine.h"
 
 ObjectViewContainer::ObjectViewContainer(const DrawableObjectRef& object) : _ownerObject(object), _lastUpdate(0) {

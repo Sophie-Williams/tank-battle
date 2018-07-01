@@ -75,4 +75,3 @@ template <typename T>
 inline T roundUp(const T& n, const T& base) {
 	return ((n + base - 1) / base)* base;
 }
-

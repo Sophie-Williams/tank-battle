@@ -2,7 +2,7 @@
 
 #include "cinder/gl/gl.h"
 #include "cinder/app/App.h"
-#include "Engine/Geometry.h"
+#include "../common/Geometry.h"
 
 using namespace ci;
 using namespace std;

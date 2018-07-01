@@ -1,7 +1,7 @@
 #include "TankCamera.h"
 #include "BattlePlatform.h"
 #include "Engine/Barrier.h"
-#include "Engine/Geometry.h"
+#include "../common/Geometry.h"
 #include "Engine/GameEngine.h"
 
 TankCamera::TankCamera(const std::shared_ptr<ObjectViewContainer>& objectViewContainer, float viewAngle) : 

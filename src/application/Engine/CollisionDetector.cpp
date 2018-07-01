@@ -1,5 +1,5 @@
 #include "CollisionDetector.h"
-#include "Geometry.h"
+#include "../common/Geometry.h"
 #include <memory>
 
 using namespace ci;
