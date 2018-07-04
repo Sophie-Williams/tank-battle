@@ -195,7 +195,7 @@ void TankControllerWorker::loop() {
 		timeLeft = (unsigned int)(t2 - t1);
 		timeLeft = timeLeft > requestControlInterval ? 0 : requestControlInterval - timeLeft;
 		// check if a stop signal was sent then exit the loop
-	} while (_stopSignal.waitSignal(timeLeft) == false);
+	} while (_stopSignal.waitSignal(timeLeft) == false && _tank->isAvailable());
 }
 
 void TankControllerWorker::run() {
