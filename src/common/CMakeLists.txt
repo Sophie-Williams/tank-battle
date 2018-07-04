@@ -2,10 +2,11 @@ cmake_minimum_required (VERSION 3.2)
 project(common C CXX)
 
 SET (MAIN_SOURCES
-    ../common/AutoScope.h
-    ../common/AutoScope.cpp
-    ../common/utility.cpp
-    ../common/utility.h
+    AutoScope.h
+    AutoScope.cpp
+    utility.cpp
+    utility.h
+    GameUtil.hpp
 )
 
 SET (SOURCES ${MAIN_SOURCES})

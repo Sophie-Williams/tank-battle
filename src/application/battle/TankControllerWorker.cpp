@@ -2,6 +2,8 @@
 #include "Engine/GameEngine.h"
 #include "PlayerContextImpl.h"
 
+#include <Windows.h>
+
 template <class T>
 void freeSnapshotsRaw(T& obj) {
 	auto snapShotRaw = obj.data;
@@ -49,8 +51,8 @@ void TankControllerWorker::setUp() {
 	}
 }
 
-void TankControllerWorker::run() {
-	constexpr unsigned int requestControlInterval = 200;
+void TankControllerWorker::loop() {
+	constexpr unsigned int requestControlInterval = 20;
 	unsigned int timeLeft = 0;
 
 	TankOperations tankCommands = TANK_NULL_OPERATION;
@@ -67,7 +69,7 @@ void TankControllerWorker::run() {
 	initRawArray(radarSnapshots);
 
 	// free resource when the function exit
-	std::unique_ptr<void, std::function<void(void*)>> freeResource((void*)0, 
+	std::unique_ptr<void, std::function<void(void*)>> freeResource((void*)0,
 		[&cameraSnapshots, &radarSnapshots](void*) {
 		freeSnapshotsRaw(cameraSnapshots);
 		freeSnapshotsRaw(radarSnapshots);
@@ -89,6 +91,7 @@ void TankControllerWorker::run() {
 			for (auto jt = bound.begin(); jt != bound.end(); jt++) {
 				rawPoint->x = jt->x;
 				rawPoint->y = jt->y;
+				rawPoint++;
 			}
 
 			snapShotRaw++;
@@ -195,8 +198,36 @@ void TankControllerWorker::run() {
 	} while (_stopSignal.waitSignal(timeLeft) == false);
 }
 
-void TankControllerWorker::stop() {
-	_stopSignal.signal();
+void TankControllerWorker::run() {
+	setUp();
+	worker = std::thread(std::bind(&TankControllerWorker::loop, this));
+}
+
+static bool stopAndWait(std::thread& worker, int milisecond) {
+	HANDLE hThread = (HANDLE)worker.native_handle();
+	DWORD waitRes = WaitForSingleObject(hThread, (DWORD)milisecond);
+
+	if (waitRes == WAIT_OBJECT_0) {
+		worker.join();
+		return true;
+	}
+	if (waitRes == WAIT_TIMEOUT) {
+		bool res = TerminateThread(hThread, 0) != FALSE;
+		worker.join();
+		return res;
+	}
+
+	return false;
+}
+
+bool TankControllerWorker::stopAndWait(int milisecond) {
+	if (worker.joinable()) {
+		_stopSignal.signal();
+
+		return ::stopAndWait(worker, milisecond);
+	}
+
+	return false;
 }
 
 void TankControllerWorker::pause() {

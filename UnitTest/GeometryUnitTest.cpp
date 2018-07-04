@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "CppUnitTest.h"
-#include "../src/application/Engine/Geometry.h"
+#include "../src/common/Geometry.h"
 #include "cinder/gl/gl.h"
 
 using namespace std;
@@ -915,6 +915,46 @@ namespace UnitTest
 
 				return L"should intersect";
 			});
+		}
+
+		TEST_METHOD(CheckLeftHandRule1)
+		{
+			vec2 A = { 10.22, -8.36 };
+			vec2 B = { 15.96, 1.24 };
+			vec2 C = { 7.384, 3.738 };
+
+			GeneralLine<float> l;
+			l.build(A, B - A);
+			auto res = l.compute(C);
+			Assert::IsTrue(res > 0, L"general line is not follow left hand rule");
+		}
+
+		TEST_METHOD(CheckDirectionalVector1)
+		{
+			vec2 A = { 10.22, -8.36 };
+			vec2 B = { 16.844, 1.318 };
+			vec2 C = { 7.296, 2.902 };
+
+			auto u = B - A;
+			auto v = C - A;
+
+			auto angle = directionalAngle(u, v) * 180 / glm::pi<double>();
+
+			Assert::IsTrue( std::abs(angle - 48.94) < 0.01, L"general line is not follow left hand rule");
+		}
+
+		TEST_METHOD(CheckDirectionalVector2)
+		{
+			vec2 A = { 10.22, -8.36 };
+			vec2 B = { 16.844, 1.318 };
+			vec2 C = { 7.296, 2.902 };
+
+			auto u = B - A;
+			auto v = C - A;
+
+			auto angle = directionalAngle(v, u) * 180 / glm::pi<double>();
+
+			Assert::IsTrue(std::abs(48.94 + angle) < 0.01, L"general line is not follow left hand rule");
 		}
 	};
 }

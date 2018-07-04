@@ -34,7 +34,6 @@ SET (ENGINE_SRC
     engine/GameController.cpp
     engine/LiveObject.h
     engine/LiveObject.cpp
-    engine/Geometry.h
     engine/Barrier.h
     engine/Barrier.cpp
     engine/Animation.h
@@ -102,6 +101,8 @@ SET (BATTLE_SRC
     Battle/GameInterfaceImpl.h
     Battle/PlayerContextImpl.cpp
     Battle/PlayerContextImpl.h
+    Battle/TankControllerModuleWrapper.cpp
+    Battle/TankControllerModuleWrapper.h
 )
 
 SET (MAIN_SOURCES

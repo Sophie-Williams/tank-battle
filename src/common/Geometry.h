@@ -115,6 +115,9 @@ struct GeneralLine {
 	T C;
 	T vectorLength;
 
+	// build a general line equation from the point it goes through
+	// and the direction vector it follows
+	// the general line has normal vector follow left hand rule
 	template <class Pt>
 	void build(const Pt& P, const Pt& u) {
 		A = -u.y;
@@ -128,11 +131,41 @@ struct GeneralLine {
 	auto compute(const Pt& Q) const {
 		return A * Q.x + B * Q.y + C;
 	}
+
+	// compute directional distance of a point to this line
 	template <class Pt>
 	auto directionalDistance(const Pt& Q) const {
 		return compute(Q)/ vectorLength;
 	}
 };
+
+template <class T>
+double directionalAngle(const T& u, const T& v)
+{
+	// angle has value from [0 - pi]
+	auto angle = acosf((float)cosAngle(u, v));
+
+	// test direction of v base on u
+
+	// first compute sub vector of u and v
+	auto t = u - v;
+
+	// second compute normal vector of u follow left hand rule
+	T n;
+	n.x = -u.y;
+	n.y = u.x;
+
+	// third compute dot product of t and n
+	auto dotProduct = (double)t.x;
+	dotProduct *= n.x;
+	dotProduct += ((double)t.y)*n.y;
+
+	if (dotProduct > 0) {
+		angle = -angle;
+	}
+
+	return angle;
+}
 
 template <class T>
 inline bool checkPoint(const T& p, int width, int height) {

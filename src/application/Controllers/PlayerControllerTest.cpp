@@ -62,7 +62,7 @@ void PlayerControllerTest::randomStrategy(float t) {
 
 	if (_lastFireAt < 0 || (t - _lastFireAt) >= _fireLimitDuration) {
 		_lastFireAt = t;
-		//pTank->fire(t);
+		pTank->fire(t);
 		// random firing time limit for the next time
 		_fireLimitDuration = radomizer.randFloat(1.5f, 3.0f);
 	}

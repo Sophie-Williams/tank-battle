@@ -82,6 +82,7 @@ void recreateRawArray(RawArray<T>& arr, int n) {
 	if (n > 0) {
 		arr.data = (T*)malloc(sizeof(T) * n);
 	}
+	arr.elmCount = n;
 }
 
 //template GAME_CONTROLLER_INTERFACE RawArray<RawPoint> createRawArray<RawPoint>(int n);
@@ -91,3 +92,15 @@ void recreateRawArray(RawArray<T>& arr, int n) {
 //template GAME_CONTROLLER_INTERFACE void freeRawArray<RawObject>(RawArray<RawObject>& arr);
 //template GAME_CONTROLLER_INTERFACE void freeRawArray<RawPoint>(RawArray<RawPoint>& arr);
 //template GAME_CONTROLLER_INTERFACE void freeRawArray<GameObjectId>(RawArray<GameObjectId>& arr);
+
+GAME_CONTROLLER_INTERFACE RawPoint operator-(const RawPoint& P);
+GAME_CONTROLLER_INTERFACE RawPoint operator+(const RawPoint& P, const RawPoint& Q);
+GAME_CONTROLLER_INTERFACE const RawPoint& operator+=(RawPoint& P, const RawPoint& Q);
+GAME_CONTROLLER_INTERFACE RawPoint operator-(const RawPoint& P, const RawPoint& Q);
+GAME_CONTROLLER_INTERFACE const RawPoint& operator-=(RawPoint& P, const RawPoint& Q);
+GAME_CONTROLLER_INTERFACE float operator*(const RawPoint& P, const RawPoint& Q);
+
+GAME_CONTROLLER_INTERFACE RawPoint operator*(const RawPoint& P, float k);
+GAME_CONTROLLER_INTERFACE const RawPoint& operator*=(RawPoint& P, float k);
+GAME_CONTROLLER_INTERFACE RawPoint operator/(const RawPoint& P, float k);
+GAME_CONTROLLER_INTERFACE const RawPoint& operator/=(RawPoint& P, float k);

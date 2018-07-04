@@ -1,6 +1,6 @@
 #include "Radar.h"
 #include "Engine/Barrier.h"
-#include "Engine/Geometry.h"
+#include "../common/Geometry.h"
 #include "Engine/GameEngine.h"
 
 Radar::Radar(const std::shared_ptr<ObjectViewContainer>& objectViewContainer, float scanSpeed) : _lastScanAt(-1), _range(100), _scanSpeed(scanSpeed), _objectViewContainer(objectViewContainer) {
@@ -43,6 +43,7 @@ void Radar::update(float t) {
 
 	constexpr float scanMinAngle = glm::pi<float>() / 24;
 
+	std::lock_guard<std::mutex> lk(_detectedGroupObjectsMutex);
 	// update the detected object list during time event
 	auto expiredTime = 2 * glm::pi<float>() / _scanSpeed;
 	for(auto it = _detectedGroupObjects.begin(); it != _detectedGroupObjects.end();) {

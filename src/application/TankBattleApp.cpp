@@ -35,6 +35,8 @@ using namespace std;
 #include "battle/BattlePlatform.h"
 #include "UI/WxTankPeripheralsView.h"
 #include "battle/GameCapture.h"
+#include "battle/TankControllerWorker.h"
+#include "battle/TankControllerModuleWrapper.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -64,6 +66,7 @@ class BasicApp : public App {
 	shared_ptr<GameEngine> _gameEngine;
 	shared_ptr<GameResource> _gameResource;
 	shared_ptr<BattlePlatform> _battlePlatform;
+	vector<shared_ptr<TankControllerWorker>> _tankControllerWorkers;
 	
 	bool _runFlag;
 	LogAdapter* _logAdapter;
@@ -106,10 +109,15 @@ void BasicApp::intializeApp(App::Settings* settings) {
 
 BasicApp::BasicApp() :
 	_runFlag(true) {
-}
+};
 
 BasicApp::~BasicApp() {
 	stopServices();
+
+	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+		auto& worker = *it;
+		worker->stopAndWait(100);
+	}
 
 	_runFlag = false;
 	if (_logAdapter) {
@@ -302,7 +310,7 @@ void generateTanks1(Scene* scene) {
 	scene->addDrawbleObject(tank4);
 }
 
-std::vector<Tank*> generateTanks2(Scene* scene) {
+std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, int customTanks, int expectedAutoTank) {
 	float padding = 8;
 
 	auto& sceneArea = scene->getSceneArea();
@@ -323,11 +331,10 @@ std::vector<Tank*> generateTanks2(Scene* scene) {
 	int rowMax = (int)(sceneHeight / tankSize.y / 2);
 	int tankMaxCount = colMax * rowMax;
 
-	int expectedTank = 10;
+	int expectedTank = expectedAutoTank + customTanks;
 	int tankCount = std::min(expectedTank, tankMaxCount);
 	if (tankCount <= 0) {
-		std::vector<Tank*> tanks;
-		return tanks;
+		return nullptr;
 	}
 
 	Rand randomizer( (uint32_t) (GameEngine::getInstance()->getCurrentTime() * 10000) );
@@ -338,7 +345,7 @@ std::vector<Tank*> generateTanks2(Scene* scene) {
 	auto baseCoordinateOfScene = sceneArea.getUpperLeft();
 
 	std::map<int, bool> generatedPos;
-	std::vector<Tank*> tanks(tankCount);
+	auto tanks = std::make_shared<std::vector<std::shared_ptr<Tank>>>(tankCount);
 
 	for (int i = 0; i < tankCount; i++) {
 		auto iPos = randomizer.nextInt(0, tankMaxCount);
@@ -361,15 +368,12 @@ std::vector<Tank*> generateTanks2(Scene* scene) {
 		}
 
 		scene->addDrawbleObject(tank);
-		tanks[i] = tank.get();
+		tanks->at(i) = tank;
 	}
 
-	auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
-	//auto playerController = std::make_shared<PlayerControllerTest>();
-	tanks[0]->addComponent(playerController);
-	for (int i = 1; i < tankCount; i++) {
+	for (int i = customTanks; i < tankCount; i++) {
 		auto playerController = make_shared<PlayerControllerTest>();
-		tanks[i]->addComponent(playerController);
+		tanks->at(i)->addComponent(playerController);
 	}
 
 	return tanks;
@@ -419,7 +423,7 @@ void BasicApp::setupGame() {
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
 
-	auto tanks = generateTanks2(gameScene.get());
+	auto tanks = generateTanks(gameScene.get(), 1, 8);
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
@@ -427,7 +431,7 @@ void BasicApp::setupGame() {
 
 	gameScene->addGameObject(gameCapture);
 
-	auto tankRef = dynamic_pointer_cast<DrawableObject>(gameScene->findObjectRef(tanks[0]));
+	auto tankRef = tanks->at(0);
 
 	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
 
@@ -451,6 +455,12 @@ void BasicApp::setupGame() {
 	}
 
 	_gameView->setTankView(peripheralsview);
+
+	auto tankController = make_shared<TankControllerModuleWrapper>("SimplePlayer");
+	auto worker1 = make_shared<TankControllerWorker>(tankRef, tankController);
+	_tankControllerWorkers.push_back(worker1);
+
+	worker1->run();
 }
 
 void BasicApp::startServices() {

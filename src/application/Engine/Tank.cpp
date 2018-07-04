@@ -74,6 +74,10 @@ void Tank::setSize(const ci::vec2& size) {
 	//setPivot(ci::vec3(bodyBound.getCenter(), 0));
 	setBound(bodyBound);
 	_barrel.setPivot(ci::vec3(barrelPivot, 0));
+
+	// initialize cached gun
+	ci::vec2 topGun = (barrelBound.getLowerLeft() + barrelBound.getLowerRight()) / 2.0f;
+	_cahedGun = vec4(barrelPivot.x, barrelPivot.y, topGun.x, topGun.y);
 }
 
 void Tank::updateInternal(float t) {
