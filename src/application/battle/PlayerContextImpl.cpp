@@ -70,3 +70,16 @@ RawRay TankPlayerContextImpl::getMyGun() const {
 float TankPlayerContextImpl::getMyHealth() const {
 	return _myTank->getHealth();
 }
+
+GeometryInfo TankPlayerContextImpl::getMyGeometry() const {
+	GeometryInfo geo;
+	glm::vec3 offset;
+	float rotation;
+	_myTank->getGeometryInfo(offset, rotation);
+
+	geo.coord.x = offset.x;
+	geo.coord.y = offset.y;
+	geo.rotation = rotation;
+
+	return geo;
+}

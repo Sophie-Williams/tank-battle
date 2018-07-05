@@ -35,6 +35,11 @@ struct RawPoint {
 	float y;
 };
 
+struct GeometryInfo {
+	RawPoint coord;
+	float rotation;
+};
+
 struct RawRay {
 	RawPoint start;
 	RawPoint dir;

@@ -318,9 +318,10 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 	auto sceneWidth = sceneArea.getWidth() - padding * 2;
 
 	Colorf tankColors[] = {
-		{ 0,0,1 },
-		{ 0,1,0 },
 		{ 1,0,0 },
+		{ 0,0,1 },
+		
+		{ 0,1,0 },
 		{ 1,1,0 },
 	};
 
@@ -379,7 +380,6 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 	return tanks;
 }
 
-
 void BasicApp::setupGame() {
 	addAssetDirectory("E:/Projects/tank-battle/src/application/assets");
 	_gameResource = std::shared_ptr<GameResource>(GameResource::createInstance());
@@ -423,7 +423,7 @@ void BasicApp::setupGame() {
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
 
-	auto tanks = generateTanks(gameScene.get(), 1, 8);
+	auto tanks = generateTanks(gameScene.get(), 2, 0);
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
@@ -432,7 +432,6 @@ void BasicApp::setupGame() {
 	gameScene->addGameObject(gameCapture);
 
 	auto tankRef = tanks->at(0);
-
 	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
 
 	auto radar = make_shared<Radar>(objectViewContainer, glm::pi<float>());
@@ -456,11 +455,28 @@ void BasicApp::setupGame() {
 
 	_gameView->setTankView(peripheralsview);
 
-	auto tankController = make_shared<TankControllerModuleWrapper>("SimplePlayer");
-	auto worker1 = make_shared<TankControllerWorker>(tankRef, tankController);
-	_tankControllerWorkers.push_back(worker1);
-
+	auto tankController1 = make_shared<TankControllerModuleWrapper>("SimplePlayer");
+	auto worker1 = make_shared<TankControllerWorker>(tankRef, tankController1);
 	worker1->run();
+
+	auto tankRef2 = tanks->at(1);
+	auto objectViewContainer2 = make_shared<ObjectViewContainer>(tankRef2);
+	auto radar2 = make_shared<Radar>(objectViewContainer2, glm::pi<float>());
+	radar2->setRange(std::max(gameArea.getWidth(), gameArea.getHeight()) / 2);
+
+	auto camera2 = make_shared<TankCamera>(objectViewContainer2, glm::pi<float>()*2.0f / 3);
+	camera2->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
+
+	tankRef2->addComponent(objectViewContainer2);
+	tankRef2->addComponent(radar2);
+	tankRef2->addComponent(camera2);
+
+	auto tankController2 = make_shared<TankControllerModuleWrapper>("SimplePlayer");
+	auto worker2 = make_shared<TankControllerWorker>(tankRef2, tankController2);
+	worker2->run();
+
+	_tankControllerWorkers.push_back(worker1);
+	_tankControllerWorkers.push_back(worker2);
 }
 
 void BasicApp::startServices() {

@@ -15,7 +15,7 @@ PlayerControllerUI::~PlayerControllerUI() {
 
 void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {
 	auto pTank = dynamic_cast<Tank*>(_owner);
-	if (pTank == nullptr) return;
+	if (pTank == nullptr || pTank->isAvailable() == false) return;
 
 	auto gameEngine = GameEngine::getInstance();
 	if (gameEngine->isPausing()) {

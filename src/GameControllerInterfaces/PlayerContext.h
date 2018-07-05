@@ -13,6 +13,8 @@ public:
 	virtual const SnapshotObjectPoints* getCameraSnapshot() const = 0;
 	virtual RawRay getMyGun() const = 0;
 	virtual float getMyHealth() const = 0;
+	virtual GeometryInfo getMyGeometry() const = 0;
+
 	virtual TankOperations getCurrentOperations() const = 0;
 
 	virtual bool isAlly(GameObjectId id) const = 0;

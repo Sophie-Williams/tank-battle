@@ -19,6 +19,7 @@ public:
 
 	RawRay getMyGun() const;
 	float getMyHealth() const;
+	GeometryInfo getMyGeometry() const;
 
 	bool isAlly(GameObjectId id) const;
 	bool isEnemy(GameObjectId id) const;

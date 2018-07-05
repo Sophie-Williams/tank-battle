@@ -60,4 +60,5 @@ public:
 	void setCollisionHandler(CollisionDetectedHandler&&);
 
 	static ci::vec2 transform(const ci::vec2& point, const glm::mat4& m);
+	void getGeometryInfo(ci::vec3& offset, float& rotation);
 };

@@ -1,4 +1,5 @@
 #include "DrawableObject.h"
+#include "glm\gtx\matrix_decompose.hpp"
 
 using namespace ci;
 
@@ -124,3 +125,18 @@ void DrawableObject::draw() {
 	gl::setModelMatrix(currentModelMatrix);
 }
 
+void DrawableObject::getGeometryInfo(ci::vec3& offset, float& rotation) {
+	//glm::mat4::d
+	vec3 scale, skew, translation;
+	vec4 perspective;
+	quat orientation;
+	
+	if (glm::decompose(_tMat, scale, orientation, translation, skew, perspective) == false) {
+		offset = { 0, 0, 0 };
+		rotation = 0;
+	}
+	else {
+		rotation = glm::angle(orientation);
+		offset = translation;
+	}
+}

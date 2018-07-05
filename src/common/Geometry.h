@@ -146,21 +146,12 @@ double directionalAngle(const T& u, const T& v)
 	auto angle = acosf((float)cosAngle(u, v));
 
 	// test direction of v base on u
+	// by computing dot product of normal vector n = (u.y, -u.x) and
+	// sub vector t = u - v
+	// after optimize expansion of the dot product we have following formular
+	auto dotProduct = u.x*v.y - u.y*v.x;
 
-	// first compute sub vector of u and v
-	auto t = u - v;
-
-	// second compute normal vector of u follow left hand rule
-	T n;
-	n.x = -u.y;
-	n.y = u.x;
-
-	// third compute dot product of t and n
-	auto dotProduct = (double)t.x;
-	dotProduct *= n.x;
-	dotProduct += ((double)t.y)*n.y;
-
-	if (dotProduct > 0) {
+	if (dotProduct < 0) {
 		angle = -angle;
 	}
 
