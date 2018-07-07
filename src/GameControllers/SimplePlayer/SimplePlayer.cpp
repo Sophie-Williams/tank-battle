@@ -4,6 +4,9 @@
 #include "GameInterface.h"
 #include "TankCommandsBuilder.h"
 
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 extern "C" {
 	GAME_CONTROLLER_API TankController* createController() {
 		return new SimplePlayer();
@@ -16,6 +19,14 @@ SimplePlayer::SimplePlayer()
 
 SimplePlayer::~SimplePlayer()
 {
+}
+
+void SimplePlayer::setup(TankPlayerContext*) {
+	static bool seedGenerated = false;
+	if (seedGenerated == false) {
+		srand(time(NULL));
+		seedGenerated = true;
+	}
 }
 
 TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
@@ -45,12 +56,15 @@ TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
 	commandBuider.freeze();
 
 	static char moveDir = 1;
-	static int moveCount = 0;
+	static int moveCount = (rand() % 50 + 50);
+
 	commandBuider.move(moveDir);
-	moveCount++;
-	if (moveCount == 100) {
-		moveCount = 0;
-		moveDir = -moveDir;
+	moveCount--;
+	if (moveCount <= 0) {
+		moveCount = (rand() % 50 + 50);
+		if (rand() % 2) {
+			moveDir = -moveDir;
+		}
 	}
 
 	GeneralLine<float> gunLine;

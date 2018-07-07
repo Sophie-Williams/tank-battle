@@ -140,6 +140,8 @@ void TankControllerWorker::loop() {
 		}
 	};
 
+	_tankController->setup(&playerContext);
+
 	do
 	{
 		auto t1 = getCurrentTimeStamp();

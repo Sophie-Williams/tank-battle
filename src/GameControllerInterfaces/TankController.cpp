@@ -4,4 +4,4 @@ TankController::TankController() {}
 
 TankController::~TankController() {}
 
-void TankController::setup(GameInterface* gameInterfaces, TankPlayerContext* player) {}
+void TankController::setup(TankPlayerContext* player) {}
