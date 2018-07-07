@@ -175,3 +175,7 @@ void Radar::accessGrouoObjectsMultithread(const std::function<void(ScannedObject
 	std::lock_guard<std::mutex> lk(_detectedGroupObjectsMutex);
 	access(_detectedGroupObjects);
 }
+
+const std::shared_ptr<ObjectViewContainer>& Radar::getView() const {
+	return _objectViewContainer;
+}

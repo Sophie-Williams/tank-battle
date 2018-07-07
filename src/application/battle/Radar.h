@@ -34,4 +34,5 @@ public:
 	const std::map<DrawableObjectRef, ScannedObjectGroupRef>& getGroupObjects() const;
 
 	void accessGrouoObjectsMultithread(const std::function<void(ScannedObjectGroupMap&)>& access);
+	const std::shared_ptr<ObjectViewContainer>& getView() const;
 };

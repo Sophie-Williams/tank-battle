@@ -9,5 +9,5 @@ public:
 	virtual~GameController();
 	static GameController* getInstance();
 
-	void OnBulletCollisionDetected(GameObjectRef bullet, DrawableObjectRef other, const ColissionPosition& poistion, float t);
+	void OnBulletCollisionDetected(GameObjectRef bullet, DrawableObjectRef other, const CollisionInfo& poistion, float t);
 };

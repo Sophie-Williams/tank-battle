@@ -11,7 +11,7 @@ protected:
 	float _expectedRatio;
 	std::shared_ptr<Scene> _gameScene;
 	ci::app::WindowRef _parent;
-	std::shared_ptr<Widget> _tankView;
+	std::shared_ptr<Widget> _tankViews[2];
 protected:
 	bool updateViewPort();
 public:

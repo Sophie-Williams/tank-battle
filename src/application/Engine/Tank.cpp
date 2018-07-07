@@ -250,3 +250,7 @@ TankOperations Tank::getCurrentOperations() const {
 
 	return operations;
 }
+
+float Tank::getMaxTurningSpeed() const {
+	return _rotateSpeed;
+}

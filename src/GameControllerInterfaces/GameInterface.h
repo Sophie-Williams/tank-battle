@@ -9,6 +9,7 @@ public:
 
 	virtual float getObjectSpeed(GameObjectType) const = 0;
 	virtual float getObjectHealth(GameObjectId id) const = 0;
+	virtual float getTime() const = 0;
 
 	virtual GameObjectType getObjectype(GameObjectId id) const = 0;
 };

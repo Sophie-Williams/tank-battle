@@ -71,6 +71,8 @@ class BasicApp : public App {
 	bool _runFlag;
 	LogAdapter* _logAdapter;
 	int _startStopButtonState = 0;
+	shared_ptr<SignalAny> _controllerReadySignal;
+	float _beginGameTime;
 public:
 	BasicApp();
 	~BasicApp();
@@ -423,7 +425,7 @@ void BasicApp::setupGame() {
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
 
-	auto tanks = generateTanks(gameScene.get(), 2, 0);
+	auto tanks = generateTanks(gameScene.get(), 2, 8);
 
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
@@ -444,20 +446,19 @@ void BasicApp::setupGame() {
 	tankRef->addComponent(radar);
 	tankRef->addComponent(camera);
 
-	auto peripheralsview = make_shared<WxTankPeripheralsView>(getWindow());
+	auto peripheralsview1 = make_shared<WxTankPeripheralsView>(getWindow());
 
 	try {
-		peripheralsview->setupPeripherals(camera, radar);
+		peripheralsview1->setupPeripherals(camera, radar);
 	}
 	catch (...) {
 		quit();
 	}
-
-	_gameView->setTankView(peripheralsview);
+	//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
+	//tankRef->addComponent(controlByUser);
 
 	auto tankController1 = make_shared<TankControllerModuleWrapper>("SimplePlayer");
 	auto worker1 = make_shared<TankControllerWorker>(tankRef, tankController1);
-	worker1->run();
 
 	auto tankRef2 = tanks->at(1);
 	auto objectViewContainer2 = make_shared<ObjectViewContainer>(tankRef2);
@@ -471,12 +472,32 @@ void BasicApp::setupGame() {
 	tankRef2->addComponent(radar2);
 	tankRef2->addComponent(camera2);
 
-	auto tankController2 = make_shared<TankControllerModuleWrapper>("SimplePlayer");
+	auto peripheralsview2 = make_shared<WxTankPeripheralsView>(getWindow());
+
+	try {
+		peripheralsview2->setupPeripherals(camera2, radar2);
+	}
+	catch (...) {
+		quit();
+	}
+
+	auto tankController2 = make_shared<TankControllerModuleWrapper>("DumpPlayer");
 	auto worker2 = make_shared<TankControllerWorker>(tankRef2, tankController2);
-	worker2->run();
+
+	_controllerReadySignal = make_shared<SignalAny>(true);
+	_beginGameTime = GameEngine::getInstance()->getCurrentTime();
+
+	worker1->setSignalWaiter(_controllerReadySignal.get());
+	worker2->setSignalWaiter(_controllerReadySignal.get());
 
 	_tankControllerWorkers.push_back(worker1);
 	_tankControllerWorkers.push_back(worker2);
+
+	_gameView->setTankView(peripheralsview1);
+	_gameView->setTankView(peripheralsview2);
+
+	worker1->run();
+	worker2->run();
 }
 
 void BasicApp::startServices() {
@@ -525,6 +546,12 @@ void BasicApp::update()
 
 	// update popup window
 	_controlBoard->update();
+
+	auto t = GameEngine::getInstance()->getCurrentTime();
+	if (t - _beginGameTime > 3) {
+		_beginGameTime = 10000000000;
+		_controllerReadySignal->signal();
+	}
 }
 
 void BasicApp::draw()

@@ -42,9 +42,13 @@ bool WxGameView::updateViewPort() {
 
 	radaH = radaW = std::min({ radaH, radaW, maxRadaWidth });
 
-	if (_tankView) {
-		_tankView->setPos((float)(_viewPort.x2 + padding), (float)padding);
-		_tankView->setSize((float)radaW, (float)radaH);
+	if (_tankViews[0]) {
+		_tankViews[0]->setPos((float)(_viewPort.x2 + padding), (float)padding);
+		_tankViews[0]->setSize((float)radaW, (float)radaH);
+	}
+	if (_tankViews[1]) {
+		_tankViews[1]->setPos((float)(_viewPort.x2 + padding), (float)(padding * 2 + radaH));
+		_tankViews[1]->setSize((float)radaW, (float)radaH);
 	}
 
 	return true;
@@ -74,12 +78,20 @@ void WxGameView::setScene(std::shared_ptr<Scene> gameScene) {
 }
 
 void WxGameView::setTankView(const std::shared_ptr<Widget>& tankView) {
-	_tankView = tankView;
+	if (_tankViews[0]) {
+		_tankViews[1] = tankView;
+	}
+	else {
+		_tankViews[0] = tankView;
+	}
 }
 
 void WxGameView::update() {
-	if (_tankView) {
-		_tankView->update();
+	if (_tankViews[0]) {
+		_tankViews[0]->update();
+	}
+	if (_tankViews[1]) {
+		_tankViews[1]->update();
 	}
 }
 
@@ -92,8 +104,11 @@ void WxGameView::draw() {
 			_gameScene->draw();
 		}
 	}
-	if(_tankView) {
-		_tankView->draw();
+	if (_tankViews[0]) {
+		_tankViews[0]->draw();
+	}
+	if (_tankViews[1]) {
+		_tankViews[1]->draw();
 	}
 
 	{

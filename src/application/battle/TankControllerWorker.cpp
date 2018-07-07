@@ -1,6 +1,8 @@
 #include "TankControllerWorker.h"
 #include "Engine/GameEngine.h"
 #include "PlayerContextImpl.h"
+#include "Engine/Bullet.h"
+#include "../common/GameUtil.hpp"
 
 #include <Windows.h>
 
@@ -22,8 +24,13 @@ TankControllerWorker::TankControllerWorker(const std::shared_ptr<Tank>& tank,
 	const std::shared_ptr<TankController>& tankController) :
 	_tankController(tankController),
 	_stopSignal(false),
-	_tank(tank)
+	_tank(tank),
+	_pWaitForReadySignal(nullptr)
 {
+
+	CollisionDetectedHandler onCollisionDetected = std::bind(&TankControllerWorker::onTankCollision,
+		this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	_tank->getCollisionHandler() += std::move(onCollisionDetected);
 }
 
 TankControllerWorker::~TankControllerWorker() {}
@@ -33,6 +40,47 @@ long long getCurrentTimeStamp() {
 	auto now = system_clock::now();
 	auto now_ms = time_point_cast<milliseconds>(now);
 	return now_ms.time_since_epoch().count();
+}
+
+void TankControllerWorker::onTankCollision(DrawableObjectRef other, const CollisionInfo& poistion, float t) {
+	std::lock_guard<std::mutex> lk(_collsionsMutex);
+	ColissionRawInfo collision;
+	collision.collisionPosition = (CollisionPosition)poistion.relative;
+	collision.isExplosion = dynamic_cast<Bullet*>(other.get()) != nullptr;
+
+	if (collision.collisionPosition == CollisionPosition::Unknown) {
+		// estimate relative collision internally
+		std::vector<ci::vec2> boundingPoly(4);
+		other->getBoundingPoly(boundingPoly);
+		
+		auto pStart = boundingPoly.data();
+		auto pEnd = pStart + boundingPoly.size();
+		auto objectCenter = center(pStart, pEnd);
+		
+		ci::mat4 inverseMatrix = glm::inverse(_tank->getTransformation());
+		auto theCenterOnTankView = DrawableObject::transform(objectCenter, inverseMatrix);
+
+		// caculate angle of vector from center of tank to center of colission object and x axis
+		auto angle = atan2(theCenterOnTankView.y, theCenterOnTankView.x) * 180 / glm::pi<float>();
+		// make angle in range [0->2PI]
+		if (angle < 0) {
+			angle = 360 + angle;
+		}
+		if (45 <= angle && angle < 135) {
+			collision.collisionPosition = CollisionPosition::Front;
+		}
+		else if (135 <= angle && angle < 225) {
+			collision.collisionPosition = CollisionPosition::Left;
+		}
+		else if (225 <= angle && angle < 315) {
+			collision.collisionPosition = CollisionPosition::Bottom;
+		}
+		else {
+			collision.collisionPosition = CollisionPosition::Right;
+		}
+	}
+
+	_collisions.push_back(collision);
 }
 
 void TankControllerWorker::setUp() {
@@ -52,6 +100,9 @@ void TankControllerWorker::setUp() {
 }
 
 void TankControllerWorker::loop() {
+	if (_pWaitForReadySignal) {
+		_pWaitForReadySignal->waitSignal();
+	}
 	constexpr unsigned int requestControlInterval = 20;
 	unsigned int timeLeft = 0;
 
@@ -64,15 +115,18 @@ void TankControllerWorker::loop() {
 
 	SnapshotObjectPoints cameraSnapshots;
 	SnapshotTimeObjectPoints radarSnapshots;
+	SnapshotColissions collisionsAtEachTurn;
 
 	initRawArray(cameraSnapshots);
 	initRawArray(radarSnapshots);
+	initRawArray(collisionsAtEachTurn);
 
 	// free resource when the function exit
 	std::unique_ptr<void, std::function<void(void*)>> freeResource((void*)0,
-		[&cameraSnapshots, &radarSnapshots](void*) {
+		[&cameraSnapshots, &radarSnapshots, &collisionsAtEachTurn](void*) {
 		freeSnapshotsRaw(cameraSnapshots);
 		freeSnapshotsRaw(radarSnapshots);
+		freeRawArray(collisionsAtEachTurn);
 	});
 
 	// take camera snapshot object and convert to raw objects
@@ -140,6 +194,24 @@ void TankControllerWorker::loop() {
 		}
 	};
 
+	auto takeCollisionAtThisTurn = [this](SnapshotColissions& collisionsAtEachTurn) {
+		std::lock_guard<std::mutex> lk(_collsionsMutex);
+
+		freeRawArray(collisionsAtEachTurn);
+		if (_collisions.size() == 0) {
+			initRawArray(collisionsAtEachTurn);
+			return;
+		}
+		recreateRawArray(collisionsAtEachTurn, (int)_collisions.size());
+
+		auto rawPoint = collisionsAtEachTurn.data;
+		for (auto it = _collisions.begin(); it != _collisions.end(); it++) {
+			*rawPoint++ = *it;
+		}
+
+		_collisions.clear();
+	};
+
 	_tankController->setup(&playerContext);
 
 	do
@@ -166,9 +238,13 @@ void TankControllerWorker::loop() {
 			initRawArray(radarSnapshots);
 		}
 
+		// take raw collisions at this turn
+		takeCollisionAtThisTurn(collisionsAtEachTurn);
+
 		// set the snapshot to player context
 		playerContext.setCameraSnapshot(&cameraSnapshots);
 		playerContext.setRadarSnapshot(&radarSnapshots);
+		playerContext.setCollisionsAtThisTurn(&collisionsAtEachTurn);
 
 		// acquire commands from tank's controller
 		tankCommands = _tankController->giveOperations(&playerContext);
@@ -236,4 +312,8 @@ void TankControllerWorker::pause() {
 }
 
 void TankControllerWorker::resume() {
+}
+
+void TankControllerWorker::setSignalWaiter(SignalAny* pSignal) {
+	_pWaitForReadySignal = pSignal;
 }

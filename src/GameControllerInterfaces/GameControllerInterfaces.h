@@ -27,12 +27,26 @@ typedef unsigned int TankOperations;
 //	Bullet
 //};
 
+enum class CollisionPosition : char
+{
+	Unknown = 0,
+	Front,
+	Right,
+	Bottom,
+	Left
+};
+
 
 #pragma pack(push, 1)
 
 struct RawPoint {
 	float x;
 	float y;
+};
+
+struct ColissionRawInfo {
+	CollisionPosition collisionPosition;
+	bool isExplosion;
 };
 
 struct GeometryInfo {

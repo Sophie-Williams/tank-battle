@@ -3,6 +3,7 @@
 
 typedef RawArray<RawObject> SnapshotObjectPoints;
 typedef RawArray<RawTimeObject> SnapshotTimeObjectPoints;
+typedef RawArray<ColissionRawInfo> SnapshotColissions;
 
 class GAME_CONTROLLER_INTERFACE TankPlayerContext {
 public:
@@ -11,9 +12,12 @@ public:
 
 	virtual const SnapshotTimeObjectPoints* getRadarSnapshot() const = 0;
 	virtual const SnapshotObjectPoints* getCameraSnapshot() const = 0;
+	virtual const SnapshotColissions* getCollisionsAtThisTurn() const = 0;
 	virtual RawRay getMyGun() const = 0;
 	virtual float getMyHealth() const = 0;
 	virtual GeometryInfo getMyGeometry() const = 0;
+	virtual float getMovingSpeed() const = 0;
+	virtual float getTurningSpeed() const = 0;
 
 	virtual TankOperations getCurrentOperations() const = 0;
 

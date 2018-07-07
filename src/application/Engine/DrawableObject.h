@@ -8,19 +8,19 @@ class DrawableObject;
 typedef std::shared_ptr<DrawableObject> DrawableObjectRef;
 
 enum class ColissionPositionRelative : int {
-	Unknown,
+	Unknown = 0,
 	Front,
 	Right,
 	Bottom,
 	Left
 };
 
-struct ColissionPosition {
+struct CollisionInfo {
 	ColissionPositionRelative relative;
 	ci::vec2 absolute;
 };
 
-typedef std::function<void(DrawableObjectRef, const ColissionPosition&, float)> CollisionDetectedHandler;
+typedef std::function<void(DrawableObjectRef, const CollisionInfo&, float)> CollisionDetectedHandler;
 typedef HandlerCollection<CollisionDetectedHandler> CollisionDetectedHandlerCollection;
 
 class DrawableObject : public GameObject

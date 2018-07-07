@@ -51,6 +51,10 @@ float GameInterfaceImpl::getObjectHealth(GameObjectId id) const {
 	return health;
 }
 
+float GameInterfaceImpl::getTime() const {
+	return GameEngine::getInstance()->getCurrentTime();
+}
+
 GameObjectType GameInterfaceImpl::getObjectype(GameObjectId id) const {
 	std::lock_guard<std::mutex> lk(_capturedObjectRefMapMutex);
 	GameObjectType type = GAME_TYPE_UNKNOWN;

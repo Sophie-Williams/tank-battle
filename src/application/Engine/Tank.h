@@ -66,6 +66,7 @@ public:
 	void setColor(const ci::Colorf& color);
 	int getGroupId() const;
 	void setGroupId(int groupId);
+	float getMaxTurningSpeed() const;
 
 	/// gun segment on tank's model view
 	ci::vec4 getGun() const;

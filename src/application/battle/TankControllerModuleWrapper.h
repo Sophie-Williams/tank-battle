@@ -10,5 +10,7 @@ private:
 public:
 	TankControllerModuleWrapper(const char* module);
 	virtual ~TankControllerModuleWrapper();
+	
+	void setup(TankPlayerContext* player);
 	TankOperations giveOperations(TankPlayerContext* player);
 };

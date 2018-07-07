@@ -47,6 +47,12 @@ TankControllerModuleWrapper::~TankControllerModuleWrapper() {
 	}
 }
 
+void TankControllerModuleWrapper::setup(TankPlayerContext* player) {
+	if (_interface) {
+		return _interface->setup(player);
+	}
+}
+
 TankOperations TankControllerModuleWrapper::giveOperations(TankPlayerContext* player) {
 	if (_interface) {
 		return _interface->giveOperations(player);

@@ -21,6 +21,7 @@ public:
 
 	float getObjectSpeed(GameObjectType) const;
 	float getObjectHealth(GameObjectId id) const;
+	float getTime() const;
 
 	GameObjectType getObjectype(GameObjectId id) const;
 	DrawableObjectRef getObject(GameObjectId id) const;

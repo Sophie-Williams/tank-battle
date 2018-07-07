@@ -5,8 +5,8 @@
 TankPlayerContextImpl::TankPlayerContextImpl(const std::shared_ptr<Tank>& myTank) :
 	_pCameraSnapshots(nullptr),
 	_pRadarSnapshots(nullptr),
-	_myTank(myTank)
-	{
+	_pSnapshotCollision(nullptr),
+	_myTank(myTank) {
 }
 
 TankPlayerContextImpl::~TankPlayerContextImpl() {
@@ -20,6 +20,10 @@ void TankPlayerContextImpl::setCameraSnapshot(const SnapshotObjectPoints* pCamer
 	_pCameraSnapshots = pCameraSnapshots;
 }
 
+void TankPlayerContextImpl::setCollisionsAtThisTurn(const SnapshotColissions* collisions) {
+	_pSnapshotCollision = collisions;
+}
+
 const SnapshotTimeObjectPoints* TankPlayerContextImpl::getRadarSnapshot() const {
 	return _pRadarSnapshots;
 }
@@ -30,6 +34,10 @@ const SnapshotObjectPoints* TankPlayerContextImpl::getCameraSnapshot() const {
 
 TankOperations TankPlayerContextImpl::getCurrentOperations() const {
 	return _myTank->getCurrentOperations();
+}
+
+const SnapshotColissions* TankPlayerContextImpl::getCollisionsAtThisTurn() const {
+	return _pSnapshotCollision;
 }
 
 bool TankPlayerContextImpl::isAlly(GameObjectId id) const {
@@ -69,6 +77,14 @@ RawRay TankPlayerContextImpl::getMyGun() const {
 
 float TankPlayerContextImpl::getMyHealth() const {
 	return _myTank->getHealth();
+}
+
+float TankPlayerContextImpl::getMovingSpeed() const {
+	return GameInterfaceImpl::getInstance()->getObjectSpeed(GAME_TYPE_TANK);
+}
+
+float TankPlayerContextImpl::getTurningSpeed() const {
+	return _myTank->getMaxTurningSpeed();
 }
 
 GeometryInfo TankPlayerContextImpl::getMyGeometry() const {

@@ -727,7 +727,7 @@ void CollisionDetector::resolveCollisions_old(std::list<DrawableObjectRef>& draw
 		}
 	}
 
-	ColissionPosition dummy;
+	CollisionInfo dummy;
 	dummy.relative = ColissionPositionRelative::Unknown;
 	dummy.absolute = ci::vec2();
 
@@ -922,14 +922,26 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 					collisions1 = make_shared<list<CollisionNode>>();
 				}
 				// add primary collision
-				collisions1->push_back({ true, &collisionInfo2 });
+				CollisionNode node1;
+				node1.isMain = true;
+				node1.pCollisionInfo = &collisionInfo2;
+				node1.colliedEdge1 = intersectAt.atEdgeInPoly1;
+				node1.colliedEdge2 = intersectAt.atEdgeInPoly2;
+				node1.collidedPosition = intersectAt.position;
+				collisions1->push_back(node1);
 
 				auto& collisions2 = collisionInfo2.collisions;
 				if (collisions2 == nullptr) {
 					collisions2 = make_shared<list<CollisionNode>>();
 				}
 				// add secondary collision
-				collisions2->push_back({ false, &collisionInfo1 });
+				CollisionNode node2;
+				node2.isMain = false;
+				node2.pCollisionInfo = &collisionInfo1;
+				node2.colliedEdge1 = intersectAt.atEdgeInPoly2;
+				node2.colliedEdge2 = intersectAt.atEdgeInPoly1;
+				node2.collidedPosition = intersectAt.position;
+				collisions2->push_back(node2);
 			}
 		}
 	}
@@ -960,9 +972,9 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 					}
 				}
 				else {
-					node.colliedEdge1 = -1;
-					node.colliedEdge2 = -1;
-					node.collidedPosition = ci::vec2(0, 0);
+					//node.colliedEdge1 = -1;
+					//node.colliedEdge2 = -1;
+					//node.collidedPosition = ci::vec2(0, 0);
 					kt++;
 				}
 			}
@@ -984,7 +996,7 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 			updateTranformForCollision(object.get(), it->collisionTimeRange.first, t);
 		}
 	}
-	ColissionPosition collisionPossition;
+	CollisionInfo collisionPossition;
 
 	// call collision event handler
 	for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {

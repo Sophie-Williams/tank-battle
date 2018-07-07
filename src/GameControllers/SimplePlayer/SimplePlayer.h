@@ -6,6 +6,8 @@
 
 class SimplePlayer : public TankController
 {
+	char _moveDir = 1;
+	int _moveCount = 100;
 public:
 	SimplePlayer();
 	virtual ~SimplePlayer();

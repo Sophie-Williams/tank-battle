@@ -299,7 +299,7 @@ bool isPointInside2(const std::vector<T>& poly, const T& Q) {
 
 		// if the previous value and current value is opposite of sign
 		// it means the point is out side of the polygon
-		if (prevVal * currVal < 0) {\
+		if (prevVal * currVal < 0) {
 			break;
 		}
 		prevVal = currVal;

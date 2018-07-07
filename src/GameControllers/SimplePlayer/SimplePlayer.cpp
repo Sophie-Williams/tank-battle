@@ -24,9 +24,12 @@ SimplePlayer::~SimplePlayer()
 void SimplePlayer::setup(TankPlayerContext*) {
 	static bool seedGenerated = false;
 	if (seedGenerated == false) {
-		srand(time(NULL));
+		srand((unsigned int)time(NULL));
 		seedGenerated = true;
 	}
+
+	_moveDir = 1;
+	_moveCount = (rand() % 50 + 50);
 }
 
 TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
@@ -55,15 +58,12 @@ TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
 
 	commandBuider.freeze();
 
-	static char moveDir = 1;
-	static int moveCount = (rand() % 50 + 50);
-
-	commandBuider.move(moveDir);
-	moveCount--;
-	if (moveCount <= 0) {
-		moveCount = (rand() % 50 + 50);
+	commandBuider.move(_moveDir);
+	_moveCount--;
+	if (_moveCount <= 0) {
+		_moveCount = (rand() % 50 + 50);
 		if (rand() % 2) {
-			moveDir = -moveDir;
+			_moveDir = -_moveDir;
 		}
 	}
 
@@ -89,8 +89,8 @@ TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
 	}
 
 	
-	float angleMin = 100;
-	float angle;
+	double angleMin = 100;
+	double angle;
 
 	int enemiesDetectedByCamera = 0;
 
@@ -108,17 +108,15 @@ TankOperations SimplePlayer::giveOperations(TankPlayerContext* player) {
 		}
 	}
 
-	static int currDir = 1;
 	if (angleMin > 0) {
-		currDir = 1;
+		commandBuider.spinGun(1);
 	}
-	else if(angleMin < 0) {
-		currDir = -1;
+	else if (angleMin < 0) {
+		commandBuider.spinGun(-1);
 	}
 	else {
-		currDir = 0;
+		commandBuider.spinGun(0);
 	}
-	commandBuider.spinGun(currDir);
 
 	if(enemiesDetectedByCamera == 0)
 	{
