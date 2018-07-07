@@ -503,7 +503,8 @@ void BasicApp::update()
 {
 	FUNCTON_LOG();
 	if (getWindow()->isHidden()) return;
-
+	static int countt = 0;
+	countt++;
 	// use ImGUI to check double click event
 	if (ImGui::IsMouseDoubleClicked(0)) {
 		auto& io = ImGui::GetIO();

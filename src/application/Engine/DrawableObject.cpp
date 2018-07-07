@@ -92,12 +92,8 @@ bool DrawableObject::canBeWentThrough(DrawableObject* other) const {
 	return (canBeWentThrough() || other->canBeWentThrough());
 }
 
-const CollisionDetectedHandler& DrawableObject::getCollisionHandler() const {
-	return _collisionHandler;
-}
-
-void DrawableObject::setCollisionHandler(CollisionDetectedHandler&& handler) {
-	_collisionHandler = handler;
+CollisionDetectedHandlerCollection& DrawableObject::getCollisionHandler() {
+	return _collisionHandlerCollection;
 }
 
 void DrawableObject::drawInternal() {

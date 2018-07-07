@@ -16,7 +16,7 @@ GameController::GameController() {
 GameController::~GameController() {
 }
 
-void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObjectRef other, float t) {
+void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObjectRef other, const ColissionPosition& poistion, float t) {
 	auto pBullet = dynamic_cast<Bullet*>(bullet.get());
 	if (pBullet) {
 		// the bullet is not impact to its owner

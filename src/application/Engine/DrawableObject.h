@@ -2,11 +2,26 @@
 #include "GameObject.h"
 #include "cinder/gl/gl.h"
 #include <vector>
+#include "../common/HandlerCollection.hpp"
 
 class DrawableObject;
 typedef std::shared_ptr<DrawableObject> DrawableObjectRef;
 
-typedef std::function<void(DrawableObjectRef, float)> CollisionDetectedHandler;
+enum class ColissionPositionRelative : int {
+	Unknown,
+	Front,
+	Right,
+	Bottom,
+	Left
+};
+
+struct ColissionPosition {
+	ColissionPositionRelative relative;
+	ci::vec2 absolute;
+};
+
+typedef std::function<void(DrawableObjectRef, const ColissionPosition&, float)> CollisionDetectedHandler;
+typedef HandlerCollection<CollisionDetectedHandler> CollisionDetectedHandlerCollection;
 
 class DrawableObject : public GameObject
 {
@@ -21,7 +36,7 @@ protected:
 	std::pair<glm::mat4, float> _previousMatFrame;
 	ci::vec3 _pivot;
 
-	CollisionDetectedHandler _collisionHandler;
+	CollisionDetectedHandlerCollection _collisionHandlerCollection;
 
 protected:
 	virtual void drawInternal();
@@ -56,8 +71,7 @@ public:
 	void setObjectStaticFlag(bool staticFlag);
 	bool isStaticObject() const;
 
-	const CollisionDetectedHandler& getCollisionHandler() const;
-	void setCollisionHandler(CollisionDetectedHandler&&);
+	CollisionDetectedHandlerCollection& getCollisionHandler();
 
 	static ci::vec2 transform(const ci::vec2& point, const glm::mat4& m);
 	void getGeometryInfo(ci::vec3& offset, float& rotation);

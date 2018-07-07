@@ -2,6 +2,7 @@
 #include <list>
 #include "DrawableObject.h"
 #include <vector>
+#include "../common/Geometry.h"
 
 class CollisionDetector
 {
@@ -16,7 +17,7 @@ public:
 
 	bool checkCollision2d(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2, std::vector<ci::vec2>& convexPoly);
 
-	int checkCollision2d(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2);
+	int checkCollision2d(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2, PolyIntersectionInfo<ci::vec2>& intersectAt);
 
 	std::pair<float,float> findCollideTime(float beginTime, float colliedTime,
 		const std::vector<ci::vec2>& staticBound, std::vector<ci::vec2>& dynamicBoundBuffer, DrawableObject* dynamicObject);

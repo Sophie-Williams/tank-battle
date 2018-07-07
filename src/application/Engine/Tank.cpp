@@ -183,9 +183,9 @@ void Tank::fire(float at) {
 			bulletLifeTimeControl->startLifeTimeCountDown(at);
 			bullet->addComponent(bulletLifeTimeControl);
 
-			auto onCollisionDetected = std::bind(&GameController::OnBulletCollisionDetected,
-				GameController::getInstance(), bullet, std::placeholders::_1, std::placeholders::_2);
-			bullet->setCollisionHandler(onCollisionDetected);
+			CollisionDetectedHandler onCollisionDetected = std::bind(&GameController::OnBulletCollisionDetected,
+				GameController::getInstance(), bullet, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+			bullet->getCollisionHandler() += std::move(onCollisionDetected);
 
 			bullet->setOwner(currentScene->findObjectRef(this));
 

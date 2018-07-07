@@ -381,14 +381,24 @@ bool hasInside(const std::vector<T>& poly1, const std::vector<T>& poly2) {
 	return false;
 }
 
+template <class T>
+struct PolyIntersectionInfo {
+	int atEdgeInPoly1;
+	int atEdgeInPoly2;
+	T position;
+};
+
 // check if two poly is intersect
 // return -1 if two poly is not intersect
 // return 0 of they are just touch to each other
 // return 1 if they have a common zone
 template <class T>
-int checkIntersect2d(const std::vector<T>& poly1, const std::vector<T>& poly2) {
+int checkIntersect2d(const std::vector<T>& poly1, const std::vector<T>& poly2, PolyIntersectionInfo<T>& intersectAt) {
 	int m = (int)poly1.size();
 	int n = (int)poly2.size();
+	intersectAt.atEdgeInPoly1 = -1;
+	intersectAt.atEdgeInPoly2 = -1;
+	intersectAt.position = T();
 
 	// count number of inside point
 	if (hasInside(poly1, poly2)) {
@@ -418,6 +428,8 @@ int checkIntersect2d(const std::vector<T>& poly1, const std::vector<T>& poly2) {
 				// at two construct points of the segment
 				if ((t1 > 0.0f && t1 < 1.0f) && (t2 > 0.0f && t2 < 1.0f)) {
 					// if two edges are intersect at middle, it means they have common area
+					intersectAt.atEdgeInPoly1 = i;
+					intersectAt.atEdgeInPoly2 = j;
 					return 1;
 				}
 				else if ((t1 == 0.0f || t1 == 1.0f) && (t2 >= 0.0f && t2 <= 1.0f)) {
@@ -461,6 +473,11 @@ int checkIntersect2d(const std::vector<T>& poly1, const std::vector<T>& poly2) {
 						}
 					}
 				}
+			}
+
+			if (isTouched) {
+				intersectAt.atEdgeInPoly1 = i;
+				intersectAt.atEdgeInPoly2 = j;
 			}
 		}
 	}

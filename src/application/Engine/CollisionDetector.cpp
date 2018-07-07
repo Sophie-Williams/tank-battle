@@ -390,8 +390,8 @@ bool CollisionDetector::checkCollision2d(const std::vector<ci::vec2>& poly1, con
 	return buildingVertices.size() > 0;
 }
 
-int CollisionDetector::checkCollision2d(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2) {
-	return checkIntersect2d(poly1, poly2);
+int CollisionDetector::checkCollision2d(const std::vector<ci::vec2>& poly1, const std::vector<ci::vec2>& poly2, PolyIntersectionInfo<ci::vec2>& intersectAt) {
+	return checkIntersect2d(poly1, poly2, intersectAt);
 }
 
 // smallest check duration is 1/32 of 
@@ -411,6 +411,8 @@ std::pair<float, float> CollisionDetector::findCollideTime(float beginTime, floa
 	// backup transformation
 	auto backupTransform = dynamicObject->getTransformation();
 
+	PolyIntersectionInfo<ci::vec2> intersectAt;
+
 	bool loop = true;
 	int checkResult;
 	while (loop && (duration = (tEnd - tStart)) > smallestDuration) {
@@ -419,7 +421,7 @@ std::pair<float, float> CollisionDetector::findCollideTime(float beginTime, floa
 		dynamicObject->update(t);
 		dynamicObject->getBoundingPoly(dynamicBoundBuffer);
 		
-		checkResult = checkIntersect2d(staticBound, dynamicBoundBuffer);
+		checkResult = checkIntersect2d(staticBound, dynamicBoundBuffer, intersectAt);
 		
 		if (checkResult == 0) {
 			// two objects just touch each other
@@ -464,6 +466,9 @@ std::pair<float, float> CollisionDetector::findCollideTime(
 
 	bool loop = true;
 	int checkResult;
+
+	PolyIntersectionInfo<ci::vec2> intersectAt;
+
 	while (loop && (duration = (tEnd - tStart)) > smallestDuration) {
 		t = tStart + duration / 2;
 
@@ -483,7 +488,7 @@ std::pair<float, float> CollisionDetector::findCollideTime(
 		}
 		dynamicObject2->getBoundingPoly(dynamicBoundBuffer2);
 
-		checkResult = checkIntersect2d(dynamicBoundBuffer1, dynamicBoundBuffer2);
+		checkResult = checkIntersect2d(dynamicBoundBuffer1, dynamicBoundBuffer2, intersectAt);
 
 		if (checkResult == 0) {
 			// two objects just touch each other
@@ -562,6 +567,8 @@ void CollisionDetector::resolveCollisions_old(std::list<DrawableObjectRef>& draw
 	std::vector<ci::vec2> boundingPolyStatic(4);
 	DrawableObject* currentCollision = nullptr;
 
+	PolyIntersectionInfo<ci::vec2> intersectAt;
+
 	for (auto jt = drawableObjects.begin(); jt != drawableObjects.end(); jt++) {
 		auto& drawableObject = *jt;
 		if (drawableObject->isAvailable() == false) {
@@ -574,15 +581,15 @@ void CollisionDetector::resolveCollisions_old(std::list<DrawableObjectRef>& draw
 			for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
 				currentCollision = it->object.get();
 
-				if (drawableObject->canBeWentThrough() && drawableObject->getCollisionHandler() == nullptr && currentCollision->getCollisionHandler() == nullptr) {
+				if (drawableObject->canBeWentThrough() && drawableObject->getCollisionHandler().isEmpty() && currentCollision->getCollisionHandler().isEmpty()) {
 					continue;
 				}
-				if (currentCollision->canBeWentThrough() && currentCollision->getCollisionHandler() == nullptr && drawableObject->getCollisionHandler() == nullptr) {
+				if (currentCollision->canBeWentThrough() && currentCollision->getCollisionHandler().isEmpty() && drawableObject->getCollisionHandler().isEmpty()) {
 					continue;
 				}
 
 				auto& dynamicBound = *it->boundingPoly;
-				if (checkCollision2d(dynamicBound, boundingPolyStatic) >= 0) {
+				if (checkCollision2d(dynamicBound, boundingPolyStatic, intersectAt) >= 0) {
 					if (_lastUpdate > 0) {
 						// restore the state of object if it available before the current update occur
 						// update back to previous frame
@@ -639,15 +646,15 @@ void CollisionDetector::resolveCollisions_old(std::list<DrawableObjectRef>& draw
 				continue;
 			}
 
-			if (drawableObject1->canBeWentThrough() && drawableObject1->getCollisionHandler() == nullptr && drawableObject2->getCollisionHandler() == nullptr) {
+			if (drawableObject1->canBeWentThrough() && drawableObject1->getCollisionHandler().isEmpty() && drawableObject2->getCollisionHandler().isEmpty()) {
 				continue;
 			}
-			if (drawableObject2->canBeWentThrough() && drawableObject2->getCollisionHandler() == nullptr && drawableObject1->getCollisionHandler() == nullptr) {
+			if (drawableObject2->canBeWentThrough() && drawableObject2->getCollisionHandler().isEmpty() && drawableObject1->getCollisionHandler().isEmpty()) {
 				continue;
 			}
 			auto& dynamicBound2 = *jt->boundingPoly;
 
-			if (checkCollision2d(dynamicBound1, dynamicBound2) >= 0) {
+			if (checkCollision2d(dynamicBound1, dynamicBound2, intersectAt) >= 0) {
 				if (_lastUpdate > 0) {
 					// restore the state of object if it available before the current update occur
 					// update back to previous frame
@@ -700,7 +707,7 @@ void CollisionDetector::resolveCollisions_old(std::list<DrawableObjectRef>& draw
 			// recheck and remove out-of-date collision
 			for (auto kt = colliedObjects->begin(); kt != colliedObjects->end();) {
 				(*kt)->getBoundingPoly(boundingPolyStatic);
-				if (checkCollision2d(dynamicBound, boundingPolyStatic) < 0) {
+				if (checkCollision2d(dynamicBound, boundingPolyStatic, intersectAt) < 0) {
 					auto ktTemp = kt;
 					kt++;
 					colliedObjects->erase(ktTemp);
@@ -720,26 +727,30 @@ void CollisionDetector::resolveCollisions_old(std::list<DrawableObjectRef>& draw
 		}
 	}
 
+	ColissionPosition dummy;
+	dummy.relative = ColissionPositionRelative::Unknown;
+	dummy.absolute = ci::vec2();
+
 	// call collision event handler
 	for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
 		auto& colliedObjects = it->colliedObjects;
 		auto& object = it->object;
 		if (colliedObjects) {
 			auto& collisionHandler1 = object->getCollisionHandler();
-			if (collisionHandler1) {
+			if (collisionHandler1.isEmpty() == false) {
 				for (auto kt = colliedObjects->begin(); kt != colliedObjects->end(); kt++) {
 					auto& collisionHandler2 = (*kt)->getCollisionHandler();
-					collisionHandler1(*kt, it->collisionTimeRange.first);
-					if (collisionHandler2) {
-						collisionHandler2(object, it->collisionTimeRange.first);
+					collisionHandler1(*kt, dummy, it->collisionTimeRange.first);
+					if (collisionHandler2.isEmpty() == false) {
+						collisionHandler2(object, dummy, it->collisionTimeRange.first);
 					}
 				}
 			}
 			else {
 				for (auto kt = colliedObjects->begin(); kt != colliedObjects->end(); kt++) {
 					auto& collisionHandler2 = (*kt)->getCollisionHandler();
-					if (collisionHandler2) {
-						collisionHandler2(object, it->collisionTimeRange.first);
+					if (collisionHandler2.isEmpty() == false) {
+						collisionHandler2(object, dummy, it->collisionTimeRange.first);
 					}
 				}
 			}
@@ -757,6 +768,9 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 	struct CollisionNode {
 		bool isMain;
 		CollisionCheckInfo* pCollisionInfo;
+		ci::vec2 collidedPosition;
+		int colliedEdge1;
+		int colliedEdge2;
 	};
 	struct CollisionCheckInfo {
 		// object need to be check
@@ -798,6 +812,7 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 
 		collisionCheckList.push_back(collisionCheckInfo);
 	}
+	PolyIntersectionInfo<ci::vec2> intersectAt;
 
 	auto prevEnd = collisionCheckList.end();
 	prevEnd--;
@@ -825,13 +840,13 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 			}
 
 			// check if object1 or object2 is not a barrel and both object have no collision handler
-			if ((object1->canBeWentThrough() || object2->canBeWentThrough()) && object1->getCollisionHandler() == nullptr && object2->getCollisionHandler() == nullptr) {
+			if ((object1->canBeWentThrough() || object2->canBeWentThrough()) && object1->getCollisionHandler().isEmpty() && object2->getCollisionHandler().isEmpty()) {
 				continue;
 			}
 
 			auto& boundingPoly2 = *collisionInfo2.boundingPoly;
 
-			if (checkCollision2d(boundingPoly1, boundingPoly2) >= 0) {
+			if (checkCollision2d(boundingPoly1, boundingPoly2, intersectAt) >= 0) {
 				if (_lastUpdate > 0) {
 					if (object1->isStaticObject() == false && object2->isStaticObject() == false) {
 						// restore the state of object if it available before the current update occur
@@ -932,16 +947,22 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 				auto& node = *kt;
 				if (node.isMain) {
 					auto& colliedObject = node.pCollisionInfo->object;
-					if (checkCollision2d(dynamicBound, *(node.pCollisionInfo->boundingPoly)) < 0) {
+					if (checkCollision2d(dynamicBound, *(node.pCollisionInfo->boundingPoly), intersectAt) < 0) {
 						auto ktTemp = kt;
 						kt++;
 						collisions->erase(ktTemp);
 					}
 					else {
 						kt++;
+						node.colliedEdge1 = intersectAt.atEdgeInPoly1;
+						node.colliedEdge2 = intersectAt.atEdgeInPoly2;
+						node.collidedPosition = intersectAt.position;
 					}
 				}
 				else {
+					node.colliedEdge1 = -1;
+					node.colliedEdge2 = -1;
+					node.collidedPosition = ci::vec2(0, 0);
 					kt++;
 				}
 			}
@@ -963,6 +984,7 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 			updateTranformForCollision(object.get(), it->collisionTimeRange.first, t);
 		}
 	}
+	ColissionPosition collisionPossition;
 
 	// call collision event handler
 	for (auto it = collisionCheckList.begin(); it != collisionCheckList.end(); it++) {
@@ -970,15 +992,20 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 		auto& object = it->object;
 		if (collisions) {
 			auto& collisionHandler1 = object->getCollisionHandler();
-			if (collisionHandler1) {
+			if (collisionHandler1.isEmpty() == false) {
 				for (auto kt = collisions->begin(); kt != collisions->end(); kt++) {
 					auto& node = *kt;
 					if (node.isMain) {
 						auto& colliedObject = node.pCollisionInfo->object;
 						auto& collisionHandler2 = colliedObject->getCollisionHandler();
-						collisionHandler1(colliedObject, it->collisionTimeRange.first);
-						if (collisionHandler2) {
-							collisionHandler2(object, it->collisionTimeRange.first);
+						collisionPossition.relative = (ColissionPositionRelative)(node.colliedEdge1 + 1);
+						collisionPossition.absolute = node.collidedPosition;
+
+						collisionHandler1(colliedObject, collisionPossition, it->collisionTimeRange.first);
+						if (collisionHandler2.isEmpty() == false) {
+
+							collisionPossition.relative = (ColissionPositionRelative)(node.colliedEdge2 + 1);
+							collisionHandler2(object, collisionPossition, it->collisionTimeRange.first);
 						}
 					}
 				}
@@ -989,8 +1016,11 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 					if (node.isMain) {
 						auto& colliedObject = node.pCollisionInfo->object;
 						auto& collisionHandler2 = colliedObject->getCollisionHandler();
-						if (collisionHandler2) {
-							collisionHandler2(object, it->collisionTimeRange.first);
+						if (collisionHandler2.isEmpty() == false) {
+
+							collisionPossition.relative = (ColissionPositionRelative)(node.colliedEdge2 + 1);
+							collisionPossition.absolute = node.collidedPosition;
+							collisionHandler2(object, collisionPossition, it->collisionTimeRange.first);
 						}
 					}
 				}

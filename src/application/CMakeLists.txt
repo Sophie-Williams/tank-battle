@@ -7,6 +7,7 @@ SET (COMMON_SRC
     ../common/AutoScope.cpp
     ../common/AutoScope.h
     ../common/SyncMessageQueue.hpp
+    ../common/HandlerCollection.hpp
 )
 
 SET (ENGINE_SRC
