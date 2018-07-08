@@ -2,46 +2,106 @@
 #include "../common/Utility.h"
 #include <sstream>
 
-
 #define START_STOP_BUTTON_ID "StartStop"
+#define PAUSE_RESUME_BUTTON_ID "PauseResume"
 
-WxControlBoard::WxControlBoard(const std::vector<std::string>& players) : ImPopup("")
+WxControlBoard::WxControlBoard()
 {
+	_window_flags |= ImGuiWindowFlags_NoTitleBar;
 	_window_flags |= ImGuiWindowFlags_NoMove;
 	_window_flags |= ImGuiWindowFlags_NoResize;
 	_window_flags |= ImGuiWindowFlags_NoCollapse;
 	_window_flags |= ImGuiWindowFlags_NoScrollbar;
 
-	_players = players;
-	if (_players.size()) {
-		_player1 = 0;
-		_player2 = _players.size() - 1;
-	}
-	else {
-		_player1 = -1;
-		_player2 = -1;
-	}
-
 	setStarStopButtonText("");
 }
+
 
 WxControlBoard::~WxControlBoard()
 {
 }
 
-void WxControlBoard::updateContent() {
+void WxControlBoard::update() {
 	FUNCTON_LOG();
 
-	// current control align base on the control window at 130 width length
-	int widthAutoFilledLength = _window_size.x - 130;
+	ImGui::SetNextWindowSize(_window_size, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(_window_pos);
 
-	_starStopButtonStrMutex.lock();
-	auto tempButtonStr = _starStopButtonStr;
-	_starStopButtonStrMutex.unlock();
-	if (ImGui::Button(tempButtonStr.c_str(), ImVec2(120 + widthAutoFilledLength, 35))) {
+	if (!ImGui::Begin("Control board", nullptr, _window_flags))
+	{
+		// Early out if the window is collapsed, as an optimization.
+		ImGui::End();
+		return;
+	}
+
+	ImGui::Columns(2, nullptr, false);
+	ImGui::SetColumnWidth(0, 250);
+	ImGui::SetColumnWidth(1, 150); 
+
+	ImGui::CollapsingHeader("Game Settings", ImGuiTreeNodeFlags_Leaf);
+	ImGui::SliderInt("bot", &_numberOfBot, 0, 10);
+	ImGui::SliderInt("tank health", &_tankHeathCapacity, 20, 1000);
+	ImGui::SliderInt("round", &_round, 1, 17);
+
+	ImGui::CollapsingHeader("Players", ImGuiTreeNodeFlags_Leaf);
+	showPlayers("Player 1", _player1);
+	showPlayers("Player 2", _player2);
+
+	ImGui::NextColumn();
+	if (ImGui::Button("Generate tanks", ImVec2(130, 35))) {
+		if (_generateButtonClickHandler) {
+			_generateButtonClickHandler(this);
+		}
+	}
+
+	if (ImGui::Button("Start rounds", ImVec2(130, 35))) {
+		if (_startRoundsButtonClickHandler) {
+			_startRoundsButtonClickHandler(this);
+		}
+	}
+
+	if (ImGui::Button(_starStopButtonStr.c_str(), ImVec2(130, 35))) {
 		if (_startButtonClickHandler) {
 			_startButtonClickHandler(this);
 		}
+	}
+
+	if (ImGui::Button(_pauseResumeButtonStr.c_str(), ImVec2(130, 35))) {
+		if (_pauseButtonClickHandler) {
+			_pauseButtonClickHandler(this);
+		}
+	}
+	//ImGui::NextColumn();
+	//ImGui::CollapsingHeader("Game statistics", ImGuiTreeNodeFlags_Leaf);
+	//if (ImGui::TreeNode("Sumary")) {
+	//	ImGui::Text("Player"); ImGui::SameLine();
+	//	ImGui::Text("Win"); ImGui::SameLine();
+	//	ImGui::Text("Time Per frame");
+
+	//	ImGui::Text("Time Per frame");
+	//	ImGui::TreePop();
+	//}
+	
+	ImGui::Columns(1);
+
+	ImGui::End();
+}
+
+void WxControlBoard::showPlayers(const char* label, int& selected) {
+	const char* preview = "";
+	if (selected < (int)_players.size()) {
+		preview = _players[selected].c_str();
+	}
+	if (ImGui::BeginCombo(label, preview)) {
+		for (int i = 0; i < (int)_players.size(); i++)
+		{
+			bool is_selected = selected == i;
+			if (ImGui::Selectable(_players[i].c_str(), is_selected))
+				selected = i;
+			if (is_selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
 	}
 }
 
@@ -49,24 +109,44 @@ void WxControlBoard::setOnStartStopButtonClickHandler(ButtonClickEventHandler&& 
 	_startButtonClickHandler = handler;
 }
 
+void WxControlBoard::setOnPauseResumeClickHandler(ButtonClickEventHandler&& handler) {
+	_pauseButtonClickHandler = handler;
+}
+
+void WxControlBoard::setOnGenerateClickHandler(ButtonClickEventHandler&& handler) {
+	_generateButtonClickHandler = handler;
+}
+
+void WxControlBoard::setOnStartRoundsClickHandler(ButtonClickEventHandler&& handler) {
+	_startRoundsButtonClickHandler = handler;
+}
+
 void WxControlBoard::setStarStopButtonText(const char* buttonText) {
-	std::unique_lock<std::mutex> lk(_starStopButtonStrMutex);
 	_starStopButtonStr = buttonText;
 	_starStopButtonStr.append("##" START_STOP_BUTTON_ID);
 }
 
-const char* WxControlBoard::getPlayer1() const {
-	if (_player1 >= 0 && _player1 <= _players.size()) {
-		return _players[_player1].c_str();
-	}
-
-	return nullptr;
+void WxControlBoard::setPauseResumeButtonText(const char* buttonText) {
+	_pauseResumeButtonStr = buttonText;
+	_pauseResumeButtonStr.append("##" PAUSE_RESUME_BUTTON_ID);
 }
 
-const char* WxControlBoard::getPlayer2() const {
-	if (_player1 >= 0 && _player1 <= _players.size()) {
-		return _players[_player1].c_str();
-	}
+void WxControlBoard::setPlayers(const std::vector<std::string>& players) {
+	_players = players;
+}
 
-	return nullptr;
+const std::string& WxControlBoard::getPlayer1() const {
+	return _players[_player1];
+}
+
+const std::string& WxControlBoard::getPlayer2() const {
+	return _players[_player2];
+}
+
+int WxControlBoard::getNumberOfBot() const {
+	return _numberOfBot;
+}
+
+int WxControlBoard::getTankHeathCapacity() const {
+	return _tankHeathCapacity;
 }

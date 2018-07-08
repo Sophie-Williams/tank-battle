@@ -1,5 +1,5 @@
 #pragma once
-#include "ImPopup.h"
+#include "ImWidget.h"
 #include <functional>
 #include <vector>
 #include <mutex>
@@ -7,24 +7,45 @@
 typedef ButtonClickEventHandler FilterActiveChanged;
 
 class WxControlBoard :
-	public ImPopup
+	public ImWidget
 {
 	ButtonClickEventHandler _startButtonClickHandler;
-	mutable std::mutex _starStopButtonStrMutex;
+	ButtonClickEventHandler _startRoundsButtonClickHandler;
+	ButtonClickEventHandler _pauseButtonClickHandler;
+	ButtonClickEventHandler _generateButtonClickHandler;
+	
 	std::string _starStopButtonStr;
+	std::string _pauseResumeButtonStr;
 	std::vector<std::string> _players;
-	int _player1;
-	int _player2;
-protected:
-	virtual void updateContent();
+
+	int _numberOfBot = 4;
+	int _tankHeathCapacity = 50;
+	int _round = 1;
+	int _player1 = 0;
+	int _player2 = 0;
+
+private:
+	void showPlayers(const char* label, int& selected);
+
 public:
-	WxControlBoard(const std::vector<std::string>& players);
+	WxControlBoard();
 	virtual ~WxControlBoard();
 
-	void setOnStartStopButtonClickHandler(ButtonClickEventHandler&& handler);
-	void setStarStopButtonText(const char* buttonText);
+	virtual void update();
 
-	const char* getPlayer1() const;
-	const char* getPlayer2() const;
+	void setOnStartStopButtonClickHandler(ButtonClickEventHandler&& handler);
+	void setOnPauseResumeClickHandler(ButtonClickEventHandler&& handler);
+	void setOnGenerateClickHandler(ButtonClickEventHandler&& handler);
+	void setOnStartRoundsClickHandler(ButtonClickEventHandler&& handler);
+
+	void setStarStopButtonText(const char* buttonText);
+	void setPauseResumeButtonText(const char* buttonText);
+
+	void setPlayers(const std::vector<std::string>& players);
+	const std::string& getPlayer1() const;
+	const std::string& getPlayer2() const;
+
+	int getNumberOfBot() const;
+	int getTankHeathCapacity() const;
 };
 

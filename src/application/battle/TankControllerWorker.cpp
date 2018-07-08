@@ -30,10 +30,12 @@ TankControllerWorker::TankControllerWorker(const std::shared_ptr<Tank>& tank,
 
 	CollisionDetectedHandler onCollisionDetected = std::bind(&TankControllerWorker::onTankCollision,
 		this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-	_tank->getCollisionHandler() += std::move(onCollisionDetected);
+	_tankCollisionHandlerId = (_tank->getCollisionHandler() += std::move(onCollisionDetected));
 }
 
-TankControllerWorker::~TankControllerWorker() {}
+TankControllerWorker::~TankControllerWorker() {
+	_tank->getCollisionHandler() -= _tankCollisionHandlerId;
+}
 
 long long getCurrentTimeStamp() {
 	using namespace std::chrono;

@@ -37,7 +37,7 @@ void WxRadarView::renderScene() {
 }
 
 void WxRadarView::draw() {
-	if (!_fboScene) return;
+	if (!_fboScene || !_glslBlurShader) return;
 	{
 		//// render scene into mFboScene using illumination texture
 		{

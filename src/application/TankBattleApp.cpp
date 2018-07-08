@@ -1,11 +1,13 @@
 #ifdef WIN32
 #include <Windows.h>
+#include <experimental/filesystem> // C++-standard header file name  
 #include <filesystem>
-using namespace std::experimental;
+using namespace std::experimental::filesystem::v1;
 #else
 #include <unistd.h>
 #include <filesystem>
 using namespace std;
+using fs = std::filesystem;
 #endif
 
 #include <stdio.h>
@@ -34,9 +36,11 @@ using namespace std;
 #include "Controllers/PlayerControllerTest.h"
 #include "battle/BattlePlatform.h"
 #include "UI/WxTankPeripheralsView.h"
+#include "UI/WxGameStatistics.h"
 #include "battle/GameCapture.h"
 #include "battle/TankControllerWorker.h"
 #include "battle/TankControllerModuleWrapper.h"
+#include "Engine/Timer.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -60,7 +64,7 @@ class BasicApp : public App {
 	shared_ptr<WxAppLog> _applog;
 	shared_ptr<WxGameView> _gameView;
 	shared_ptr<WxControlBoard> _controlBoard;
-	thread _asynTasksWorker;
+	shared_ptr<WxGameStatistics> _gameStatistics;
 	SyncMessageQueue<Task> _tasks;
 	
 	shared_ptr<GameEngine> _gameEngine;
@@ -72,7 +76,10 @@ class BasicApp : public App {
 	LogAdapter* _logAdapter;
 	int _startStopButtonState = 0;
 	shared_ptr<SignalAny> _controllerReadySignal;
-	float _beginGameTime;
+	string _workingDir;
+
+	shared_ptr<WxTankPeripheralsView> _peripheralsview1;
+	shared_ptr<WxTankPeripheralsView> _peripheralsview2;
 public:
 	BasicApp();
 	~BasicApp();
@@ -83,6 +90,8 @@ public:
 	void startServices();
 	void stopServices();
 	void setupGame();
+	void loadPlayers();
+	void generateGame();
 
 	void addLog(LogLevel logLevel, const char* fmt, va_list args) {
 		if (_applog) {
@@ -93,6 +102,8 @@ public:
 	static void intializeApp(App::Settings* settings);
 	void onWindowSizeChanged();
 	void setSSButtonState(int state);
+
+	void applyController(shared_ptr<Tank> tank, const char* controllerModule, std::shared_ptr<WxTankPeripheralsView> peripheralsview);
 };
 
 void pushLog(int logLevel, const char* fmt, ...) {
@@ -125,10 +136,6 @@ BasicApp::~BasicApp() {
 	if (_logAdapter) {
 		delete _logAdapter;
 	}
-
-	if (_asynTasksWorker.joinable()) {
-		_asynTasksWorker.join();
-	}
 }
 
 void BasicApp::cleanup() {
@@ -159,6 +166,24 @@ void BasicApp::setup()
 {
 	FUNCTON_LOG();
 
+	fs::path path = fs::current_path();
+	path.append("assets");
+	if (fs::exists(path) && fs::is_directory(path)) {
+		_workingDir = path.parent_path().u8string();
+	}
+	else {
+		path = fs::path(getExecutableAbsolutePath());
+		path = path.parent_path();
+		path.append("assets");
+		if (fs::exists(path) && fs::is_directory(path)) {
+			_workingDir = path.parent_path().u8string();
+		}
+		else {
+			quit();
+			return;
+		}
+	}
+
 	using namespace std::placeholders;
 	ui::Options uiOptions;
 	ui::initialize(uiOptions);
@@ -182,20 +207,39 @@ void BasicApp::setup()
 	auto bottomSpliter = std::make_shared<Spliter>();
 	auto bottomLeftSpilter = std::make_shared<Spliter>();
 
-	_controlBoard = std::make_shared<WxControlBoard>(players);
+	_controlBoard = std::make_shared<WxControlBoard>();
+	_gameStatistics = make_shared<WxGameStatistics>();
 	_logAdapter = new LogAdapter(_applog.get());
 
 	_gameView = std::make_shared<WxGameView>(getWindow());
 
-	auto _playerInfo1 = std::make_shared<WxPlayerInfo>("player1");
-	auto _playerInfo2 = std::make_shared<WxPlayerInfo>("player2");;
+	auto& records = _gameStatistics->records();
+	_gameStatistics->setPlayers(players);
+
+	RoundRecord record1;
+	record1.winner = 0;
+	record1.playerRecords.push_back({ 0, 2 });
+	record1.playerRecords.push_back({ 1, 5 });
+	records.push_back(record1);
+
+	RoundRecord record2;
+	record2.winner = -1;
+	record2.playerRecords.push_back({ 0, 3 });
+	record2.playerRecords.push_back({ 1, 4 });
+	records.push_back(record2);
+
+	RoundRecord record3;
+	record3.winner = 1;
+	record3.playerRecords.push_back({ 0, 3 });
+	record3.playerRecords.push_back({ 1, 5 });
+	records.push_back(record3);
 
 	// arrange player information windows
 	bottomLeftSpilter->setVertical(true);
-	bottomLeftSpilter->setLayoutType(Spliter::LayoutType::Auto);
-	bottomLeftSpilter->setLayoutRelative(0.5f);
-	bottomLeftSpilter->setChild1(_playerInfo1);
-	bottomLeftSpilter->setChild2(_playerInfo2);
+	bottomLeftSpilter->setLayoutFixedSize(200);
+	bottomLeftSpilter->setLayoutType(Spliter::LayoutType::Panel2Fixed);
+	bottomLeftSpilter->setChild1(_controlBoard);
+	bottomLeftSpilter->setChild2(_gameStatistics);
 
 	bottomSpliter->setVertical(true);
 	bottomSpliter->setLayoutFixedSize(600);
@@ -228,91 +272,47 @@ void BasicApp::setup()
 	_controlBoard->setOnStartStopButtonClickHandler([this](Widget*) {
 		if (StartState::NOT_STARTED == _startStopButtonState) {
 			setSSButtonState(StartState::STARTING);
-			Task task = std::bind(&BasicApp::startServices, this);
-			_tasks.pushMessage(task);
+
+			auto gameEngine = GameEngine::getInstance();
+			auto& secne = gameEngine->getScene();
+
+			auto timer = make_shared<TimerObject>(3.0f);
+			timer->setTimeOutHandler([this]() {
+				_controllerReadySignal->signal();
+			});
+			timer->startTimer();
+			secne->addGameObject(timer);
+
+			_tankControllerWorkers.at(0)->run();
+			_tankControllerWorkers.at(1)->run();
+
 		}
 		else if (StartState::STOPING == _startStopButtonState) {
 			pushLog((int)LogLevel::Error, "services are stoping, please wait\n");
 		}
 		else {
 			setSSButtonState(StartState::STOPING);
-			Task task = std::bind(&BasicApp::stopServices, this);
-			_tasks.pushMessage(task);
 		}
 	});
 
-	// start the asynchonous task handlers
-	_asynTasksWorker = std::thread([this]() {
-		while (_runFlag)
-		{
-			BasicApp::Task task;
-			if (_tasks.popMessage(task, 1000)) {
-				task();
-			}
-		}
+	_controlBoard->setOnGenerateClickHandler([this](Widget*) {
+		generateGame();
 	});
 
 	// set the first state of application
 	setSSButtonState(StartState::NOT_STARTED);
+	_controlBoard->setPauseResumeButtonText("Pause");
 
-	//_controlBoard->showWindow(true);
+	_peripheralsview1 = make_shared<WxTankPeripheralsView>(getWindow());
+	_peripheralsview2 = make_shared<WxTankPeripheralsView>(getWindow());
+
+	_gameView->setTankView(_peripheralsview1);
+	_gameView->setTankView(_peripheralsview2);
 
 	setupGame();
 }
 
-void generateTanks1(Scene* scene) {
-	auto& sceneArea = scene->getSceneArea();
-	auto sceneHeight = sceneArea.getHeight();
-	auto sceneWidth = sceneArea.getWidth();
-
-	auto tank1 = make_shared<Tank>();
-	tank1->setSize(vec2(5.7f, 6.6f));
-	auto playerController = std::make_shared<PlayerControllerUI>(getWindow());
-	//auto playerController = make_shared<PlayerControllerTest>();
-	tank1->addComponent(playerController);
-	tank1->translate(vec3(0, sceneHeight / 2 - tank1->getBound().getHeight() - 7, 0));
-	tank1->rotate(glm::pi<float>());
-
-	auto tank2 = make_shared<Tank>();
-	tank2->setSize(vec2(5.7f, 6.6f));
-	auto playerController1 = make_shared<PlayerControllerTest>();
-	tank2->addComponent(playerController1);
-	tank2->translate(vec3(0, -sceneHeight / 2 + tank1->getBound().getHeight() + 7, 0));
-
-	auto tank3 = make_shared<Tank>();
-	tank3->setSize(vec2(5.7f, 6.6f));
-	auto playerController3 = make_shared<PlayerControllerTest>();
-	tank3->addComponent(playerController3);
-	tank3->translate(vec3(-sceneWidth / 2 + tank1->getBound().getWidth() + 7, 0, 0));
-	tank3->rotate(-glm::pi<float>() / 2);
-
-	auto tank4 = make_shared<Tank>();
-	tank4->setSize(vec2(5.7f, 6.6f));
-	auto playerController4 = make_shared<PlayerControllerTest>();
-	tank4->addComponent(playerController4);
-	tank4->translate(vec3(sceneWidth / 2 - tank1->getBound().getWidth() - 7, 0, 0));
-	tank4->rotate(glm::pi<float>() / 2);
-
-	Colorf tankColors[] = {
-		{ 0,0,1 },
-		{ 0,1,0 },
-		{ 1,0,0 },
-		{ 1,1,0 },
-	};
-
-	int i = 0;
-	tank1->setColor(tankColors[i++]);
-	tank2->setColor(tankColors[i++]);
-	tank3->setColor(tankColors[i++]);
-	tank4->setColor(tankColors[i++]);
-
-	scene->addDrawbleObject(tank1);
-	scene->addDrawbleObject(tank2);
-	scene->addDrawbleObject(tank3);
-	scene->addDrawbleObject(tank4);
-}
-
-std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, int customTanks, int expectedAutoTank) {
+std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, int customTanks, int expectedAutoTank, float tankHealthCapacity) {
 	float padding = 8;
 
 	auto& sceneArea = scene->getSceneArea();
@@ -359,6 +359,7 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 		generatedPos[iPos] = true;
 		ci::vec3 tankPos((iPos % colMax) * colW + colW/2 + baseCoordinateOfScene.x + padding, (iPos / rowMax) * rowW + rowW/2 + baseCoordinateOfScene.y + padding, 0);
 		auto tank = make_shared<Tank>();
+		tank->setHealth(tankHealthCapacity);
 		tank->setSize(tankSize);
 		tank->translate(tankPos);
 		tank->rotate(glm::half_pi<float>() * randomizer.nextInt(0, 4));
@@ -382,8 +383,87 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 	return tanks;
 }
 
+void BasicApp::applyController(shared_ptr<Tank> tankRef, const char* controllerModule, std::shared_ptr<WxTankPeripheralsView> peripheralsview) {
+	auto& gameArea = _battlePlatform->getMapArea();
+	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
+
+	auto radar = make_shared<Radar>(objectViewContainer, glm::pi<float>());
+	radar->setRange(std::max(gameArea.getWidth(), gameArea.getHeight()) / 2);
+
+	auto camera = make_shared<TankCamera>(objectViewContainer, glm::pi<float>()*2.0f / 3);
+	camera->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
+
+	tankRef->addComponent(objectViewContainer);
+	tankRef->addComponent(radar);
+	tankRef->addComponent(camera);
+
+	try {
+		peripheralsview->setupPeripherals(camera, radar);
+	}
+	catch (...) {
+		quit();
+	}
+
+	auto tankController = make_shared<TankControllerModuleWrapper>(controllerModule);
+	auto worker = make_shared<TankControllerWorker>(tankRef, tankController);
+
+	_tankControllerWorkers.push_back(worker);
+	worker->setSignalWaiter(_controllerReadySignal.get());
+}
+
+void BasicApp::loadPlayers() {
+	vector<string> players;
+
+	fs::path controllersPath(_workingDir);
+	controllersPath.append("controllers");
+	if (fs::exists(controllersPath) && fs::is_directory(controllersPath)) {
+		for (auto & p : fs::directory_iterator(controllersPath)) {
+			auto file = p.path().filename();
+			auto ext = file.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+#ifdef WIN32
+			if (ext == ".dll") {
+#else
+			if (ext == ".so") {
+#endif
+				auto fileWithoutExt = file.string();
+				fileWithoutExt = fileWithoutExt.substr(0, fileWithoutExt.size() - ext.size());
+				players.push_back(fileWithoutExt);
+			}
+		}
+#ifdef WIN32
+		BOOL res = SetDllDirectoryA(controllersPath.string().c_str());
+#else
+		throw std::std::runtime_error("dynamic library search path is not implemented");
+#endif
+	}
+
+	_controlBoard->setPlayers(players);
+}
+
+void BasicApp::generateGame() {
+	auto& gameScene = GameEngine::getInstance()->getScene();
+	_tankControllerWorkers.clear();
+
+	auto tanks = generateTanks(gameScene.get(), 2, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());
+
+	//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
+	//tankRef->addComponent(controlByUser);
+
+	_controllerReadySignal = make_shared<SignalAny>(true);
+
+	auto& player1 = _controlBoard->getPlayer1();
+	auto& player2 = _controlBoard->getPlayer1();
+
+	applyController(tanks->at(0), player1.c_str(), _peripheralsview1);
+	applyController(tanks->at(1), player2.c_str(), _peripheralsview2);
+}
+
 void BasicApp::setupGame() {
-	addAssetDirectory("E:/Projects/tank-battle/src/application/assets");
+	fs::path assetsPath(_workingDir);
+	assetsPath.append("assets");
+	addAssetDirectory(assetsPath.u8string());
+
 	_gameResource = std::shared_ptr<GameResource>(GameResource::createInstance());
 	_gameResource->setTexture(TEX_ID_BULLET, "bulletBlue1_outline.png");
 	_gameResource->setTexture(TEX_ID_EXPLOSION, "explosion.png");
@@ -425,79 +505,15 @@ void BasicApp::setupGame() {
 	gameScene->addDrawbleObject(barrier3);
 	gameScene->addDrawbleObject(barrier4);
 
-	auto tanks = generateTanks(gameScene.get(), 2, 8);
-
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
 
 	gameScene->addGameObject(gameCapture);
 
-	auto tankRef = tanks->at(0);
-	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
-
-	auto radar = make_shared<Radar>(objectViewContainer, glm::pi<float>());
-	radar->setRange(std::max(gameArea.getWidth(), gameArea.getHeight())/2);
-
-	auto camera = make_shared<TankCamera>(objectViewContainer, glm::pi<float>()*2.0f/3);
-	camera->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
-
-	tankRef->addComponent(objectViewContainer);
-	tankRef->addComponent(radar);
-	tankRef->addComponent(camera);
-
-	auto peripheralsview1 = make_shared<WxTankPeripheralsView>(getWindow());
-
-	try {
-		peripheralsview1->setupPeripherals(camera, radar);
-	}
-	catch (...) {
-		quit();
-	}
-	//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
-	//tankRef->addComponent(controlByUser);
-
-	auto tankController1 = make_shared<TankControllerModuleWrapper>("SimplePlayer");
-	auto worker1 = make_shared<TankControllerWorker>(tankRef, tankController1);
-
-	auto tankRef2 = tanks->at(1);
-	auto objectViewContainer2 = make_shared<ObjectViewContainer>(tankRef2);
-	auto radar2 = make_shared<Radar>(objectViewContainer2, glm::pi<float>());
-	radar2->setRange(std::max(gameArea.getWidth(), gameArea.getHeight()) / 2);
-
-	auto camera2 = make_shared<TankCamera>(objectViewContainer2, glm::pi<float>()*2.0f / 3);
-	camera2->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
-
-	tankRef2->addComponent(objectViewContainer2);
-	tankRef2->addComponent(radar2);
-	tankRef2->addComponent(camera2);
-
-	auto peripheralsview2 = make_shared<WxTankPeripheralsView>(getWindow());
-
-	try {
-		peripheralsview2->setupPeripherals(camera2, radar2);
-	}
-	catch (...) {
-		quit();
-	}
-
-	auto tankController2 = make_shared<TankControllerModuleWrapper>("DumpPlayer");
-	auto worker2 = make_shared<TankControllerWorker>(tankRef2, tankController2);
-
+	loadPlayers();
+	
 	_controllerReadySignal = make_shared<SignalAny>(true);
-	_beginGameTime = GameEngine::getInstance()->getCurrentTime();
-
-	worker1->setSignalWaiter(_controllerReadySignal.get());
-	worker2->setSignalWaiter(_controllerReadySignal.get());
-
-	_tankControllerWorkers.push_back(worker1);
-	_tankControllerWorkers.push_back(worker2);
-
-	_gameView->setTankView(peripheralsview1);
-	_gameView->setTankView(peripheralsview2);
-
-	worker1->run();
-	worker2->run();
 }
 
 void BasicApp::startServices() {
@@ -543,15 +559,6 @@ void BasicApp::update()
 
 	_gameEngine->doUpdate();
 	_topCotrol->update();
-
-	// update popup window
-	_controlBoard->update();
-
-	auto t = GameEngine::getInstance()->getCurrentTime();
-	if (t - _beginGameTime > 3) {
-		_beginGameTime = 10000000000;
-		_controllerReadySignal->signal();
-	}
 }
 
 void BasicApp::draw()
@@ -562,9 +569,6 @@ void BasicApp::draw()
 	gl::clear(ColorA::black());
 
 	_topCotrol->draw();
-
-	// draw popup window
-	_controlBoard->draw();
 }
 
 CINDER_APP(BasicApp, RendererGl( RendererGl::Options().msaa( 16 ) ), BasicApp::intializeApp)

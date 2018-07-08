@@ -19,6 +19,7 @@ class TankControllerWorker {
 
 	std::list<ColissionRawInfo> _collisions;
 	std::mutex _collsionsMutex;
+	HandlerId _tankCollisionHandlerId;
 private:
 	// this method will be invoked in game UI thread
 	void setUp();

@@ -11,6 +11,7 @@ using namespace std;
 
 WxTankPeripheralsView::WxTankPeripheralsView(ci::app::WindowRef parent) :
 	_parent(parent) {
+	_radarView = make_shared<WxRadarView>(_parent);
 }
 
 WxTankPeripheralsView::~WxTankPeripheralsView(){}
@@ -65,6 +66,7 @@ void WxTankPeripheralsView::draw() {
 		}
 
 		// draw frame buffer scene to screen using blur fragment shader
+		if(_glslFboToScreen)
 		{
 			gl::ScopedTextureBind tex0(_fboScene->getColorTexture(), (uint8_t)0);
 			gl::ScopedGlslProg shader(_glslFboToScreen);

@@ -49,6 +49,8 @@ SET (ENGINE_SRC
     engine/GameResource.cpp
     engine/UIThreadRunner.h
     engine/UIThreadRunner.cpp
+    engine/Timer.h
+    engine/Timer.cpp
 )
 
 SET (UI_SRC
@@ -76,6 +78,8 @@ SET (UI_SRC
     UI/WxRadarView.cpp
     UI/WxTankPeripheralsView.h
     UI/WxTankPeripheralsView.cpp
+    UI/WxGameStatistics.h
+    UI/WxGameStatistics.cpp
 )
 
 SET (CONTROLLERS_SRC
@@ -145,20 +149,15 @@ else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     SET (PLATFORM x86)
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
-if(WIN32)
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<$<CONFIG:debug>:${CINDER_BIN_D}>$<$<CONFIG:release>:${CINDER_BIN_R}>" ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>/)
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<$<CONFIG:debug>:${CINDER_IMGUI_BIN_D}>$<$<CONFIG:release>:${CINDER_IMGUI_BIN_R}>" ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>/)
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy $<TARGET_FILE:GameControllerInterfaces> ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>/)
-endif()
-
 SET (INSTALL_DEST ${CMAKE_BINARY_DIR}/bin/${PLATFORM}/)
-install(FILES $<TARGET_FILE:${PROJECT_NAME}> DESTINATION ${INSTALL_DEST}/debug CONFIGURATIONS Debug)
-install(FILES $<TARGET_FILE:${PROJECT_NAME}> DESTINATION ${INSTALL_DEST}/release CONFIGURATIONS Release)
-install(FILES $<TARGET_FILE:GameControllerInterfaces> DESTINATION ${INSTALL_DEST}/release CONFIGURATIONS Release)
 
-if(WIN32)
-install(FILES ${CINDER_BIN_D} DESTINATION ${INSTALL_DEST}/debug CONFIGURATIONS Debug)
-install(FILES ${CINDER_BIN_R} DESTINATION ${INSTALL_DEST}/release CONFIGURATIONS Release)
-install(FILES ${CINDER_IMGUI_BIN_D} DESTINATION ${INSTALL_DEST}/debug CONFIGURATIONS Debug)
-install(FILES ${CINDER_IMGUI_BIN_R} DESTINATION ${INSTALL_DEST}/release CONFIGURATIONS Release)
-endif()
+file(MAKE_DIRECTORY ${INSTALL_DEST})
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E make_directory "${INSTALL_DEST}$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>")
+#if(WIN32)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<$<CONFIG:debug>:${CINDER_BIN_D}>$<$<CONFIG:release>:${CINDER_BIN_R}>" "${INSTALL_DEST}$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>/")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<$<CONFIG:debug>:${CINDER_IMGUI_BIN_D}>$<$<CONFIG:release>:${CINDER_IMGUI_BIN_R}>" "${INSTALL_DEST}$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>/")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy $<TARGET_FILE:GameControllerInterfaces> "${INSTALL_DEST}$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>/")
+#endif()
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets "${INSTALL_DEST}$<$<CONFIG:debug>:Debug>$<$<CONFIG:release>:Release>/assets")
