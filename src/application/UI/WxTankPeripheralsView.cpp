@@ -20,7 +20,7 @@ void WxTankPeripheralsView::setupPeripherals(const std::shared_ptr<TankCamera>& 
 	_tankCamera = tankCamera;
 
 	// setup radar view
-	_radarView = make_shared<WxRadarView>(_parent);
+	//_radarView = make_shared<WxRadarView>(_parent);
 	auto pApp = app::App::get();
 	auto shaderBlur = gl::GlslProg::create(pApp->loadAsset("blur.vert"), pApp->loadAsset("blur.frag"));
 	_glslFboToScreen = gl::GlslProg::create(pApp->loadAsset("radar.vert"), pApp->loadAsset("radar.frag"));
