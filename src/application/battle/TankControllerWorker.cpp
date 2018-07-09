@@ -124,7 +124,7 @@ void TankControllerWorker::loop() {
 	initRawArray(collisionsAtEachTurn);
 
 	// free resource when the function exit
-	std::unique_ptr<void, std::function<void(void*)>> freeResource((void*)0,
+	std::unique_ptr<void, std::function<void(void*)>> freeResource((void*)1,
 		[&cameraSnapshots, &radarSnapshots, &collisionsAtEachTurn](void*) {
 		freeSnapshotsRaw(cameraSnapshots);
 		freeSnapshotsRaw(radarSnapshots);
@@ -301,6 +301,20 @@ static bool stopAndWait(std::thread& worker, int milisecond) {
 }
 
 bool TankControllerWorker::stopAndWait(int milisecond) {
+	std::unique_ptr<void, std::function<void(void*)>> resetTankCommand((void*)1, [this](void*) {
+		auto tank = _tank;
+		auto task = [tank](float t) {
+			if (tank->isAvailable() == false) return;
+
+			tank->move(0, t);
+			tank->turn(0, t);
+			tank->spinBarrel(0, t);
+		};
+
+		GameEngine::getInstance()->postTask(task);
+	});
+
+
 	if (worker.joinable()) {
 		_stopSignal.signal();
 

@@ -1,11 +1,14 @@
 #include "PlayerControllerTest.h"
 #include "Engine/Tank.h"
 #include "cinder/Rand.h"
+#include "Engine/GameEngine.h"
 using namespace ci;
 std::mersenne_twister_engine<unsigned int, 32, 624, 397, 31, 2567483615, 11, 4294967295, 7, 2636928640, 15, 4022730752, 18, 1812433253> cinder::Rand::sBase;
 std::uniform_real_distribution<float> cinder::Rand::sFloatGen;
 
-PlayerControllerTest::PlayerControllerTest() : _lastMoveAt(-1), _lastFireAt(-1), _lifeBeginAt(-1) {
+static Rand radomizer;
+
+PlayerControllerTest::PlayerControllerTest() : _lastMoveAt(-1), _lastFireAt(-1), _enableRun(false) {
 	_fireLimitDuration = 2.7f;
 	_moveLimitDuration = 2;
 }
@@ -18,24 +21,10 @@ void PlayerControllerTest::randomStrategy(float t) {
 
 	static char singleActions[] = { 1, -1, 1, -1, 1, -1 };
 	//static char singleActions[] = { 1, -1 };
-	static Rand radomizer;
 	static bool isSeeded = false;
 	if (!isSeeded) {
 		radomizer.seed((uint32_t)(t * 100000));
 		isSeeded = true;
-	}
-
-	if (_lifeBeginAt < 0) {
-		_lifeBeginAt = t;
-
-		_fireLimitDuration = radomizer.randFloat(1.5f, 3.0f);
-		_moveLimitDuration = radomizer.randFloat(1.5f, 4.0f);
-		return;
-	}
-
-	auto delta = t - _lifeBeginAt;
-	if (delta < 3.0f) {
-		return;
 	}
 
 	if (_lastMoveAt < 0 || (t - _lastMoveAt) >= _moveLimitDuration) {
@@ -68,16 +57,29 @@ void PlayerControllerTest::randomStrategy(float t) {
 	}
 }
 
-void PlayerControllerTest::moveDownStrategy(float t) {
-	auto pTank = dynamic_cast<Tank*>(_owner);
-	if (pTank == nullptr) return;
-	if (_lifeBeginAt < 0) {
-		_lifeBeginAt = t;
-		pTank->move(-1, t);
+void PlayerControllerTest::update(float t) {
+	if (!_enableRun) return;
+	randomStrategy(t);
+}
+
+void PlayerControllerTest::startControl() {
+	if (_enableRun == false) {
+		_fireLimitDuration = radomizer.randFloat(1.5f, 3.0f);
+		_moveLimitDuration = radomizer.randFloat(1.5f, 4.0f);
+
+		_enableRun = true;
 	}
 }
 
-void PlayerControllerTest::update(float t) {
-	randomStrategy(t);
-	//moveDownStrategy(t);
+void PlayerControllerTest::stopControl() {
+	_enableRun = false;
+
+	auto pTank = dynamic_cast<Tank*>(_owner);
+	if (pTank == nullptr) return;
+
+	auto t = GameEngine::getInstance()->getCurrentTime();
+
+	pTank->move(0, t);
+	pTank->turn(0, t);
+	pTank->spinBarrel(0, t);
 }

@@ -133,6 +133,15 @@ void WxControlBoard::setPauseResumeButtonText(const char* buttonText) {
 
 void WxControlBoard::setPlayers(const std::vector<std::string>& players) {
 	_players = players;
+	if (_players.size() > 0 && _player1 < 0) {
+		_player1 = 0;
+	}
+	if (_players.size() > 1 && _player2 < 0) {
+		_player2 = 1;
+	}
+	if (_players.size() > 0 && _player2 < 0) {
+		_player2 = 0;
+	}
 }
 
 const std::string& WxControlBoard::getPlayer1() const {

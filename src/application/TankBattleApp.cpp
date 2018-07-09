@@ -92,6 +92,7 @@ public:
 	void setupGame();
 	void loadPlayers();
 	void generateGame();
+	void startStopBots(bool start);
 
 	void addLog(LogLevel logLevel, const char* fmt, va_list args) {
 		if (_applog) {
@@ -270,33 +271,13 @@ void BasicApp::setup()
 	});
 
 	_controlBoard->setOnStartStopButtonClickHandler([this](Widget*) {
-		if (StartState::NOT_STARTED == _startStopButtonState) {
-			setSSButtonState(StartState::STARTING);
-
-			auto gameEngine = GameEngine::getInstance();
-			auto& secne = gameEngine->getScene();
-
-			auto timer = make_shared<TimerObject>(3.0f);
-			timer->setTimeOutHandler([this]() {
-				_controllerReadySignal->signal();
-			});
-			timer->startTimer();
-			secne->addGameObject(timer);
-
-			_tankControllerWorkers.at(0)->run();
-			_tankControllerWorkers.at(1)->run();
-
-		}
-		else if (StartState::STOPING == _startStopButtonState) {
-			pushLog((int)LogLevel::Error, "services are stoping, please wait\n");
-		}
-		else {
-			setSSButtonState(StartState::STOPING);
-		}
+		startServices();
 	});
 
 	_controlBoard->setOnGenerateClickHandler([this](Widget*) {
-		generateGame();
+		if (_startStopButtonState == StartState::NOT_STARTED) {
+			generateGame();
+		}
 	});
 
 	// set the first state of application
@@ -511,17 +492,69 @@ void BasicApp::setupGame() {
 
 	gameScene->addGameObject(gameCapture);
 
-	loadPlayers();
-	
+	loadPlayers();	
 	_controllerReadySignal = make_shared<SignalAny>(true);
+	generateGame();
+}
+
+void BasicApp::startStopBots(bool start) {
+	auto gameEngine = GameEngine::getInstance();
+	auto& secne = gameEngine->getScene();
+
+	auto& objects = secne->getDrawableObjects();
+	for (auto it = objects.begin(); it != objects.end(); it++) {
+		auto tank = dynamic_cast<Tank*>(it->get());
+		if (tank) {
+			auto& components = tank->getComponents();
+			for (auto jt = components.begin(); jt != components.end(); jt++) {
+				auto controller = dynamic_cast<PlayerControllerTest*>(jt->get());
+				if (controller) {
+					if (start) {
+						controller->startControl();
+					}
+					else {
+						controller->stopControl();
+					}
+				}
+			}
+		}
+	}
 }
 
 void BasicApp::startServices() {
 	LOG_SCOPE_ACCESS(_logAdapter, __FUNCTION__);
 
-	std::unique_ptr<void, std::function<void(void*)>> scopedFinishState((void*)1, [this](void*) {
+	if (StartState::NOT_STARTED == _startStopButtonState) {
 		setSSButtonState(StartState::STARTED);
-	});
+
+		auto gameEngine = GameEngine::getInstance();
+		auto& secne = gameEngine->getScene();
+
+		auto timer = make_shared<TimerObject>(3.0f);
+		timer->setTimeOutHandler([this]() {
+			_controllerReadySignal->signal();
+			startStopBots(true);
+		});
+		timer->startTimer();
+		secne->addGameObject(timer);
+
+		// start user's controller
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			auto& worker = *it;
+			worker->run();
+		}
+
+		// start bot tanks
+	}
+	else if (StartState::STARTED == _startStopButtonState) {
+		setSSButtonState(StartState::NOT_STARTED);
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			auto& worker = *it;
+			worker->stopAndWait(100);
+		}
+		_controllerReadySignal->resetState();
+		startStopBots(false);
+	}
 }
 
 void BasicApp::stopServices() {

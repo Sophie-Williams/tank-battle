@@ -21,8 +21,8 @@ class WxControlBoard :
 	int _numberOfBot = 4;
 	int _tankHeathCapacity = 50;
 	int _round = 1;
-	int _player1 = 0;
-	int _player2 = 0;
+	int _player1 = -1;
+	int _player2 = -1;
 
 private:
 	void showPlayers(const char* label, int& selected);
