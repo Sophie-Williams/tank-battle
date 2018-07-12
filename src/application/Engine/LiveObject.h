@@ -1,5 +1,6 @@
 #pragma once
 #include "DrawableObject.h"
+#include <functional>
 
 class LiveObject : public DrawableObject
 {

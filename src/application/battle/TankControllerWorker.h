@@ -7,6 +7,7 @@
 #include "Radar.h"
 #include <thread>
 #include <mutex>
+#include <string>
 
 class TankControllerWorker {
 	std::shared_ptr<TankController> _tankController;
@@ -20,6 +21,7 @@ class TankControllerWorker {
 	std::list<ColissionRawInfo> _collisions;
 	std::mutex _collsionsMutex;
 	HandlerId _tankCollisionHandlerId;
+	std::string _name;
 private:
 	// this method will be invoked in game UI thread
 	void setUp();
@@ -35,4 +37,7 @@ public:
 	void resume();
 
 	void setSignalWaiter(SignalAny* pSignal);
+	const std::shared_ptr<Tank>& getAssociatedTank() const;
+	const std::string& getName() const;
+	void setName(std::string& name);
 };

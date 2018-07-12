@@ -32,8 +32,17 @@ GameObjectId GameObject::getId() const {
 }
 
 void GameObject::update(float t) {
-	for (auto it = _components.begin(); it != _components.end(); it++) {
-		it->get()->update(t);
+	for (auto it = _components.begin(); it != _components.end();) {
+		auto gameComponent = it->get();
+		if (gameComponent->isAvailable()) {
+			gameComponent->update(t);
+			it++;
+		}
+		else {
+			auto itTemp = it;
+			it++;
+			_components.erase(itTemp);
+		}
 	}
 }
 

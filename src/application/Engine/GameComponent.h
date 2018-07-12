@@ -6,7 +6,10 @@ class GameComponent
 {
 protected:
 	GameObject* _owner;
+	bool _isAvailble;
 protected:
+	void destroy();
+	bool isAvailable();
 public:
 	GameComponent();
 	virtual ~GameComponent();

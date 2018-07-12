@@ -1,10 +1,10 @@
 #pragma once
 #include <functional>
-#include "GameObject.h"
+#include "GameComponent.h"
 
 typedef std::function<void()> TimeEventHandler;
 
-class TimerObject : public GameObject
+class TimerObject : public GameComponent
 {
 	TimeEventHandler _timeCompletion;
 	float _startAt;

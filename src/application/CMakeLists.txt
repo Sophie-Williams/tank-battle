@@ -53,6 +53,11 @@ SET (ENGINE_SRC
     engine/Timer.cpp
 )
 
+SET (ENGINE_SPECIFIC_SRC
+    EngineSpecific/GameStateManager.h
+    EngineSpecific/GameStateManager.cpp
+)
+
 SET (UI_SRC
     UI/CiWidget.cpp
     UI/CiWidget.h
@@ -122,6 +127,7 @@ SET (MAIN_SOURCES
     ${COMMON_SRC}
     ${CONTROLLERS_SRC}
     ${BATTLE_SRC}
+    ${ENGINE_SPECIFIC_SRC}
 )
 
 SET (SOURCES ${MAIN_SOURCES})
@@ -130,6 +136,7 @@ if(MSVC)
     source_group(UI FILES ${UI_SRC})
     source_group(Common FILES ${COMMON_SRC})
     source_group(Engine FILES ${ENGINE_SRC})
+    source_group(EngineSpecific FILES ${ENGINE_SPECIFIC_SRC})
     source_group(Controllers FILES ${CONTROLLERS_SRC})
     source_group(Battle FILES ${BATTLE_SRC})
 endif()

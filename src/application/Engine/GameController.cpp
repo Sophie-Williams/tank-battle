@@ -20,7 +20,8 @@ void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObj
 	auto pBullet = dynamic_cast<Bullet*>(bullet.get());
 	if (pBullet) {
 		// the bullet is not impact to its owner
-		if (pBullet->getOwner().get() == other.get()) {
+		GameObject* owner = pBullet->getOwner().get();
+		if (owner == other.get()) {
 			return;
 		}
 		if (dynamic_cast<Bullet*>(other.get()) != nullptr) {
@@ -33,6 +34,12 @@ void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObj
 		if (liveObject) {
 			// make it hurt
 			liveObject->takeDamage(pBullet->getDamage());
+			if (liveObject->isAvailable() == false) {
+				auto it = _killCounter.insert(std::make_pair(owner->getId(), 1));
+				if (it.second == false) {
+					it.first->second++;
+				}
+			}
 		}
 		
 		if (other->canBeWentThrough() == false) {
@@ -40,4 +47,13 @@ void GameController::OnBulletCollisionDetected(GameObjectRef bullet, DrawableObj
 			bullet->destroy(t);
 		}
 	}
+}
+
+int GameController::getKills(GameObjectId id) {
+	auto it = _killCounter.find(id);
+	if (it == _killCounter.end()) {
+		return 0;
+	}
+
+	return it->second;
 }

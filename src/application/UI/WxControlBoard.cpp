@@ -144,6 +144,10 @@ void WxControlBoard::setPlayers(const std::vector<std::string>& players) {
 	}
 }
 
+const std::vector<std::string>& WxControlBoard::getPlayers() const {
+	return _players;
+}
+
 const std::string& WxControlBoard::getPlayer1() const {
 	return _players[_player1];
 }
@@ -158,4 +162,8 @@ int WxControlBoard::getNumberOfBot() const {
 
 int WxControlBoard::getTankHeathCapacity() const {
 	return _tankHeathCapacity;
+}
+
+int WxControlBoard::getRoundCount() const {
+	return _round;
 }

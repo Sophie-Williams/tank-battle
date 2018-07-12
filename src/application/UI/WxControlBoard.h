@@ -42,10 +42,12 @@ public:
 	void setPauseResumeButtonText(const char* buttonText);
 
 	void setPlayers(const std::vector<std::string>& players);
+	const std::vector<std::string>& getPlayers() const;
 	const std::string& getPlayer1() const;
 	const std::string& getPlayer2() const;
 
 	int getNumberOfBot() const;
 	int getTankHeathCapacity() const;
+	int getRoundCount() const;
 };
 

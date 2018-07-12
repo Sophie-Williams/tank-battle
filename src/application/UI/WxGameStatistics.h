@@ -28,5 +28,8 @@ public:
 
 	std::list<RoundRecord>& records();
 	void setPlayers(const std::vector<std::string>& players);
+	const std::vector<std::string>& getPlayers() const;
+	void addPlayer(const std::string& player);
+	void clearPlayers();
 };
 

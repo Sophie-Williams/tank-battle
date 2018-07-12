@@ -23,6 +23,6 @@ void TimerObject::update(float t) {
 			_timeCompletion();
 		}
 
-		destroy(t);
+		destroy();
 	}
 }

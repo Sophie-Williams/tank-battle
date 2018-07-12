@@ -333,3 +333,15 @@ void TankControllerWorker::resume() {
 void TankControllerWorker::setSignalWaiter(SignalAny* pSignal) {
 	_pWaitForReadySignal = pSignal;
 }
+
+const std::shared_ptr<Tank>& TankControllerWorker::getAssociatedTank() const {
+	return _tank;
+}
+
+const std::string& TankControllerWorker::getName() const {
+	return _name;
+}
+
+void TankControllerWorker::setName(std::string& name) {
+	_name = name;
+}

@@ -22,6 +22,19 @@ void WxGameStatistics::setPlayers(const std::vector<std::string>& players) {
 	_players = players;
 }
 
+const std::vector<std::string>& WxGameStatistics::getPlayers() const {
+	return _players;
+}
+
+void WxGameStatistics::addPlayer(const std::string& player) {
+	_players.push_back(player);
+}
+
+void WxGameStatistics::clearPlayers() {
+	_players.clear();
+	_records.clear();
+}
+
 struct SummaryRecord {
 	int kills;
 	int wins;
@@ -75,7 +88,12 @@ void WxGameStatistics::update() {
 			ImGui::NextColumn();
 			sprintf(buffer, "%d", record.wins);
 			ImGui::Text(buffer); ImGui::NextColumn();
-			sprintf(buffer, "%.1f", (record.kills/(float)_records.size()));
+			if (_records.size()) {
+				sprintf(buffer, "%.1f", (record.kills / (float)_records.size()));
+			}
+			else {
+				sprintf(buffer, "0");
+			}
 			ImGui::Text(buffer); ImGui::NextColumn();
 		}
 

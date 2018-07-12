@@ -41,6 +41,8 @@ using fs = std::filesystem;
 #include "battle/TankControllerWorker.h"
 #include "battle/TankControllerModuleWrapper.h"
 #include "Engine/Timer.h"
+#include "EngineSpecific/GameStateManager.h"
+#include "Engine/GameController.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -80,6 +82,13 @@ class BasicApp : public App {
 
 	shared_ptr<WxTankPeripheralsView> _peripheralsview1;
 	shared_ptr<WxTankPeripheralsView> _peripheralsview2;
+	shared_ptr<GameObject> _applicationComponentContainer;
+	shared_ptr<GameStateManager> _gameStateManager;
+
+	std::string _selectedPlayer1;
+	std::string _selectedPlayer2;
+	int _selectedRoundCount = -1;
+
 public:
 	BasicApp();
 	~BasicApp();
@@ -87,12 +96,14 @@ public:
 	void update() override;
 	void draw() override;
 	void cleanup();
-	void startServices();
-	void stopServices();
+	void startStopButtonClick();
 	void setupGame();
 	void loadPlayers();
 	void generateGame();
 	void startStopBots(bool start);
+
+	void startRound();
+	void stopRound();
 
 	void addLog(LogLevel logLevel, const char* fmt, va_list args) {
 		if (_applog) {
@@ -126,7 +137,6 @@ BasicApp::BasicApp() :
 };
 
 BasicApp::~BasicApp() {
-	stopServices();
 
 	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
 		auto& worker = *it;
@@ -203,7 +213,7 @@ void BasicApp::setup()
 
 	_applog = std::make_shared<WxAppLog>();
 
-	vector<string> players = {"player1", "player2"};
+	//vector<string> players = {"player1", "player2"};
 
 	auto bottomSpliter = std::make_shared<Spliter>();
 	auto bottomLeftSpilter = std::make_shared<Spliter>();
@@ -214,26 +224,26 @@ void BasicApp::setup()
 
 	_gameView = std::make_shared<WxGameView>(getWindow());
 
-	auto& records = _gameStatistics->records();
-	_gameStatistics->setPlayers(players);
+	//auto& records = _gameStatistics->records();
+	//_gameStatistics->setPlayers(players);
 
-	RoundRecord record1;
-	record1.winner = 0;
-	record1.playerRecords.push_back({ 0, 2 });
-	record1.playerRecords.push_back({ 1, 5 });
-	records.push_back(record1);
+	//RoundRecord record1;
+	//record1.winner = 0;
+	//record1.playerRecords.push_back({ 0, 2 });
+	//record1.playerRecords.push_back({ 1, 5 });
+	//records.push_back(record1);
 
-	RoundRecord record2;
-	record2.winner = -1;
-	record2.playerRecords.push_back({ 0, 3 });
-	record2.playerRecords.push_back({ 1, 4 });
-	records.push_back(record2);
+	//RoundRecord record2;
+	//record2.winner = -1;
+	//record2.playerRecords.push_back({ 0, 3 });
+	//record2.playerRecords.push_back({ 1, 4 });
+	//records.push_back(record2);
 
-	RoundRecord record3;
-	record3.winner = 1;
-	record3.playerRecords.push_back({ 0, 3 });
-	record3.playerRecords.push_back({ 1, 5 });
-	records.push_back(record3);
+	//RoundRecord record3;
+	//record3.winner = 1;
+	//record3.playerRecords.push_back({ 0, 3 });
+	//record3.playerRecords.push_back({ 1, 5 });
+	//records.push_back(record3);
 
 	// arrange player information windows
 	bottomLeftSpilter->setVertical(true);
@@ -271,7 +281,7 @@ void BasicApp::setup()
 	});
 
 	_controlBoard->setOnStartStopButtonClickHandler([this](Widget*) {
-		startServices();
+		startStopButtonClick();
 	});
 
 	_controlBoard->setOnGenerateClickHandler([this](Widget*) {
@@ -388,6 +398,12 @@ void BasicApp::applyController(shared_ptr<Tank> tankRef, const char* controllerM
 	auto tankController = make_shared<TankControllerModuleWrapper>(controllerModule);
 	auto worker = make_shared<TankControllerWorker>(tankRef, tankController);
 
+	std::string playerName(controllerModule);
+	playerName.append("(");
+	playerName.append(std::to_string((int)_tankControllerWorkers.size()));
+	playerName.append(")");
+	worker->setName(playerName);
+
 	_tankControllerWorkers.push_back(worker);
 	worker->setSignalWaiter(_controllerReadySignal.get());
 }
@@ -426,6 +442,19 @@ void BasicApp::generateGame() {
 	auto& gameScene = GameEngine::getInstance()->getScene();
 	_tankControllerWorkers.clear();
 
+	// remove old tanks
+	auto& physicalObjects = gameScene->getDrawableObjects();
+	for (auto it = physicalObjects.begin(); it != physicalObjects.end();) {
+		if (dynamic_cast<Tank*>(it->get())) {
+			auto itTemp = it;
+			it++;
+			physicalObjects.erase(itTemp);
+		}
+		else {
+			it++;
+		}
+	}
+
 	auto tanks = generateTanks(gameScene.get(), 2, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());
 
 	//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
@@ -433,11 +462,8 @@ void BasicApp::generateGame() {
 
 	_controllerReadySignal = make_shared<SignalAny>(true);
 
-	auto& player1 = _controlBoard->getPlayer1();
-	auto& player2 = _controlBoard->getPlayer1();
-
-	applyController(tanks->at(0), player1.c_str(), _peripheralsview1);
-	applyController(tanks->at(1), player2.c_str(), _peripheralsview2);
+	applyController(tanks->at(0), _selectedPlayer1.c_str(), _peripheralsview1);
+	applyController(tanks->at(1), _selectedPlayer2.c_str(), _peripheralsview2);
 }
 
 void BasicApp::setupGame() {
@@ -468,6 +494,12 @@ void BasicApp::setupGame() {
 	auto gameScene = std::shared_ptr<Scene>(Scene::createScene(gameArea));
 	gameScene->setBackgroundColor(ci::ColorA8u::gray(69, 255));
 
+	_applicationComponentContainer = make_shared<GameObject>();
+	_gameStateManager = make_shared<GameStateManager>();
+	_applicationComponentContainer->addComponent(_gameStateManager);
+
+	gameScene->addGameObject(_applicationComponentContainer);
+
 	auto barrier1 = std::make_shared<Barrier>();
 	auto barrier2 = std::make_shared<Barrier>();
 	auto barrier3 = std::make_shared<Barrier>();
@@ -494,6 +526,10 @@ void BasicApp::setupGame() {
 
 	loadPlayers();	
 	_controllerReadySignal = make_shared<SignalAny>(true);
+
+	_selectedPlayer1 = _controlBoard->getPlayer1();
+	_selectedPlayer2 = _controlBoard->getPlayer2();
+
 	generateGame();
 }
 
@@ -521,47 +557,56 @@ void BasicApp::startStopBots(bool start) {
 	}
 }
 
-void BasicApp::startServices() {
+void BasicApp::startRound() {
+	_gameStateManager->initState();
+
+	// start user's controller
+	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+		auto& worker = *it;
+		worker->run();
+	}
+
+	// start bot tanks
+	_controllerReadySignal->signal();
+	startStopBots(true);
+}
+
+void BasicApp::stopRound() {
+	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+		auto& worker = *it;
+		worker->stopAndWait(100);
+	}
+	_controllerReadySignal->resetState();
+	startStopBots(false);
+	_gameStateManager->initState();
+}
+
+void BasicApp::startStopButtonClick() {
 	LOG_SCOPE_ACCESS(_logAdapter, __FUNCTION__);
 
 	if (StartState::NOT_STARTED == _startStopButtonState) {
 		setSSButtonState(StartState::STARTED);
 
-		auto gameEngine = GameEngine::getInstance();
-		auto& secne = gameEngine->getScene();
+		bool different = _selectedPlayer1 != _controlBoard->getPlayer1() || _selectedPlayer2 != _controlBoard->getPlayer2();
+		_selectedRoundCount = _controlBoard->getRoundCount();
 
-		auto timer = make_shared<TimerObject>(3.0f);
-		timer->setTimeOutHandler([this]() {
-			_controllerReadySignal->signal();
-			startStopBots(true);
-		});
-		timer->startTimer();
-		secne->addGameObject(timer);
-
-		// start user's controller
-		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-			auto& worker = *it;
-			worker->run();
+		if (different) {
+			_selectedPlayer1 = _controlBoard->getPlayer1();
+			_selectedPlayer2 = _controlBoard->getPlayer2();
+			generateGame();
 		}
 
-		// start bot tanks
+		_gameStatistics->clearPlayers();
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			_gameStatistics->addPlayer(it->get()->getName());
+		}
+
+		startRound();
 	}
 	else if (StartState::STARTED == _startStopButtonState) {
 		setSSButtonState(StartState::NOT_STARTED);
-		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-			auto& worker = *it;
-			worker->stopAndWait(100);
-		}
-		_controllerReadySignal->resetState();
-		startStopBots(false);
+		stopRound();
 	}
-}
-
-void BasicApp::stopServices() {
-	LOG_SCOPE_ACCESS(_logAdapter, __FUNCTION__);
-	std::unique_ptr<void, std::function<void(void*)>> scopedFinishState((void*)1, [this](void*) {
-		setSSButtonState(StartState::NOT_STARTED);
-	});
 }
 
 void BasicApp::setSSButtonState(int state) {
@@ -587,6 +632,67 @@ void BasicApp::update()
 				_topCotrol = _gameView.get();
 			}
 			onWindowSizeChanged();
+		}
+	}
+
+	if (_gameStateManager->isGameOver()) {
+		auto winnner = _gameStateManager->getWinner();
+
+		auto gameController = GameController::getInstance();
+		auto& records = _gameStatistics->records();
+		auto& players = _gameStatistics->getPlayers();
+
+		// push a empty record
+		records.push_back({});
+		auto& roundRecord = records.back();
+		roundRecord.winner = -1;
+		auto& playerRecords = roundRecord.playerRecords;
+
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			auto& tankPlayer = it->get()->getAssociatedTank();
+			auto playerIt = std::find(players.begin(), players.end(), it->get()->getName());
+			int playerIdx = -1;
+
+			if (playerIt != players.end()) {
+				playerIdx = (int)(playerIt - players.begin());
+			}
+			else {
+				continue;
+			}
+
+			if (tankPlayer->getId() == _gameStateManager->getWinner()) {
+				roundRecord.winner = playerIdx;
+			}
+
+			PlayerRecord playerRecord;
+			playerRecord.averageTimePerFrame = -1;
+			playerRecord.playerIdx = playerIdx;
+			playerRecord.kills = gameController->getKills(tankPlayer->getId());
+
+			playerRecords.push_back(playerRecord);
+		}
+
+		if ((int)records.size() < _selectedRoundCount) {
+			stopRound();
+
+			auto timer1 = make_shared<TimerObject>(3.0f);
+			timer1->startTimer();
+			timer1->setTimeOutHandler([this]() {
+				generateGame();
+
+				auto timer2 = make_shared<TimerObject>(1.0f);
+				timer2->startTimer();
+
+				timer2->setTimeOutHandler([this]() {
+					startRound();
+				});
+				_applicationComponentContainer->addComponent(timer2);
+			});
+
+			_applicationComponentContainer->addComponent(timer1);
+		}
+		else {
+			startStopButtonClick();
 		}
 	}
 
