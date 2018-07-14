@@ -22,6 +22,8 @@ class TankControllerWorker {
 	std::mutex _collsionsMutex;
 	HandlerId _tankCollisionHandlerId;
 	std::string _name;
+	float _totalProcessingTime;
+	int _frameCount;
 private:
 	// this method will be invoked in game UI thread
 	void setUp();
@@ -40,4 +42,5 @@ public:
 	const std::shared_ptr<Tank>& getAssociatedTank() const;
 	const std::string& getName() const;
 	void setName(std::string& name);
+	float getAverageProcessingTimeOfController() const;
 };

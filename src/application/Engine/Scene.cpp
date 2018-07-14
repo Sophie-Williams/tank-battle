@@ -1,12 +1,12 @@
 #include "Scene.h"
+#include "GameResource.h"
 
 using namespace ci;
 
 static Scene* s_currentScene = nullptr;
 
 Scene::Scene(const ci::Rectf& area) : _sceneArea(area) {
-	auto img = loadImage("E:\\Projects\\TankBattle\\src\\application\\assets\\background.jpg");
-	_backGroundTex = gl::Texture2d::create(img);
+	_backGroundTex = GameResource::getInstance()->getTexture(TEX_ID_BACKGROUND);
 
 	s_currentScene = this;
 }

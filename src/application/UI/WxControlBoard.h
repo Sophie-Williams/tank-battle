@@ -10,7 +10,6 @@ class WxControlBoard :
 	public ImWidget
 {
 	ButtonClickEventHandler _startButtonClickHandler;
-	ButtonClickEventHandler _startRoundsButtonClickHandler;
 	ButtonClickEventHandler _pauseButtonClickHandler;
 	ButtonClickEventHandler _generateButtonClickHandler;
 	
@@ -36,7 +35,6 @@ public:
 	void setOnStartStopButtonClickHandler(ButtonClickEventHandler&& handler);
 	void setOnPauseResumeClickHandler(ButtonClickEventHandler&& handler);
 	void setOnGenerateClickHandler(ButtonClickEventHandler&& handler);
-	void setOnStartRoundsClickHandler(ButtonClickEventHandler&& handler);
 
 	void setStarStopButtonText(const char* buttonText);
 	void setPauseResumeButtonText(const char* buttonText);

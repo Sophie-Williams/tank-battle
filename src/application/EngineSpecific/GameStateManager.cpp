@@ -1,76 +1,101 @@
 #include "GameStateManager.h"
 #include "../Engine/GameEngine.h"
 #include "../Engine/Tank.h"
+#include "../Engine/Bullet.h"
 
-GameStateManager::GameStateManager() : _beginTankCount(-1) {
-	initState(false);
+GameStateManager::GameStateManager() {
+	initState();
 }
 
 GameStateManager::~GameStateManager() {
 }
 
-int countTank(Tank** ppTank = nullptr) {
-	int tankCount = 0;
+int countLiveObject(LiveObject** ppLiveObject = nullptr) {
+	int liveObjectCount = 0;
 
-	Tank* pTank = nullptr;
+	LiveObject* pLiveObject = nullptr;
 
 	auto& physicalObjects = GameEngine::getInstance()->getScene()->getDrawableObjects();
 	for (auto it = physicalObjects.begin(); it != physicalObjects.end(); it++) {
-		if ( (pTank = dynamic_cast<Tank*>(it->get()))) {
-			tankCount++;
-			if (ppTank) {
-				*ppTank = pTank;
+		if ( (pLiveObject = dynamic_cast<LiveObject*>(it->get()))) {
+			liveObjectCount++;
+			if (ppLiveObject) {
+				*ppLiveObject = pLiveObject;
 			}
 		}
 	}
 
-	return tankCount;
+	return liveObjectCount;
 }
 
 //void GameStateManager::onTankCollisionDetected(DrawableObjectRef other, const CollisionInfo& poistion, float t) {
 //}
 
-void GameStateManager::initState(bool beginGameState) {
+void GameStateManager::initState() {
 	_lastStandDetectedAt = -1;
 	_gameOver = false;
 	_winner = -1;
-	_beginTankCount = -1;
-
-	if (beginGameState) {
-		_beginTankCount = 0;
-		Tank* pTank = nullptr;
-
-		auto& physicalObjects = GameEngine::getInstance()->getScene()->getDrawableObjects();
-		for (auto it = physicalObjects.begin(); it != physicalObjects.end(); it++) {
-			if ((pTank = dynamic_cast<Tank*>(it->get()))) {
-				_beginTankCount++;
-			}
-		}
-	}
+	_snapshotKillingObjects.clear();
+	_firstTimeNoKillingObjectDetectedAt = -1;
+	_mustAliveObjects.clear();
 }
 
 void GameStateManager::update(float t) {
 	if (_gameOver) return;
+	if (_mustAliveObjects.size() == 0) return;
 
-	Tank* lastTank;
-	int tankCount = countTank(&lastTank);
-	if (_beginTankCount == tankCount) return;
-
-	if (tankCount == 0) {
-		// game over but no tank is alive
-		if (_beginTankCount != tankCount) {
-			_gameOver = true;
+	int mustAliveObjectCount = 0;
+	for (auto it = _mustAliveObjects.begin(); it != _mustAliveObjects.end(); it++) {
+		if (it->get()->isAvailable()) {
+			mustAliveObjectCount++;
 		}
 	}
-	else if (tankCount == 1) {
-		if (_lastStandDetectedAt == -1) {
-			_lastStandDetectedAt = t;
-		}
-		// check if last stand is alive last 2 seconds
-		else if ((t - _lastStandDetectedAt) >= 2.0f) {
-			// game over and one last stand
-			_gameOver = true;
-			_winner = lastTank->getId();
+
+	// check if there is no object in monitored list alive
+	if (mustAliveObjectCount == 0) {
+		_winner = -1;
+		_gameOver = true;
+		return;
+	}
+
+	if (mustAliveObjectCount == 1) {
+		LiveObject* lastLiveObject;
+		int aliveCount = countLiveObject(&lastLiveObject);
+		if (aliveCount == 1) {
+			if (_lastStandDetectedAt == -1) {
+				// take a snapshot of killing object at the time when only one live object left
+				_snapshotKillingObjects.clear();
+				auto& physicalObjects = GameEngine::getInstance()->getScene()->getDrawableObjects();
+				for (auto it = physicalObjects.begin(); it != physicalObjects.end(); it++) {
+					// current game, there is only bullet game object can hurt other object
+					if (dynamic_cast<Bullet*>(it->get())) {
+						_snapshotKillingObjects.push_back(*it);
+					}
+				}
+
+				_lastStandDetectedAt = t;
+			}
+			// check if last stand is alive last 2 seconds
+			else {
+				// wait until all killing object is self-destroyed;
+				for (auto it = _snapshotKillingObjects.begin(); it != _snapshotKillingObjects.end(); it++) {
+					if (it->get()->isAvailable()) {
+						return;
+					}
+				}
+				// no need to store these objects
+				_snapshotKillingObjects.clear();
+				if (_firstTimeNoKillingObjectDetectedAt < 0) {
+					_firstTimeNoKillingObjectDetectedAt = t;
+				}
+
+				// wait more 0.5 second to set game is over
+				if ((t - _firstTimeNoKillingObjectDetectedAt) >= 0.5f) {
+					// game over and one last stand
+					_gameOver = true;
+					_winner = lastLiveObject->getId();
+				}
+			}
 		}
 	}
 }
@@ -81,4 +106,8 @@ GameObjectId GameStateManager::getWinner() const {
 
 bool GameStateManager::isGameOver() const {
 	return _gameOver;
+}
+
+void GameStateManager::addMonitorObject(const std::shared_ptr<LiveObject>& liveObject) {
+	_mustAliveObjects.push_back(liveObject);
 }

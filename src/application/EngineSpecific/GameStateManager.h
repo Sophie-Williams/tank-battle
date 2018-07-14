@@ -1,13 +1,18 @@
 #pragma once
 #include "../Engine/GameComponent.h"
+#include "../Engine/LiveObject.h"
 #include "GameControllerInterfaces.h"
+#include <list>
 
 class GameStateManager : public GameComponent
 {
 	bool _gameOver;
-	int _beginTankCount;
 	float _lastStandDetectedAt;
+	float _firstTimeNoKillingObjectDetectedAt;
 	GameObjectId _winner;
+	// list of killing object at a specific of time
+	std::list<DrawableObjectRef> _snapshotKillingObjects;
+	std::list<std::shared_ptr<LiveObject>> _mustAliveObjects;
 protected:
 	//void onTankCollisionDetected(DrawableObjectRef other, const CollisionInfo& poistion, float t);
 public:
@@ -16,7 +21,8 @@ public:
 
 	virtual void update(float t);
 
-	void initState(bool beginGameState = true);
+	void initState();
 	GameObjectId getWinner() const;
 	bool isGameOver() const;
+	void addMonitorObject(const std::shared_ptr<LiveObject>&);
 };

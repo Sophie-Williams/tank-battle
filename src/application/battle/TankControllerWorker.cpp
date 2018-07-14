@@ -25,7 +25,9 @@ TankControllerWorker::TankControllerWorker(const std::shared_ptr<Tank>& tank,
 	_tankController(tankController),
 	_stopSignal(false),
 	_tank(tank),
-	_pWaitForReadySignal(nullptr)
+	_pWaitForReadySignal(nullptr),
+	_totalProcessingTime(0),
+	_frameCount(0)
 {
 
 	CollisionDetectedHandler onCollisionDetected = std::bind(&TankControllerWorker::onTankCollision,
@@ -99,6 +101,9 @@ void TankControllerWorker::setUp() {
 			}
 		}
 	}
+
+	_totalProcessingTime = 0;
+	_frameCount = 0;
 }
 
 void TankControllerWorker::loop() {
@@ -216,6 +221,8 @@ void TankControllerWorker::loop() {
 
 	_tankController->setup(&playerContext);
 
+
+
 	do
 	{
 		auto t1 = getCurrentTimeStamp();
@@ -249,7 +256,12 @@ void TankControllerWorker::loop() {
 		playerContext.setCollisionsAtThisTurn(&collisionsAtEachTurn);
 
 		// acquire commands from tank's controller
+		auto pt1 = gameEngine->getCurrentTime();
 		tankCommands = _tankController->giveOperations(&playerContext);
+		auto pt2 = gameEngine->getCurrentTime();
+
+		_totalProcessingTime += pt2 - pt1;
+		_frameCount++;
 
 		// set commands to the tank
 		if (!IS_NULL_COMMAND(tankCommands) && _tank && _tank->isAvailable()) {
@@ -344,4 +356,12 @@ const std::string& TankControllerWorker::getName() const {
 
 void TankControllerWorker::setName(std::string& name) {
 	_name = name;
+}
+
+float TankControllerWorker::getAverageProcessingTimeOfController() const {
+	if (_frameCount == 0) {
+		return -1;
+	}
+
+	return _totalProcessingTime / _frameCount;
 }

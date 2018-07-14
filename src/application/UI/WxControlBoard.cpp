@@ -54,12 +54,6 @@ void WxControlBoard::update() {
 		}
 	}
 
-	if (ImGui::Button("Start rounds", ImVec2(130, 35))) {
-		if (_startRoundsButtonClickHandler) {
-			_startRoundsButtonClickHandler(this);
-		}
-	}
-
 	if (ImGui::Button(_starStopButtonStr.c_str(), ImVec2(130, 35))) {
 		if (_startButtonClickHandler) {
 			_startButtonClickHandler(this);
@@ -115,10 +109,6 @@ void WxControlBoard::setOnPauseResumeClickHandler(ButtonClickEventHandler&& hand
 
 void WxControlBoard::setOnGenerateClickHandler(ButtonClickEventHandler&& handler) {
 	_generateButtonClickHandler = handler;
-}
-
-void WxControlBoard::setOnStartRoundsClickHandler(ButtonClickEventHandler&& handler) {
-	_startRoundsButtonClickHandler = handler;
 }
 
 void WxControlBoard::setStarStopButtonText(const char* buttonText) {

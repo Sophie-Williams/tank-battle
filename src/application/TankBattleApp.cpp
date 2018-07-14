@@ -57,6 +57,8 @@ enum StartState : int {
 };
 
 
+#define GAME_PREPARING_TIME 5.0f
+
 class BasicApp : public App {
 
 	typedef std::function<void()> Task;
@@ -88,6 +90,7 @@ class BasicApp : public App {
 	std::string _selectedPlayer1;
 	std::string _selectedPlayer2;
 	int _selectedRoundCount = -1;
+	float _roundCountDownAt = -1;
 
 public:
 	BasicApp();
@@ -212,9 +215,7 @@ void BasicApp::setup()
 	_topCotrol = &_spliter;
 
 	_applog = std::make_shared<WxAppLog>();
-
-	//vector<string> players = {"player1", "player2"};
-
+	
 	auto bottomSpliter = std::make_shared<Spliter>();
 	auto bottomLeftSpilter = std::make_shared<Spliter>();
 
@@ -224,36 +225,15 @@ void BasicApp::setup()
 
 	_gameView = std::make_shared<WxGameView>(getWindow());
 
-	//auto& records = _gameStatistics->records();
-	//_gameStatistics->setPlayers(players);
-
-	//RoundRecord record1;
-	//record1.winner = 0;
-	//record1.playerRecords.push_back({ 0, 2 });
-	//record1.playerRecords.push_back({ 1, 5 });
-	//records.push_back(record1);
-
-	//RoundRecord record2;
-	//record2.winner = -1;
-	//record2.playerRecords.push_back({ 0, 3 });
-	//record2.playerRecords.push_back({ 1, 4 });
-	//records.push_back(record2);
-
-	//RoundRecord record3;
-	//record3.winner = 1;
-	//record3.playerRecords.push_back({ 0, 3 });
-	//record3.playerRecords.push_back({ 1, 5 });
-	//records.push_back(record3);
-
 	// arrange player information windows
-	bottomLeftSpilter->setVertical(true);
-	bottomLeftSpilter->setLayoutFixedSize(200);
-	bottomLeftSpilter->setLayoutType(Spliter::LayoutType::Panel2Fixed);
+	bottomLeftSpilter->setVertical(false);
+	bottomLeftSpilter->setLayoutFixedSize(150);
+	bottomLeftSpilter->setLayoutType(Spliter::LayoutType::Panel1Fixed);
 	bottomLeftSpilter->setChild1(_controlBoard);
 	bottomLeftSpilter->setChild2(_gameStatistics);
 
 	bottomSpliter->setVertical(true);
-	bottomSpliter->setLayoutFixedSize(600);
+	bottomSpliter->setLayoutFixedSize(400);
 	bottomSpliter->setLayoutType(Spliter::LayoutType::Panel1Fixed);
 	bottomSpliter->setChild1(bottomLeftSpilter);
 	bottomSpliter->setChild2(_applog);
@@ -477,6 +457,7 @@ void BasicApp::setupGame() {
 	_gameResource->setTexture(TEX_ID_TANKBODY, "tankBody.png");
 	_gameResource->setTexture(TEX_ID_TANKBARREL, "tankBarrel.png");
 	_gameResource->setTexture(TEX_ID_TANKSHOT, "shotLarge.png");
+	_gameResource->setTexture(TEX_ID_BACKGROUND, "background.jpg");
 
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
 	_gameEngine->postTask([this](float t) {
@@ -563,6 +544,8 @@ void BasicApp::startRound() {
 	// start user's controller
 	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
 		auto& worker = *it;
+		_gameStateManager->addMonitorObject(worker->getAssociatedTank());
+
 		worker->run();
 	}
 
@@ -649,8 +632,9 @@ void BasicApp::update()
 		auto& playerRecords = roundRecord.playerRecords;
 
 		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-			auto& tankPlayer = it->get()->getAssociatedTank();
-			auto playerIt = std::find(players.begin(), players.end(), it->get()->getName());
+			auto worker = it->get();
+			auto& tankPlayer = worker->getAssociatedTank();
+			auto playerIt = std::find(players.begin(), players.end(), worker->getName());
 			int playerIdx = -1;
 
 			if (playerIt != players.end()) {
@@ -665,7 +649,7 @@ void BasicApp::update()
 			}
 
 			PlayerRecord playerRecord;
-			playerRecord.averageTimePerFrame = -1;
+			playerRecord.averageTimePerFrame = worker->getAverageProcessingTimeOfController();
 			playerRecord.playerIdx = playerIdx;
 			playerRecord.kills = gameController->getKills(tankPlayer->getId());
 
@@ -675,21 +659,24 @@ void BasicApp::update()
 		if ((int)records.size() < _selectedRoundCount) {
 			stopRound();
 
-			auto timer1 = make_shared<TimerObject>(3.0f);
-			timer1->startTimer();
-			timer1->setTimeOutHandler([this]() {
-				generateGame();
+			static bool generatedGame;
+			generatedGame = false;
+			auto timer = make_shared<TimerObject>(GAME_PREPARING_TIME, true);
+			_roundCountDownAt = _gameEngine->getCurrentTime();
 
-				auto timer2 = make_shared<TimerObject>(1.0f);
-				timer2->startTimer();
-
-				timer2->setTimeOutHandler([this]() {
+			timer->startTimer();
+			timer->setTimeEventHandler([this, timer](bool timeOut, float t) {
+				if (generatedGame == false && timer->getLifeTime() >= (GAME_PREPARING_TIME - 1.0f)) {
+					generateGame();
+					generatedGame = true;
+				}
+				if (timeOut) {
 					startRound();
-				});
-				_applicationComponentContainer->addComponent(timer2);
+					_roundCountDownAt = -1;
+				}
 			});
 
-			_applicationComponentContainer->addComponent(timer1);
+			_applicationComponentContainer->addComponent(timer);
 		}
 		else {
 			startStopButtonClick();
@@ -708,6 +695,23 @@ void BasicApp::draw()
 	gl::clear(ColorA::black());
 
 	_topCotrol->draw();
+
+	if (_roundCountDownAt >= 0) {
+		auto t = _gameEngine->getCurrentTime();
+		
+		auto durationLeft = (int)std::ceil(GAME_PREPARING_TIME - (t - _roundCountDownAt));
+
+		auto currentRound = (int)(_gameStatistics->records().size() + 1);
+
+		ci::vec2 textPos(getWindow()->getWidth()/2, _gameView->getY() + _gameView->getHeight() / 2);
+		string text = "Round ";
+		text.append(std::to_string(currentRound));
+		text.append(" start in ");
+		text.append(std::to_string(durationLeft));
+		text.append("s");
+		ci::Font font("Aria", 56);
+		gl::drawStringCentered(text, textPos, ci::ColorA(1, 1, 1, 1), font);
+	}
 }
 
 CINDER_APP(BasicApp, RendererGl( RendererGl::Options().msaa( 16 ) ), BasicApp::intializeApp)

@@ -60,7 +60,7 @@ void WxGameStatistics::update() {
 	ImGui::CollapsingHeader("Game statistics", ImGuiTreeNodeFlags_Leaf);
 	if (ImGui::TreeNode(buffer)) {
 		ImGui::Columns(3, nullptr, false);
-		ImGui::SetColumnWidth(0, 50);
+		ImGui::SetColumnWidth(0, 250);
 		ImGui::SetColumnWidth(1, 30);
 		ImGui::Text("Player"); ImGui::NextColumn();
 		ImGui::Text("Win"); ImGui::NextColumn();
@@ -86,15 +86,14 @@ void WxGameStatistics::update() {
 				selected = i;
 			}
 			ImGui::NextColumn();
-			sprintf(buffer, "%d", record.wins);
-			ImGui::Text(buffer); ImGui::NextColumn();
+			ImGui::Text( "%d", record.wins); ImGui::NextColumn();
 			if (_records.size()) {
-				sprintf(buffer, "%.1f", (record.kills / (float)_records.size()));
+				ImGui::Text("%.1f", (record.kills / (float)_records.size()));
 			}
 			else {
-				sprintf(buffer, "0");
+				ImGui::Text( "0");
 			}
-			ImGui::Text(buffer); ImGui::NextColumn();
+			ImGui::NextColumn();
 		}
 
 		ImGui::Columns(1);
@@ -113,7 +112,7 @@ void WxGameStatistics::update() {
 
 		if (ImGui::TreeNode(buffer)) {
 			ImGui::Columns(3, nullptr, false);
-			ImGui::SetColumnWidth(0, 50);
+			ImGui::SetColumnWidth(0, 250);
 			ImGui::SetColumnWidth(1, 40);
 			ImGui::Text("Player"); ImGui::NextColumn();
 			ImGui::Text("Kill"); ImGui::NextColumn();
@@ -126,10 +125,15 @@ void WxGameStatistics::update() {
 
 				sprintf(buffer, "%s##%d", _players[playerRecord.playerIdx].c_str(), id);
 				ImGui::Selectable(buffer, false, ImGuiSelectableFlags_SpanAllColumns);
+				ImGui::NextColumn();				
+				ImGui::Text("%d", playerRecord.kills); ImGui::NextColumn();
+				if (playerRecord.averageTimePerFrame < 0) {
+					ImGui::Text("N/A");
+				}
+				else {
+					ImGui::Text("%.3f ms", playerRecord.averageTimePerFrame);
+				}
 				ImGui::NextColumn();
-				sprintf(buffer, "%d", playerRecord.kills);
-				ImGui::Text(buffer); ImGui::NextColumn();
-				ImGui::Text("N/A"); ImGui::NextColumn();
 			}
 
 			ImGui::Columns(1);
