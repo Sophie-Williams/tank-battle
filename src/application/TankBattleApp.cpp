@@ -419,7 +419,7 @@ void BasicApp::loadPlayers() {
 }
 
 void BasicApp::generateGame() {
-	auto& gameScene = GameEngine::getInstance()->getScene();
+	auto& gameScene = _gameEngine->getScene();
 	_tankControllerWorkers.clear();
 
 	// remove old tanks
@@ -460,10 +460,6 @@ void BasicApp::setupGame() {
 	_gameResource->setTexture(TEX_ID_BACKGROUND, "background.jpg");
 
 	_gameEngine = std::shared_ptr<GameEngine>(GameEngine::createInstance());
-	_gameEngine->postTask([this](float t) {
-		bool res = this->isFullScreen();
-		res = false;
-	});
 
 	const float sceneWidth = 70;
 	const float sceneHeight = 70;
