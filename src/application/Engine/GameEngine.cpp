@@ -10,6 +10,7 @@
 
 #include "cinder/gl/gl.h"
 #include "cinder/app/App.h"
+#include "../common/Utility.h"
 
 using namespace ci;
 using namespace std;
@@ -103,14 +104,20 @@ bool GameEngine::isPausing() const {
 }
 
 void GameEngine::doUpdate(float t) {
+
 	std::lock_guard<std::mutex> lk(_gameResourceMutex);
 
 	_uiThreadRunner.executeTasks(t);
 
 	if (_gameScene) {
 		// update the scene
-		_gameScene->update(t);
+		{
+			LOG_SCOPE_ACCESS(ILogger::getInstance(), "game scene update");
+			_gameScene->update(t);
+		}
+		
 
+		LOG_SCOPE_ACCESS(ILogger::getInstance(), "engine post processing");
 		// check colission for dynamic object
 		{
 			auto& drawableObjects = _gameScene->getDrawableObjects();

@@ -40,13 +40,16 @@ void WxAppLog::setLogLevel(WxAppLog::LogLevel logLevel) {
 	_logLevel = logLevel;
 }
 
+WxAppLog::LogLevel WxAppLog::getLogLevel() const {
+	return _logLevel;
+}
+
 void WxAppLog::setDoubleClickHandler(MouseDoubleClickEventHandler&& handler) {
 	_doubleClickHandler = handler;
 }
 
 void WxAppLog::update()
-{	
-	FUNCTON_LOG();
+{
     ImGui::SetNextWindowSize(_window_size, ImGuiCond_Always);
 	ImGui::SetNextWindowPos(_window_pos);
 

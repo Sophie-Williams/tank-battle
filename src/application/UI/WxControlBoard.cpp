@@ -22,8 +22,6 @@ WxControlBoard::~WxControlBoard()
 }
 
 void WxControlBoard::update() {
-	FUNCTON_LOG();
-
 	ImGui::SetNextWindowSize(_window_size, ImGuiCond_Always);
 	ImGui::SetNextWindowPos(_window_pos);
 
@@ -41,7 +39,7 @@ void WxControlBoard::update() {
 	ImGui::CollapsingHeader("Game Settings", ImGuiTreeNodeFlags_Leaf);
 	ImGui::SliderInt("bot", &_numberOfBot, 0, 10);
 	ImGui::SliderInt("tank health", &_tankHeathCapacity, 20, 1000);
-	ImGui::SliderInt("round", &_round, 1, 17);
+	ImGui::SliderInt("round", &_round, 1, 101);
 
 	ImGui::CollapsingHeader("Players", ImGuiTreeNodeFlags_Leaf);
 	showPlayers("Player 1", _player1);

@@ -608,7 +608,7 @@ void BasicApp::setSSButtonState(int state) {
 
 void BasicApp::update()
 {
-	FUNCTON_LOG();
+	LOG_SCOPE_ACCESS(ILogger::getInstance(), __FUNCTION__);
 	if (getWindow()->isHidden()) return;
 	static int countt = 0;
 	countt++;
@@ -704,7 +704,7 @@ void BasicApp::update()
 
 void BasicApp::draw()
 {
-	FUNCTON_LOG();
+	LOG_SCOPE_ACCESS(ILogger::getInstance(), __FUNCTION__);
 	if (getWindow()->isHidden()) return;
 
 	gl::clear(ColorA::black());

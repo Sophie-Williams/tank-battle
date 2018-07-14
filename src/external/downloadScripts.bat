@@ -1,0 +1,1 @@
+git clone -b v1.x https://github.com/gabime/spdlog.git

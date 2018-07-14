@@ -20,7 +20,6 @@ void Panel::update() {
 }
 
 void Panel::draw() {
-	FUNCTON_LOG();
 	for (auto it = _children.begin(); it != _children.end(); it++) {
 		(*it)->draw();
 	}

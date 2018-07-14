@@ -44,8 +44,6 @@ struct SummaryRecord {
 };
 
 void WxGameStatistics::update() {
-	FUNCTON_LOG();
-
 	ImGui::SetNextWindowSize(_window_size, ImGuiCond_Always);
 	ImGui::SetNextWindowPos(_window_pos);
 

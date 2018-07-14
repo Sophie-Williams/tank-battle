@@ -8,6 +8,7 @@ SET (COMMON_SRC
     ../common/AutoScope.h
     ../common/SyncMessageQueue.hpp
     ../common/HandlerCollection.hpp
+    ../common/ILogger.cpp
 )
 
 SET (ENGINE_SRC
@@ -145,6 +146,7 @@ endif()
 add_executable(${PROJECT_NAME} WIN32  ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${GameControllerInterfaces_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../external/spdlog/include)
 target_link_libraries(${PROJECT_NAME} GameControllerInterfaces)
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder.cmake)

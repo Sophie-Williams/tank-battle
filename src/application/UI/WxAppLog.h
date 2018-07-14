@@ -28,5 +28,6 @@ public:
 	void    addLogV(LogLevel logLevel, const char* fmt, va_list args);
 	void    update();
 	void setLogLevel(LogLevel logLevel);
+	LogLevel getLogLevel() const;
 	void setDoubleClickHandler(MouseDoubleClickEventHandler&& handler);
 };
