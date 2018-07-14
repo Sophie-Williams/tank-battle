@@ -220,9 +220,7 @@ void TankControllerWorker::loop() {
 	};
 
 	_tankController->setup(&playerContext);
-
-
-
+	
 	do
 	{
 		auto t1 = getCurrentTimeStamp();
@@ -295,7 +293,7 @@ void TankControllerWorker::run() {
 	worker = std::thread(std::bind(&TankControllerWorker::loop, this));
 }
 
-static bool stopAndWait(std::thread& worker, int milisecond) {
+bool stopAndWait(std::thread& worker, int milisecond) {
 	HANDLE hThread = (HANDLE)worker.native_handle();
 	DWORD waitRes = WaitForSingleObject(hThread, (DWORD)milisecond);
 

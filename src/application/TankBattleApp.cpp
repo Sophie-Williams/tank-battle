@@ -43,6 +43,7 @@ using fs = std::filesystem;
 #include "Engine/Timer.h"
 #include "EngineSpecific/GameStateManager.h"
 #include "Engine/GameController.h"
+#include "Engine/UIThreadRunner.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -91,6 +92,7 @@ class BasicApp : public App {
 	std::string _selectedPlayer2;
 	int _selectedRoundCount = -1;
 	float _roundCountDownAt = -1;
+	UIThreadRunner _uiThreadRunner;
 
 public:
 	BasicApp();
@@ -150,6 +152,8 @@ BasicApp::~BasicApp() {
 	if (_logAdapter) {
 		delete _logAdapter;
 	}
+
+	_gameEngine->stop();
 }
 
 void BasicApp::cleanup() {
@@ -266,7 +270,9 @@ void BasicApp::setup()
 
 	_controlBoard->setOnGenerateClickHandler([this](Widget*) {
 		if (_startStopButtonState == StartState::NOT_STARTED) {
-			generateGame();
+			GameEngine::getInstance()->accessEngineResource([this]() {
+				generateGame();
+			});
 		}
 	});
 
@@ -435,10 +441,10 @@ void BasicApp::generateGame() {
 		}
 	}
 
-	auto tanks = generateTanks(gameScene.get(), 2, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());
+	auto tanks = generateTanks(gameScene.get(), 2, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());	
 
-	//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
-	//tankRef->addComponent(controlByUser);
+//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
+//tankRef->addComponent(controlByUser);
 
 	_controllerReadySignal = make_shared<SignalAny>(true);
 
@@ -508,11 +514,11 @@ void BasicApp::setupGame() {
 	_selectedPlayer2 = _controlBoard->getPlayer2();
 
 	generateGame();
+	_gameEngine->run();
 }
 
 void BasicApp::startStopBots(bool start) {
-	auto gameEngine = GameEngine::getInstance();
-	auto& secne = gameEngine->getScene();
+	auto& secne = _gameEngine->getScene();
 
 	auto& objects = secne->getDrawableObjects();
 	for (auto it = objects.begin(); it != objects.end(); it++) {
@@ -535,29 +541,33 @@ void BasicApp::startStopBots(bool start) {
 }
 
 void BasicApp::startRound() {
-	_gameStateManager->initState();
+	_gameEngine->accessEngineResource([this]() {
+		_gameStateManager->initState();
 
-	// start user's controller
-	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-		auto& worker = *it;
-		_gameStateManager->addMonitorObject(worker->getAssociatedTank());
+		// start user's controller
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			auto& worker = *it;
+			_gameStateManager->addMonitorObject(worker->getAssociatedTank());
 
-		worker->run();
-	}
+			worker->run();
+		}
 
-	// start bot tanks
-	_controllerReadySignal->signal();
-	startStopBots(true);
+		// start bot tanks
+		_controllerReadySignal->signal();
+		startStopBots(true);
+	});
 }
 
 void BasicApp::stopRound() {
-	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-		auto& worker = *it;
-		worker->stopAndWait(100);
-	}
-	_controllerReadySignal->resetState();
-	startStopBots(false);
-	_gameStateManager->initState();
+	_gameEngine->accessEngineResource([this]() {
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			auto& worker = *it;
+			worker->stopAndWait(100);
+		}
+		_controllerReadySignal->resetState();
+		startStopBots(false);
+		_gameStateManager->initState();
+	});
 }
 
 void BasicApp::startStopButtonClick() {
@@ -572,7 +582,10 @@ void BasicApp::startStopButtonClick() {
 		if (different) {
 			_selectedPlayer1 = _controlBoard->getPlayer1();
 			_selectedPlayer2 = _controlBoard->getPlayer2();
-			generateGame();
+
+			GameEngine::getInstance()->accessEngineResource([this]() {
+				generateGame();
+			});
 		}
 
 		_gameStatistics->clearPlayers();
@@ -613,6 +626,8 @@ void BasicApp::update()
 			onWindowSizeChanged();
 		}
 	}
+
+	_uiThreadRunner.executeTasks(0);
 
 	if (_gameStateManager->isGameOver()) {
 		auto winnner = _gameStateManager->getWinner();
@@ -662,14 +677,19 @@ void BasicApp::update()
 
 			timer->startTimer();
 			timer->setTimeEventHandler([this, timer](bool timeOut, float t) {
-				if (generatedGame == false && timer->getLifeTime() >= (GAME_PREPARING_TIME - 1.0f)) {
-					generateGame();
-					generatedGame = true;
-				}
-				if (timeOut) {
-					startRound();
-					_roundCountDownAt = -1;
-				}
+				auto lifeTime = timer->getLifeTime();
+				auto uiTask = [this, lifeTime, timeOut](float t) {
+					if (generatedGame == false && lifeTime >= (GAME_PREPARING_TIME - 1.0f)) {
+						_gameEngine->accessEngineResource(std::bind(&BasicApp::generateGame, this));
+						generatedGame = true;
+					}
+					if (timeOut) {
+						startRound();
+						_roundCountDownAt = -1;
+					}
+				};
+			
+				_uiThreadRunner.postTask(uiTask);
 			});
 
 			_applicationComponentContainer->addComponent(timer);
@@ -679,7 +699,6 @@ void BasicApp::update()
 		}
 	}
 
-	_gameEngine->doUpdate();
 	_topCotrol->update();
 }
 

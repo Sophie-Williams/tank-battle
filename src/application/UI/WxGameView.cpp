@@ -1,4 +1,5 @@
 #include "WxGameView.h"
+#include "Engine/GameEngine.h"
 
 #include "cinder/gl/gl.h"
 #include "cinder/app/App.h"
@@ -87,29 +88,34 @@ void WxGameView::setTankView(const std::shared_ptr<Widget>& tankView) {
 }
 
 void WxGameView::update() {
-	if (_tankViews[0]) {
-		_tankViews[0]->update();
-	}
-	if (_tankViews[1]) {
-		_tankViews[1]->update();
-	}
+	GameEngine::getInstance()->accessEngineResource([this]() {
+		if (_tankViews[0]) {
+			_tankViews[0]->update();
+		}
+		if (_tankViews[1]) {
+			_tankViews[1]->update();
+		}
+	});
 }
 
 void WxGameView::draw() {
-	{
-		auto h = _parent->getHeight();
-		// mapping scene to view port area
-		gl::ScopedViewport scopeViewPort(_viewPort.x1, h - _viewPort.y1 - _viewPort.getHeight(), _viewPort.getWidth(), _viewPort.getHeight());
-		if (_gameScene) {
-			_gameScene->draw();
+
+	GameEngine::getInstance()->accessEngineResource([this]() {
+		{
+			auto h = _parent->getHeight();
+			// mapping scene to view port area
+			gl::ScopedViewport scopeViewPort(_viewPort.x1, h - _viewPort.y1 - _viewPort.getHeight(), _viewPort.getWidth(), _viewPort.getHeight());
+			if (_gameScene) {
+				_gameScene->draw();
+			}
 		}
-	}
-	if (_tankViews[0]) {
-		_tankViews[0]->draw();
-	}
-	if (_tankViews[1]) {
-		_tankViews[1]->draw();
-	}
+		if (_tankViews[0]) {
+			_tankViews[0]->draw();
+		}
+		if (_tankViews[1]) {
+			_tankViews[1]->draw();
+		}
+	});	
 
 	{
 		constexpr float measureDuration = 3.0f;

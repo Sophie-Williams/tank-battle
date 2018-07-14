@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <ctime>
+#include <ratio>
 #include <chrono>
 #include <algorithm>
 #include <string>
@@ -10,8 +12,9 @@
 #include "cinder/app/App.h"
 
 using namespace ci;
-using namespace std::chrono;
 using namespace std;
+
+static chrono::high_resolution_clock::time_point timeAtEngineCreated;
 
 GameEngine* GameEngine::createInstance() {
 	return getInstance();
@@ -26,22 +29,27 @@ GameEngine* GameEngine::getInstance() {
 	return s_Instance;
 }
 
-GameEngine::GameEngine(const char* configFile) : _runFlag(false), _pauseDuration(0), _pauseTime(-1) {
+GameEngine::GameEngine(const char* configFile) : _runFlag(false), _pauseDuration(0), _pauseTime(-1), _stopSignal(false), _expectedFrameTime(1.0f/60.0f){
 	_collisionDetector = std::make_shared<CollisionDetector>();
+	timeAtEngineCreated = chrono::high_resolution_clock::now();
 }
 
 GameEngine::~GameEngine() {
 }
 
-inline float getNativeTime() {
-	return (float)ci::app::App::get()->getElapsedSeconds();
+inline double getNativeTime() {
+	using namespace std::chrono;
+	high_resolution_clock::time_point t = high_resolution_clock::now();
+
+	duration<double> time_span = duration_cast<duration<double>>(t - timeAtEngineCreated);
+	return time_span.count();
 }
 
 float GameEngine::getCurrentTime() const {
 	if (isPausing()) {
-		return _pauseTime - _pauseDuration;
+		return (float)(_pauseTime - _pauseDuration);
 	}
-	return getNativeTime() - _pauseDuration;
+	return (float)(getNativeTime() - _pauseDuration);
 }
 
 void GameEngine::setScene(const std::shared_ptr<Scene>& scene) {
@@ -52,10 +60,33 @@ const std::shared_ptr<Scene>& GameEngine::getScene() const {
 	return _gameScene;
 }
 
+extern bool stopAndWait(std::thread& worker, int milisecond);
+
+void GameEngine::loop() {
+	float timeLeft = 0;
+	while (_stopSignal.waitSignal((unsigned int)(timeLeft * 1000)) == false) {
+		auto t1 = getCurrentTime();
+
+		doUpdate(t1);
+
+		// pause some moments before go to nex turn
+		auto t2 = getCurrentTime();
+		timeLeft = t2 - t1;
+		timeLeft = timeLeft > _expectedFrameTime ? 0 : _expectedFrameTime - timeLeft;
+		// check if a stop signal was sent then exit the loop
+	}
+}
+
 void GameEngine::run() {
+	_worker = std::thread(std::bind(&GameEngine::loop, this));
 }
 
 void GameEngine::stop() {
+	if (_worker.joinable()) {
+		_stopSignal.signal();
+
+		::stopAndWait(_worker, 500);
+	}
 }
 
 void GameEngine::pause() {
@@ -71,8 +102,9 @@ bool GameEngine::isPausing() const {
 	return (_pauseTime >= 0);
 }
 
-void GameEngine::doUpdate() {
-	float t = getCurrentTime();
+void GameEngine::doUpdate(float t) {
+	std::lock_guard<std::mutex> lk(_gameResourceMutex);
+
 	_uiThreadRunner.executeTasks(t);
 
 	if (_gameScene) {
@@ -144,4 +176,9 @@ void GameEngine::sendTask(UpdateTask&& task) {
 	// wait the task executed
 	std::string msg;
 	executedSignal.waitSignal(msg);
+}
+
+void GameEngine::accessEngineResource(std::function<void()>&& acessFunction) {
+	std::lock_guard<std::mutex> lk(_gameResourceMutex);
+	acessFunction();
 }
