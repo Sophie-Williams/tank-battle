@@ -9,7 +9,7 @@ void Spliter::updateChildrenrGeometrics() {
 			}
 			if (_child2) {
 				_child2->setPos(_window_pos.x, _window_size.y*_relativeSize);
-				_child2->setSize(_window_size.x, _window_size.y - _child2->getY());
+				_child2->setSize(_window_size.x, _window_pos.y + _window_size.y - _child2->getY());
 			}
 		}
 		else {
@@ -36,7 +36,7 @@ void Spliter::updateChildrenrGeometrics() {
 			}
 			if (_child2) {
 				_child2->setPos(_window_pos.x, _window_pos.y + panel1Size);
-				_child2->setSize(_window_size.x, _window_size.y - _child2->getY());
+				_child2->setSize(_window_size.x, _window_pos.y +_window_size.y - _child2->getY());
 			}
 		}
 		else {
