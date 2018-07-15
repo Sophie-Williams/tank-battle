@@ -4,7 +4,10 @@
 #include "../common/Geometry.h"
 #include "Engine/GameEngine.h"
 
-ObjectViewContainer::ObjectViewContainer(const DrawableObjectRef& object) : _ownerObject(object), _lastUpdate(0) {
+ObjectViewContainer::ObjectViewContainer(const DrawableObjectRef& object) : 
+	_ownerObject(object),
+	_enableSnapshot(false),
+	_lastUpdate(0) {
 }
 
 ObjectViewContainer::~ObjectViewContainer() {
@@ -12,7 +15,7 @@ ObjectViewContainer::~ObjectViewContainer() {
 }
 
 void ObjectViewContainer::update(float t) {
-	if (_ownerObject->isAvailable() == false) {
+	if (_ownerObject->isAvailable() == false || _enableSnapshot == false) {
 		return;
 	}
 	constexpr float updateInterval = CAPTURE_REFRESH_RATE;
@@ -58,4 +61,11 @@ const std::list<std::shared_ptr<SnapshotObject>>& ObjectViewContainer::getModelV
 
 const DrawableObjectRef& ObjectViewContainer::getOwner() const {
 	return _ownerObject;
+}
+
+void ObjectViewContainer::enableSnapshot(bool enable) {
+	_enableSnapshot = enable;
+	if (_enableSnapshot == false) {
+		_modelSnapshotObjects.clear();
+	}
 }

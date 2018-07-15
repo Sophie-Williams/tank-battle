@@ -206,6 +206,9 @@ void Tank::fire(float at) {
 			// now we move it to bullet out position by offset the transformation matrix by translation vector of
 			// pivot and bullet out position
 			auto v = ci::vec3(bulletOutPosition, 0) - pivot;
+
+			// temporary fix the bug of bullet stuck in some cases after fired out
+			v = ci::normalize(v) * 5.f;
 			bullet->translate(v);
 
 			// bullet speed is 5 times faster than tank's moving speed

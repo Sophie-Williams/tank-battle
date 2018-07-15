@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "GameResource.h"
+#include "LiveObject.h"
 
 using namespace ci;
 
@@ -16,7 +17,7 @@ Scene::~Scene() {
 }
 
 void Scene::update(float t) {
-	for (auto it = _gameObjects.begin(); it != _gameObjects.end(); it++) {
+	for (auto it = _drawableObjects.begin(); it != _drawableObjects.end(); it++) {
 		(*it)->update(t);
 	}
 }
@@ -37,6 +38,12 @@ void Scene::draw() {
 		gl::ScopedModelMatrix modelMatrixScope;
 		(*it)->draw();
 	}
+	for (auto it = _drawableObjects.begin(); it != _drawableObjects.end(); it++) {
+		auto liveObject = dynamic_cast<LiveObject*>(it->get());
+		if (liveObject) {
+			liveObject->drawHeathBar();
+		}
+	}
 }
 
 void Scene::setBackgroundColor(const ci::ColorA8u& backGround) {
@@ -49,51 +56,31 @@ const ci::ColorA8u& Scene::getBackgroundColor() const {
 
 void Scene::addDrawbleObject(DrawableObjectRef drawableObject) {
 	_drawableObjects.push_back(drawableObject);
-	addGameObject(drawableObject);
 }
 
-void Scene::addGameObject(GameObjectRef gameObjectRef) {
-	_gameObjects.push_back(gameObjectRef);
+
+const std::list<DrawableObjectRef>& Scene::getDrawableObjects() const {
+	return _drawableObjects;
 }
 
-void Scene::removeGameObject(GameObjectRef gameObjectRef) {
-	auto it = findObjectIter(gameObjectRef.get());
-	if (it == _gameObjects.end()) {
-		return;
-	}
 
-	_gameObjects.erase(it);
-}
-
-std::list<GameObjectRef>::const_iterator Scene::findObjectIter(const GameObject* pObject) const {
-	for (auto it = _gameObjects.begin(); it != _gameObjects.end(); it++) {
+std::list<DrawableObjectRef>::const_iterator Scene::findObjectIter(const DrawableObject* pObject) const {
+	for (auto it = _drawableObjects.begin(); it != _drawableObjects.end(); it++) {
 		if (pObject == it->get()) {
 			return it;
 		}
 	}
 
-	return _gameObjects.end();
+	return _drawableObjects.end();
 }
 
-GameObjectRef Scene::findObjectRef(const GameObject* pObject) const {
+DrawableObjectRef Scene::findObjectRef(const DrawableObject* pObject) const {
 	auto it = findObjectIter(pObject);
-	if (it == _gameObjects.end()) {
+	if (it == _drawableObjects.end()) {
 		return nullptr;
 	}
 
 	return *it;
-}
-
-const std::list<GameObjectRef>& Scene::getObjects() const {
-	return _gameObjects;
-}
-
-std::list<GameObjectRef>& Scene::getObjects() {
-	return _gameObjects;
-}
-
-const std::list<DrawableObjectRef>& Scene::getDrawableObjects() const {
-	return _drawableObjects;
 }
 
 std::list<DrawableObjectRef>& Scene::getDrawableObjects() {

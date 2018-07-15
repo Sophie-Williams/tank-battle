@@ -829,7 +829,7 @@ void CollisionDetector::resolveCollisions(std::list<DrawableObjectRef>& drawable
 			auto& collisionInfo2 = *jt;
 			auto& object2 = collisionInfo2.object;
 
-			// check if object1 or object2 is not avaible at current time
+			// check if object1 or object2 is not available at current time
 			if (object1->isAvailable() == false || object2->isAvailable() == false) {
 				continue;
 			}

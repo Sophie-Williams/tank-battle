@@ -12,19 +12,16 @@ using namespace std;
 WxTankPeripheralsView::WxTankPeripheralsView(ci::app::WindowRef parent) :
 	_parent(parent) {
 	_radarView = make_shared<WxRadarView>(_parent);
+	auto pApp = app::App::get();
+	auto shaderBlur = gl::GlslProg::create(pApp->loadAsset("blur.vert"), pApp->loadAsset("blur.frag"));
+	_glslFboToScreen = gl::GlslProg::create(pApp->loadAsset("radar.vert"), pApp->loadAsset("radar.frag"));
+	_radarView->setShader(shaderBlur);
 }
 
 WxTankPeripheralsView::~WxTankPeripheralsView(){}
 
 void WxTankPeripheralsView::setupPeripherals(const std::shared_ptr<TankCamera>& tankCamera, const std::shared_ptr<Radar>& tankRadar) {
 	_tankCamera = tankCamera;
-
-	// setup radar view
-	//_radarView = make_shared<WxRadarView>(_parent);
-	auto pApp = app::App::get();
-	auto shaderBlur = gl::GlslProg::create(pApp->loadAsset("blur.vert"), pApp->loadAsset("blur.frag"));
-	_glslFboToScreen = gl::GlslProg::create(pApp->loadAsset("radar.vert"), pApp->loadAsset("radar.frag"));
-	_radarView->setShader(shaderBlur);
 	_radarView->setRadar(tankRadar);
 }
 
@@ -46,6 +43,7 @@ void WxTankPeripheralsView::setPos(float x, float y) {
 }
 
 void WxTankPeripheralsView::draw() {
+	return;
 	auto h = _parent->getHeight();
 	Rectf destRect(getX(), getY(), getX() + getWidth(), getY() + getHeight());
 

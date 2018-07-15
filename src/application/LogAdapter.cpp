@@ -74,15 +74,19 @@ public:
 	}
 };
 
-LogAdapter::LogAdapter(WxAppLog* appLog) : _appLog(appLog) {
-	_fileLogger = new FileLoggerImpl();
-	_currenLoglevel = (LogLevel)_appLog->getLogLevel();
+LogAdapter::LogAdapter() : _fileLogger(nullptr) {
 }
 
 LogAdapter::~LogAdapter() {
 	if (_fileLogger) {
 		delete _fileLogger;
 	}
+}
+
+void LogAdapter::setApplog(const std::shared_ptr<WxAppLog>& appLog) {
+	_appLog = appLog;
+	_fileLogger = new FileLoggerImpl();
+	_currenLoglevel = (LogLevel)_appLog->getLogLevel();
 }
 
 #define UPDATE_LOGLEVEL() \

@@ -8,7 +8,7 @@ public:
 protected:
 	float _health;
 	float _shield;
-protected:
+	float _healthCap;
 public:
 	LiveObject();
 	virtual ~LiveObject();
@@ -20,4 +20,5 @@ public:
 	float getShield() const;
 
 	void takeDamage(float damage);
+	void drawHeathBar();
 };

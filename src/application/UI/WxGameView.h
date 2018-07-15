@@ -3,15 +3,20 @@
 #include <memory>
 #include "../Engine/Scene.h"
 #include "cinder/app/Renderer.h"
+#include "../common/SpinArray.hpp"
 
 class WxGameView : public CiWidget
 {
 protected:
 	ci::Area _viewPort;
+	ci::Area _displayRange;
 	float _expectedRatio;
 	std::shared_ptr<Scene> _gameScene;
 	ci::app::WindowRef _parent;
 	std::shared_ptr<Widget> _tankViews[2];
+
+	float _lastTime;
+	SpinArray<float, 100> _frameCounter;
 protected:
 	bool updateViewPort();
 public:

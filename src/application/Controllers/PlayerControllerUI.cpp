@@ -1,16 +1,26 @@
 #include "PlayerControllerUI.h"
 #include "../Engine/GameEngine.h"
 #include "Engine/Tank.h"
+#include "../common/ILogger.h"
 using namespace ci;
+
+static int instanceCount = 0;
 
 PlayerControllerUI::PlayerControllerUI(ci::app::WindowRef inputWindow) {
 	_keyDown = inputWindow->getSignalKeyDown().connect(std::bind(&PlayerControllerUI::onKeyDown, this, std::placeholders::_1));
 	_keyUp = inputWindow->getSignalKeyUp().connect(std::bind(&PlayerControllerUI::onKeyUp, this, std::placeholders::_1));
+	instanceCount++;
 }
 
 PlayerControllerUI::~PlayerControllerUI() {
 	_keyDown.disconnect();
 	_keyUp.disconnect();
+
+	if (instanceCount > 1) {
+		ILogger::getInstance()->log(LogLevel::Info, "[!!!]warning: PlayerControllerUI is not clean up \n");
+	}
+	ILogger::getInstance()->log(LogLevel::Info, __FUNCTION__ " is called \n");
+	instanceCount--;
 }
 
 void PlayerControllerUI::onKeyDown(ci::app::KeyEvent& e) {

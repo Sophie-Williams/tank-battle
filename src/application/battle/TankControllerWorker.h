@@ -29,6 +29,7 @@ private:
 	void setUp();
 	void loop();
 	void onTankCollision(DrawableObjectRef other, const CollisionInfo& poistion, float t);
+	void enablePeripherals(bool enable);
 public:
 	TankControllerWorker(const std::shared_ptr<Tank>& tank, const std::shared_ptr<TankController>& tankController);
 	virtual ~TankControllerWorker();

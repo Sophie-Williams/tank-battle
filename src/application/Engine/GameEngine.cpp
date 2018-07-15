@@ -30,7 +30,13 @@ GameEngine* GameEngine::getInstance() {
 	return s_Instance;
 }
 
-GameEngine::GameEngine(const char* configFile) : _runFlag(false), _pauseDuration(0), _pauseTime(-1), _stopSignal(false), _expectedFrameTime(1.0f/60.0f){
+GameEngine::GameEngine(const char* configFile) :
+	_runFlag(false),
+	_pauseDuration(0),
+	_pauseTime(-1),
+	_stopSignal(false),
+	_expectedFrameTime(1.0f/60.0f),
+	_frameCounter({0, 0}) {
 	_collisionDetector = std::make_shared<CollisionDetector>();
 	timeAtEngineCreated = chrono::high_resolution_clock::now();
 }
@@ -65,6 +71,8 @@ extern bool stopAndWait(std::thread& worker, int milisecond);
 
 void GameEngine::loop() {
 	float timeLeft = 0;
+
+	// check if a stop signal was sent then exit the loop
 	while (_stopSignal.waitSignal((unsigned int)(timeLeft * 1000)) == false) {
 		auto t1 = getCurrentTime();
 
@@ -73,8 +81,12 @@ void GameEngine::loop() {
 		// pause some moments before go to nex turn
 		auto t2 = getCurrentTime();
 		timeLeft = t2 - t1;
+
+		auto& frame = _frameCounter.next();
+		frame.timeCap = _expectedFrameTime;
+		frame.timeConsume = timeLeft;
+
 		timeLeft = timeLeft > _expectedFrameTime ? 0 : _expectedFrameTime - timeLeft;
-		// check if a stop signal was sent then exit the loop
 	}
 }
 
@@ -110,6 +122,10 @@ void GameEngine::doUpdate(float t) {
 	_uiThreadRunner.executeTasks(t);
 
 	if (_gameScene) {
+		// update logic object
+		for (auto it = _gameObjects.begin(); it != _gameObjects.end(); it++) {
+			(*it)->update(t);
+		}
 		// update the scene
 		{
 			LOG_SCOPE_ACCESS(ILogger::getInstance(), "game scene update");
@@ -126,15 +142,14 @@ void GameEngine::doUpdate(float t) {
 		
 		// remove game object that not available
 		{
-			auto& objects = _gameScene->getObjects();
-			for (auto it = objects.begin(); it != objects.end();) {
+			for (auto it = _gameObjects.begin(); it != _gameObjects.end();) {
 				if (it->get()->isAvailable()) {
 					it++;
 				}
 				else {
 					auto itTemp = it;
 					it++;
-					objects.erase(itTemp);
+					_gameObjects.erase(itTemp);
 				}
 			}
 		}
@@ -188,4 +203,69 @@ void GameEngine::sendTask(UpdateTask&& task) {
 void GameEngine::accessEngineResource(std::function<void()>&& acessFunction) {
 	std::lock_guard<std::mutex> lk(_gameResourceMutex);
 	acessFunction();
+}
+
+float GameEngine::getFramePerSecond() const {
+	int cap = _frameCounter.cap();
+	float totalFrameTime = 0;
+	for (int i = 0; i < cap; i++) {
+		auto& frame = _frameCounter[i];
+		totalFrameTime += std::max(frame.timeCap, frame.timeConsume);
+	}
+	if (totalFrameTime == 0) return -1;
+	return cap / totalFrameTime;
+}
+float GameEngine::getCPUUsage() const {
+	int cap = _frameCounter.cap();
+	float totalFrameCap = 0;
+	float totalFrameTime = 0;
+	for (int i = 0; i < cap; i++) {
+		auto& frame = _frameCounter[i];
+		totalFrameCap += frame.timeCap;
+
+		totalFrameTime += std::min(frame.timeCap,frame.timeConsume);
+	}
+	if (totalFrameCap == 0) return -1;
+	return totalFrameTime / totalFrameCap;
+}
+
+
+void GameEngine::addGameObject(GameObjectRef gameObjectRef) {
+	_gameObjects.push_back(gameObjectRef);
+}
+
+void GameEngine::removeGameObject(GameObjectRef gameObjectRef) {
+	auto it = findObjectIter(gameObjectRef.get());
+	if (it == _gameObjects.end()) {
+		return;
+	}
+
+	_gameObjects.erase(it);
+}
+
+std::list<GameObjectRef>::const_iterator GameEngine::findObjectIter(const GameObject* pObject) const {
+	for (auto it = _gameObjects.begin(); it != _gameObjects.end(); it++) {
+		if (pObject == it->get()) {
+			return it;
+		}
+	}
+
+	return _gameObjects.end();
+}
+
+GameObjectRef GameEngine::findObjectRef(const GameObject* pObject) const {
+	auto it = findObjectIter(pObject);
+	if (it == _gameObjects.end()) {
+		return nullptr;
+	}
+
+	return *it;
+}
+
+const std::list<GameObjectRef>& GameEngine::getObjects() const {
+	return _gameObjects;
+}
+
+std::list<GameObjectRef>& GameEngine::getObjects() {
+	return _gameObjects;
 }

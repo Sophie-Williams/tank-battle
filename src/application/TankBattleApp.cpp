@@ -57,6 +57,8 @@ enum StartState : int {
 	STOPING,
 };
 
+LogAdapter _logAdapter;
+
 
 #define GAME_PREPARING_TIME 5.0f
 
@@ -78,7 +80,6 @@ class BasicApp : public App {
 	vector<shared_ptr<TankControllerWorker>> _tankControllerWorkers;
 	
 	bool _runFlag;
-	LogAdapter* _logAdapter;
 	int _startStopButtonState = 0;
 	shared_ptr<SignalAny> _controllerReadySignal;
 	string _workingDir;
@@ -93,6 +94,7 @@ class BasicApp : public App {
 	int _selectedRoundCount = -1;
 	float _roundCountDownAt = -1;
 	UIThreadRunner _uiThreadRunner;
+	shared_ptr<Tank> _userTank;
 
 public:
 	BasicApp();
@@ -149,9 +151,6 @@ BasicApp::~BasicApp() {
 	}
 
 	_runFlag = false;
-	if (_logAdapter) {
-		delete _logAdapter;
-	}
 
 	_gameEngine->stop();
 }
@@ -225,7 +224,7 @@ void BasicApp::setup()
 
 	_controlBoard = std::make_shared<WxControlBoard>();
 	_gameStatistics = make_shared<WxGameStatistics>();
-	_logAdapter = new LogAdapter(_applog.get());
+	_logAdapter.setApplog(_applog);
 
 	_gameView = std::make_shared<WxGameView>(getWindow());
 
@@ -300,7 +299,7 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 		{ 1,0,0 },
 		{ 0,0,1 },
 		
-		{ 0,1,0 },
+		{ 1,1,1 },
 		{ 1,1,0 },
 	};
 
@@ -441,15 +440,15 @@ void BasicApp::generateGame() {
 		}
 	}
 
-	auto tanks = generateTanks(gameScene.get(), 2, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());	
-
-//auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
-//tankRef->addComponent(controlByUser);
+	auto tanks = generateTanks(gameScene.get(), 3, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());	
 
 	_controllerReadySignal = make_shared<SignalAny>(true);
 
 	applyController(tanks->at(0), _selectedPlayer1.c_str(), _peripheralsview1);
 	applyController(tanks->at(1), _selectedPlayer2.c_str(), _peripheralsview2);
+
+	_userTank = tanks->at(2);
+	_userTank->setHealth(50);
 }
 
 void BasicApp::setupGame() {
@@ -481,7 +480,7 @@ void BasicApp::setupGame() {
 	_gameStateManager = make_shared<GameStateManager>();
 	_applicationComponentContainer->addComponent(_gameStateManager);
 
-	gameScene->addGameObject(_applicationComponentContainer);
+	_gameEngine->addGameObject(_applicationComponentContainer);
 
 	auto barrier1 = std::make_shared<Barrier>();
 	auto barrier2 = std::make_shared<Barrier>();
@@ -505,7 +504,7 @@ void BasicApp::setupGame() {
 	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
 
-	gameScene->addGameObject(gameCapture);
+	_gameEngine->addGameObject(gameCapture);
 
 	loadPlayers();	
 	_controllerReadySignal = make_shared<SignalAny>(true);
@@ -552,6 +551,12 @@ void BasicApp::startRound() {
 			worker->run();
 		}
 
+		if (_userTank) {
+			auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
+			_userTank->addComponent(controlByUser);
+			_gameStateManager->addMonitorObject(_userTank);
+		}
+
 		// start bot tanks
 		_controllerReadySignal->signal();
 		startStopBots(true);
@@ -571,7 +576,7 @@ void BasicApp::stopRound() {
 }
 
 void BasicApp::startStopButtonClick() {
-	LOG_SCOPE_ACCESS(_logAdapter, __FUNCTION__);
+	LOG_SCOPE_ACCESS(&_logAdapter, __FUNCTION__);
 
 	if (StartState::NOT_STARTED == _startStopButtonState) {
 		setSSButtonState(StartState::STARTED);
@@ -597,6 +602,7 @@ void BasicApp::startStopButtonClick() {
 	}
 	else if (StartState::STARTED == _startStopButtonState) {
 		setSSButtonState(StartState::NOT_STARTED);
+		_roundCountDownAt = -1;
 		stopRound();
 	}
 }
@@ -678,18 +684,16 @@ void BasicApp::update()
 			timer->startTimer();
 			timer->setTimeEventHandler([this, timer](bool timeOut, float t) {
 				auto lifeTime = timer->getLifeTime();
-				auto uiTask = [this, lifeTime, timeOut](float t) {
-					if (generatedGame == false && lifeTime >= (GAME_PREPARING_TIME - 1.0f)) {
-						_gameEngine->accessEngineResource(std::bind(&BasicApp::generateGame, this));
-						generatedGame = true;
-					}
-					if (timeOut) {
+				if (generatedGame == false && lifeTime >= (GAME_PREPARING_TIME - 1.0f)) {
+					generateGame();
+					generatedGame = true;
+				}
+				if (timeOut && _startStopButtonState != StartState::NOT_STARTED) {
+					_uiThreadRunner.postTask([this](float t){
 						startRound();
 						_roundCountDownAt = -1;
-					}
-				};
-			
-				_uiThreadRunner.postTask(uiTask);
+					});
+				}
 			});
 
 			_applicationComponentContainer->addComponent(timer);

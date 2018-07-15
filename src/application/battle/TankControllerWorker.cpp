@@ -106,10 +106,24 @@ void TankControllerWorker::setUp() {
 	_frameCount = 0;
 }
 
+void TankControllerWorker::enablePeripherals(bool enable) {
+	auto& components = _tank->getComponents();
+	for (auto it = components.begin(); it != components.end(); it++) {
+		auto objectViewContainer = dynamic_cast<ObjectViewContainer*>(it->get());
+		if (objectViewContainer) {
+			objectViewContainer->enableSnapshot(enable);
+		}
+	}
+}
+
 void TankControllerWorker::loop() {
 	if (_pWaitForReadySignal) {
 		_pWaitForReadySignal->waitSignal();
 	}
+
+	// enable snapshot for camera and radar
+	enablePeripherals(true);
+
 	constexpr unsigned int requestControlInterval = 20;
 	unsigned int timeLeft = 0;
 
@@ -324,6 +338,8 @@ bool TankControllerWorker::stopAndWait(int milisecond) {
 		GameEngine::getInstance()->postTask(task);
 	});
 
+	// disable snapshot for camera and radar
+	enablePeripherals(false);
 
 	if (worker.joinable()) {
 		_stopSignal.signal();

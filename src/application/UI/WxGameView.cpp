@@ -7,7 +7,7 @@
 using namespace ci;
 using namespace std;
 
-WxGameView::WxGameView(ci::app::WindowRef parent) : _expectedRatio(1.0f), _parent(parent) {
+WxGameView::WxGameView(ci::app::WindowRef parent) : _expectedRatio(1.0f), _parent(parent), _lastTime(-1){
 }
 WxGameView::~WxGameView(){}
 
@@ -33,6 +33,7 @@ bool WxGameView::updateViewPort() {
 	//ci::ivec2 basePoint(getX() + getWidth() / 2, getY() + getHeight() / 2);
 	ci::ivec2 basePoint(viewWidth / 2, getY() + getHeight() / 2);
 	_viewPort.set(basePoint.x - viewWidth/2, basePoint.y - viewHeight/2, basePoint.x + viewWidth / 2, basePoint.y + viewHeight / 2);
+	_displayRange = _viewPort;
 
 	// the left space of the view is the space for displaying radar
 	constexpr int padding = 10;
@@ -46,10 +47,14 @@ bool WxGameView::updateViewPort() {
 	if (_tankViews[0]) {
 		_tankViews[0]->setPos((float)(_viewPort.x2 + padding), (float)padding);
 		_tankViews[0]->setSize((float)radaW, (float)radaH);
+
+		_displayRange.x2 = _tankViews[0]->getX() + _tankViews[0]->getWidth();
 	}
 	if (_tankViews[1]) {
 		_tankViews[1]->setPos((float)(_viewPort.x2 + padding), (float)(padding * 2 + radaH));
 		_tankViews[1]->setSize((float)radaW, (float)radaH);
+
+		_displayRange.x2 = _tankViews[1]->getX() + _tankViews[1]->getWidth();
 	}
 
 	return true;
@@ -99,8 +104,8 @@ void WxGameView::update() {
 }
 
 void WxGameView::draw() {
-
-	GameEngine::getInstance()->accessEngineResource([this]() {
+	auto gameEngine = GameEngine::getInstance();
+	gameEngine->accessEngineResource([this]() {
 		{
 			auto h = _parent->getHeight();
 			// mapping scene to view port area
@@ -117,14 +122,68 @@ void WxGameView::draw() {
 		}
 	});	
 
+	// draw debug information
 	{
-		constexpr float measureDuration = 3.0f;
 		auto currentTime = ci::app::getElapsedSeconds();
-		auto frameCount = ci::app::getElapsedFrames();
+		float fps = -1;
+		if (_lastTime >= 0) {
+			_frameCounter.next() = currentTime - _lastTime;
 
-		auto fs = frameCount / currentTime;
-		auto fsStr = std::to_string((int)fs);
-		fsStr.append(" fps");
-		gl::drawString(fsStr, _viewPort.getUL());
+			int cap = _frameCounter.cap();
+			float totalFrameTime = 0;
+			for (int i = 0; i < cap; i++) {
+				totalFrameTime += _frameCounter[i];
+			}
+			fps = cap / totalFrameTime;
+		}
+		std::string str;
+		auto pos = ci::ivec2(_displayRange.x2, _displayRange.y1);
+
+		str = "display fps: ";
+		if (fps >= 0) {
+			str += std::to_string((int)std::ceil(fps));
+		}
+		else {
+			str += " N/A";
+		}
+		gl::drawString(str, pos);
+		auto engineFps = gameEngine->getFramePerSecond(); 
+		auto engineCPUUsage = gameEngine->getCPUUsage();
+
+		pos.y += 15;
+		str = "engine fps: ";
+		if (engineFps >= 0) {
+			str += std::to_string((int)(std::ceil(engineFps)));
+		}
+		else {
+			str += "N/A";
+		}
+		gl::drawString(str, pos);
+
+		pos.y += 15;
+		str = "engine cpu usage: ";
+		if (engineCPUUsage >= 0) {
+			str += std::to_string((int)(engineCPUUsage * 100));
+			str += " %";
+		}
+		else {
+			str += "N/A";
+		}
+		gl::drawString(str, pos);
+		
+		int logicObject = (int)gameEngine->getObjects().size();
+		int physicalObject = (int)_gameScene->getDrawableObjects().size();
+
+		pos.y += 15;
+		str = "logic objects: ";
+		str += std::to_string(logicObject);
+		gl::drawString(str, pos);
+
+		pos.y += 15;
+		str = "phyical objects: ";
+		str += std::to_string(physicalObject);
+		gl::drawString(str, pos);
+
+		_lastTime = currentTime;
 	}
 }

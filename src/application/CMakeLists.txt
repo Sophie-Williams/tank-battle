@@ -9,6 +9,7 @@ SET (COMMON_SRC
     ../common/SyncMessageQueue.hpp
     ../common/HandlerCollection.hpp
     ../common/ILogger.cpp
+    ../common/SpinArray.hpp
 )
 
 SET (ENGINE_SRC

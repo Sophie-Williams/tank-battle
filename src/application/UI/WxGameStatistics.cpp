@@ -110,7 +110,7 @@ void WxGameStatistics::update() {
 
 		if (ImGui::TreeNode(buffer)) {
 			ImGui::Columns(3, nullptr, false);
-			ImGui::SetColumnWidth(0, 250);
+			ImGui::SetColumnWidth(0, 210);
 			ImGui::SetColumnWidth(1, 40);
 			ImGui::Text("Player"); ImGui::NextColumn();
 			ImGui::Text("Kill"); ImGui::NextColumn();
@@ -129,7 +129,7 @@ void WxGameStatistics::update() {
 					ImGui::Text("N/A");
 				}
 				else {
-					ImGui::Text("%.3f ms", playerRecord.averageTimePerFrame);
+					ImGui::Text("%.3f us", (playerRecord.averageTimePerFrame * 1000));
 				}
 				ImGui::NextColumn();
 			}
