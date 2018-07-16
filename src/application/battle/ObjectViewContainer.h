@@ -4,7 +4,7 @@
 
 class ObjectViewContainer : public GameComponent {
 protected:
-	DrawableObjectRef _ownerObject;
+	std::weak_ptr<DrawableObject> _ownerObject;
 	std::list<std::shared_ptr<SnapshotObject>> _modelSnapshotObjects;
 	float _lastUpdate;
 	bool _enableSnapshot;
@@ -14,6 +14,5 @@ public:
 
 	void update(float t);
 	const std::list<std::shared_ptr<SnapshotObject>>& getModelViewObjects() const;
-	const DrawableObjectRef& getOwner() const;
 	void enableSnapshot(bool enable);
 };

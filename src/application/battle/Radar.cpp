@@ -27,7 +27,7 @@ inline ci::vec2 computeRay(const float& range, const float& angle) {
 }
 
 void Radar::update(float t) {
-	if (_objectViewContainer->getOwner()->isAvailable() == false) {
+	if (_owner->isAvailable() == false) {
 		return;
 	}
 

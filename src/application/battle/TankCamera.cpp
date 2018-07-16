@@ -58,7 +58,7 @@ float TankCamera::getRange() const {
 extern void drawSolidPolygon(const std::vector<ci::vec2>& poly);
 
 void TankCamera::update(float t) {
-	if (_objectViewContainer->getOwner()->isAvailable() == false) {
+	if (_owner->isAvailable() == false) {
 		return;
 	}
 

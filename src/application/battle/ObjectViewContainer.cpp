@@ -15,7 +15,13 @@ ObjectViewContainer::~ObjectViewContainer() {
 }
 
 void ObjectViewContainer::update(float t) {
-	if (_ownerObject->isAvailable() == false || _enableSnapshot == false) {
+	auto ownerRef = _ownerObject.lock();
+	// check if owner referene is expried
+	if (!ownerRef) {
+		return;
+	}
+
+	if (_owner->isAvailable() == false || _enableSnapshot == false) {
 		return;
 	}
 	constexpr float updateInterval = CAPTURE_REFRESH_RATE;
@@ -24,8 +30,11 @@ void ObjectViewContainer::update(float t) {
 	}
 
 	ci::mat4 inverseMatrix;
-	if (_ownerObject) {
-		inverseMatrix = glm::inverse(_ownerObject->getTransformation());
+
+	DrawableObject* owner = dynamic_cast<DrawableObject*>(_owner);
+
+	if (owner) {
+		inverseMatrix = glm::inverse(owner->getTransformation());
 	}
 
 	_modelSnapshotObjects.clear();
@@ -36,7 +45,7 @@ void ObjectViewContainer::update(float t) {
 
 		for (auto it = objects.begin(); it != objects.end(); it++) {
 			auto& snapshotRef = (*it);
-			if (snapshotRef->_ref.get() != _ownerObject.get()) {
+			if (snapshotRef->_ref.get() != _owner) {
 				const auto& worldModelObjectPoly = snapshotRef->objectBound;
 
 				auto snapshotObject = std::make_shared<SnapshotObject>();
@@ -57,10 +66,6 @@ void ObjectViewContainer::update(float t) {
 
 const std::list<std::shared_ptr<SnapshotObject>>& ObjectViewContainer::getModelViewObjects() const {
 	return _modelSnapshotObjects;
-}
-
-const DrawableObjectRef& ObjectViewContainer::getOwner() const {
-	return _ownerObject;
 }
 
 void ObjectViewContainer::enableSnapshot(bool enable) {

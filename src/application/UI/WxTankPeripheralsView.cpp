@@ -20,9 +20,21 @@ WxTankPeripheralsView::WxTankPeripheralsView(ci::app::WindowRef parent) :
 
 WxTankPeripheralsView::~WxTankPeripheralsView(){}
 
-void WxTankPeripheralsView::setupPeripherals(const std::shared_ptr<TankCamera>& tankCamera, const std::shared_ptr<Radar>& tankRadar) {
-	_tankCamera = tankCamera;
-	_radarView->setRadar(tankRadar);
+void WxTankPeripheralsView::setupPeripherals(const std::shared_ptr<Tank>& tank) {
+	auto& components = tank->getComponents();
+	for (auto it = components.begin(); it != components.end(); it++) {
+		auto tankCamera = dynamic_pointer_cast<TankCamera>(*it);
+		auto tankRadar = dynamic_pointer_cast<Radar>(*it);
+
+		if (tankCamera) {
+			_tankCamera = tankCamera;
+		}
+		if (tankRadar) {
+			_radarView->setRadar(tankRadar);
+		}
+	}
+
+	_tank = tank;
 }
 
 void WxTankPeripheralsView::update() {
@@ -43,7 +55,6 @@ void WxTankPeripheralsView::setPos(float x, float y) {
 }
 
 void WxTankPeripheralsView::draw() {
-	return;
 	auto h = _parent->getHeight();
 	Rectf destRect(getX(), getY(), getX() + getWidth(), getY() + getHeight());
 
@@ -103,9 +114,8 @@ void WxTankPeripheralsView::draw() {
 
 	// draw tank's gun
 	if (_tankCamera) {
-		auto pTank = dynamic_cast<Tank*>(_tankCamera->getView()->getOwner().get());
-		if (pTank) {
-			auto gunSegment = pTank->getGun();
+		if (_tank) {
+			auto gunSegment = _tank->getGun();
 			gl::ScopedColor lineColorScope(1, 1, 1);
 			constexpr float demonstrateGunLength = 20;
 

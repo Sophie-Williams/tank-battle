@@ -15,11 +15,10 @@ PlayerControllerUI::PlayerControllerUI(ci::app::WindowRef inputWindow) {
 PlayerControllerUI::~PlayerControllerUI() {
 	_keyDown.disconnect();
 	_keyUp.disconnect();
-
-	if (instanceCount > 1) {
-		ILogger::getInstance()->log(LogLevel::Info, "[!!!]warning: PlayerControllerUI is not clean up \n");
-	}
 	ILogger::getInstance()->log(LogLevel::Info, __FUNCTION__ " is called \n");
+	if (instanceCount > 1) {
+		ILogger::getInstance()->logV(LogLevel::Info, "[!!!]warning: PlayerControllerUI is not clean up: %d \n", instanceCount);
+	}
 	instanceCount--;
 }
 
