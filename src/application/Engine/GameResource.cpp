@@ -1,5 +1,6 @@
 #include "GameResource.h"
 #include "cinder/app/App.h"
+#include "../common/ILogger.h"
 
 using namespace ci;
 using namespace std;
@@ -29,10 +30,17 @@ void GameResource::setTexture(int id, ci::gl::Texture2dRef tex) {
 }
 
 void GameResource::setTexture(int id, const std::string& file) {
-	auto img = loadImage(ci::app::loadAsset((file)));
-	auto tex = gl::Texture2d::create(img);
+	try {
+		auto img = loadImage(ci::app::loadAsset((file)));
+		auto tex = gl::Texture2d::create(img);
 
-	setTexture(id, tex);
+		setTexture(id, tex);
+	}
+	
+	catch (ci::app::AssetLoadExc& e) {
+		ILogger::getInstance()->logV(LogLevel::Error, "load asset error: ", e.what() );
+	}
+	
 }
 
 ci::gl::Texture2dRef GameResource::getTexture(int id) {

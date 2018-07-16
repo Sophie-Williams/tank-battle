@@ -279,12 +279,6 @@ void BasicApp::setup()
 	setSSButtonState(StartState::NOT_STARTED);
 	_controlBoard->setPauseResumeButtonText("Pause");
 
-	_peripheralsview1 = make_shared<WxTankPeripheralsView>(getWindow());
-	_peripheralsview2 = make_shared<WxTankPeripheralsView>(getWindow());
-
-	_gameView->setTankView(_peripheralsview1);
-	_gameView->setTankView(_peripheralsview2);
-
 	setupGame();
 }
 
@@ -374,7 +368,7 @@ void BasicApp::applyController(shared_ptr<Tank> tankRef, const char* controllerM
 	tankRef->addComponent(camera);
 
 	try {
-		peripheralsview->setupPeripherals(camera, radar);
+		peripheralsview->setupPeripherals(tankRef);
 	}
 	catch (...) {
 		quit();
@@ -455,6 +449,12 @@ void BasicApp::setupGame() {
 	fs::path assetsPath(_workingDir);
 	assetsPath.append("assets");
 	addAssetDirectory(assetsPath.u8string());
+
+	_peripheralsview1 = make_shared<WxTankPeripheralsView>(getWindow());
+	_peripheralsview2 = make_shared<WxTankPeripheralsView>(getWindow());
+
+	_gameView->setTankView(_peripheralsview1);
+	_gameView->setTankView(_peripheralsview2);
 
 	_gameResource = std::shared_ptr<GameResource>(GameResource::createInstance());
 	_gameResource->setTexture(TEX_ID_BULLET, "bulletBlue1_outline.png");
