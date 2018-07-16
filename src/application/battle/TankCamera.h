@@ -13,7 +13,6 @@ protected:
 	float _lastScanAt;
 	std::vector<ci::vec2> _viewArea;
 	SnapshotRefObjects _seenObjects;
-	mutable std::mutex _seenObjectsWriteMutex;
 public:
 	TankCamera(const std::shared_ptr<ObjectViewContainer>& bjectViewContainer, float viewAngle = glm::pi<float>()/4);
 	~TankCamera();
@@ -24,5 +23,5 @@ public:
 	void draw();
 
 	const std::shared_ptr<ObjectViewContainer>& getView() const;
-	void accessSeenObjects(const std::function<void(SnapshotRefObjects&)>& f);
+	const SnapshotRefObjects& getSeenObjects() const;
 };

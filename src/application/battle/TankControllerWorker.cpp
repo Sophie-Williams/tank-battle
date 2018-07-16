@@ -47,7 +47,6 @@ long long getCurrentTimeStamp() {
 }
 
 void TankControllerWorker::onTankCollision(DrawableObjectRef other, const CollisionInfo& poistion, float t) {
-	std::lock_guard<std::mutex> lk(_collsionsMutex);
 	ColissionRawInfo collision;
 	collision.collisionPosition = (CollisionPosition)poistion.relative;
 	collision.isExplosion = dynamic_cast<Bullet*>(other.get()) != nullptr;
@@ -120,15 +119,18 @@ void TankControllerWorker::loop() {
 	if (_pWaitForReadySignal) {
 		_pWaitForReadySignal->waitSignal();
 	}
+	GameEngine* gameEngine = GameEngine::getInstance();
 
 	// enable snapshot for camera and radar
-	enablePeripherals(true);
 
+	gameEngine->accessEngineResource([this]() {
+		enablePeripherals(true);
+	});
+	
 	constexpr unsigned int requestControlInterval = 20;
 	unsigned int timeLeft = 0;
 
 	TankOperations tankCommands = TANK_NULL_OPERATION;
-	GameEngine* gameEngine = GameEngine::getInstance();
 	TankPlayerContextImpl playerContext(_tank);
 
 	std::shared_ptr<TankCamera> tankCamera = _tankCamera;
@@ -151,7 +153,7 @@ void TankControllerWorker::loop() {
 	});
 
 	// take camera snapshot object and convert to raw objects
-	std::function<void(SnapshotRefObjects&)> takeCameraSnhapShot = [&cameraSnapshots](SnapshotRefObjects& snapshotObjects) {
+	std::function<void(const SnapshotRefObjects&)> takeCameraSnhapShot = [&cameraSnapshots](const SnapshotRefObjects& snapshotObjects) {
 		if (snapshotObjects.size() == 0) return;
 
 		recreateRawArray(cameraSnapshots, (int)snapshotObjects.size());
@@ -174,7 +176,7 @@ void TankControllerWorker::loop() {
 	};
 
 	// take radar snapshot object and convert to raw objects
-	std::function<void(ScannedObjectGroupMap&)> takeRadarSnhapShot = [&radarSnapshots](ScannedObjectGroupMap& groupObjects) {
+	std::function<void(const ScannedObjectGroupMap&)> takeRadarSnhapShot = [&radarSnapshots](const ScannedObjectGroupMap& groupObjects) {
 		if (groupObjects.size() == 0) return;
 		recreateRawArray(radarSnapshots, (int)groupObjects.size());
 		auto snapShotRaw = radarSnapshots.data;
@@ -216,8 +218,6 @@ void TankControllerWorker::loop() {
 	};
 
 	auto takeCollisionAtThisTurn = [this](SnapshotColissions& collisionsAtEachTurn) {
-		std::lock_guard<std::mutex> lk(_collsionsMutex);
-
 		freeRawArray(collisionsAtEachTurn);
 		if (_collisions.size() == 0) {
 			initRawArray(collisionsAtEachTurn);
@@ -243,23 +243,26 @@ void TankControllerWorker::loop() {
 		freeSnapshotsRaw(radarSnapshots);
 
 		// take new raw snapshots from camera
-		if (tankCamera) {
-			tankCamera->accessSeenObjects(takeCameraSnhapShot);
-		}
-		else {
-			initRawArray(cameraSnapshots);
-		}
+		gameEngine->accessEngineResource([&]() {
+			if (tankCamera) {
+				takeCameraSnhapShot(tankCamera->getSeenObjects());
+			}
+			else {
+				initRawArray(cameraSnapshots);
+			}
 
-		// take new raw snapshots from radar
-		if (radar) {
-			radar->accessGrouoObjectsMultithread(takeRadarSnhapShot);
-		}
-		else {
-			initRawArray(radarSnapshots);
-		}
+			// take new raw snapshots from radar
+			if (radar) {
+				takeRadarSnhapShot(radar->getGroupObjects());
+			}
+			else {
+				initRawArray(radarSnapshots);
+			}
 
-		// take raw collisions at this turn
-		takeCollisionAtThisTurn(collisionsAtEachTurn);
+			// take raw collisions at this turn
+			takeCollisionAtThisTurn(collisionsAtEachTurn); 
+		});
+		
 
 		// set the snapshot to player context
 		playerContext.setCameraSnapshot(&cameraSnapshots);
@@ -276,21 +279,19 @@ void TankControllerWorker::loop() {
 
 		// set commands to the tank
 		if (!IS_NULL_COMMAND(tankCommands) && _tank && _tank->isAvailable()) {
-			auto tank = _tank;
-			auto task = [tank, tankCommands](float t) {
-				if (tank->isAvailable() == false) return;
+			gameEngine->accessEngineResource([gameEngine, this, tankCommands]() {
+				if (_tank->isAvailable() == false) return;
 
+				auto t = gameEngine->getCurrentTime();
 				auto scopeCommands = tankCommands;
 				TankCommandsBuilder commandsBuilder(scopeCommands);
-				tank->move(commandsBuilder.getMovingDir(), t);
-				tank->turn(commandsBuilder.getTurnDir(), t);
-				tank->spinBarrel(commandsBuilder.getSpinningGunDir(), t);
+				_tank->move(commandsBuilder.getMovingDir(), t);
+				_tank->turn(commandsBuilder.getTurnDir(), t);
+				_tank->spinBarrel(commandsBuilder.getSpinningGunDir(), t);
 				if (commandsBuilder.hasFire()) {
-					tank->fire(t);
+					_tank->fire(t);
 				}
-			};
-
-			gameEngine->postTask(task);
+			});
 		}
 
 		// pause some moments before go to nex turn

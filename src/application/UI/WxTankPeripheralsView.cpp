@@ -24,13 +24,14 @@ void WxTankPeripheralsView::setupPeripherals(const std::shared_ptr<Tank>& tank) 
 	auto& components = tank->getComponents();
 	for (auto it = components.begin(); it != components.end(); it++) {
 		auto tankCamera = dynamic_pointer_cast<TankCamera>(*it);
-		auto tankRadar = dynamic_pointer_cast<Radar>(*it);
-
 		if (tankCamera) {
 			_tankCamera = tankCamera;
 		}
-		if (tankRadar) {
-			_radarView->setRadar(tankRadar);
+		else {
+			auto tankRadar = dynamic_pointer_cast<Radar>(*it);
+			if (tankRadar) {
+				_radarView->setRadar(tankRadar);
+			}
 		}
 	}
 

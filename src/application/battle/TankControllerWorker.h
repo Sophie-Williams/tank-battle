@@ -19,7 +19,6 @@ class TankControllerWorker {
 	SignalAny* _pWaitForReadySignal;
 
 	std::list<ColissionRawInfo> _collisions;
-	std::mutex _collsionsMutex;
 	HandlerId _tankCollisionHandlerId;
 	std::string _name;
 	float _totalProcessingTime;

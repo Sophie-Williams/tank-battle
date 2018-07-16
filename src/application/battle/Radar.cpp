@@ -43,7 +43,6 @@ void Radar::update(float t) {
 
 	constexpr float scanMinAngle = glm::pi<float>() / 24;
 
-	std::lock_guard<std::mutex> lk(_detectedGroupObjectsMutex);
 	// update the detected object list during time event
 	auto expiredTime = 2 * glm::pi<float>() / _scanSpeed;
 	for(auto it = _detectedGroupObjects.begin(); it != _detectedGroupObjects.end();) {
@@ -167,13 +166,8 @@ void Radar::draw() {
 	}
 }
 
-const std::map<DrawableObjectRef, ScannedObjectGroupRef>& Radar::getGroupObjects() const {
+const ScannedObjectGroupMap& Radar::getGroupObjects() const {
 	return _detectedGroupObjects;
-}
-
-void Radar::accessGrouoObjectsMultithread(const std::function<void(ScannedObjectGroupMap&)>& access) {
-	std::lock_guard<std::mutex> lk(_detectedGroupObjectsMutex);
-	access(_detectedGroupObjects);
 }
 
 const std::shared_ptr<ObjectViewContainer>& Radar::getView() const {
