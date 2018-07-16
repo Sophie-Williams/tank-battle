@@ -12,17 +12,6 @@ SnapshotObject* SnapshotObject::clone() {
 	return new SnapshotObject();
 }
 
-TankSnapshot::TankSnapshot() {
-}
-
-TankSnapshot::~TankSnapshot() {}
-
-SnapshotObject* TankSnapshot::clone() {
-	auto pTankSnapshot =  new TankSnapshot();
-	pTankSnapshot->gun = gun;
-	return pTankSnapshot;
-}
-
 BattlePlatform::BattlePlatform(float width, float height) : 
 	_battleArea(-width / 2, -height / 2, width / 2, height / 2) {
 	g_currentInstane = this;

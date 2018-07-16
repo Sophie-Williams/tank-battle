@@ -479,6 +479,7 @@ void BasicApp::setupGame() {
 	_applicationComponentContainer = make_shared<GameObject>();
 	_gameStateManager = make_shared<GameStateManager>();
 	_applicationComponentContainer->addComponent(_gameStateManager);
+	_applicationComponentContainer->addComponent(gameCapture);
 
 	_gameEngine->addGameObject(_applicationComponentContainer);
 
@@ -503,8 +504,6 @@ void BasicApp::setupGame() {
 	_gameEngine->setScene(gameScene);
 	_gameView->setScene(gameScene);
 	_gameView->setSceneViewRatio(gameArea.getAspectRatio());
-
-	_gameEngine->addGameObject(gameCapture);
 
 	loadPlayers();	
 	_controllerReadySignal = make_shared<SignalAny>(true);

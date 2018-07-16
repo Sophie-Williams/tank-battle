@@ -19,15 +19,6 @@ public:
 	float detectedTime;
 };
 
-class TankSnapshot : public SnapshotObject {
-public:
-	ci::vec4 gun;
-public:
-	TankSnapshot();
-	virtual ~TankSnapshot();
-	virtual SnapshotObject* clone();
-};
-
 class BattlePlatform {
 	ci::Rectf _battleArea;
 	std::list<std::shared_ptr<SnapshotObject>> _snapshotObjects;

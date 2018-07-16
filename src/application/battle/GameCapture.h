@@ -1,7 +1,7 @@
 #pragma once
-#include "Engine/GameObject.h"
+#include "Engine/GameComponent.h"
 
-class GameCapture : public GameObject {
+class GameCapture : public GameComponent {
 	float _lastUpdate;
 public:
 	GameCapture();
