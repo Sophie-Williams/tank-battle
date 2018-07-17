@@ -123,7 +123,7 @@ void TankControllerWorker::loop() {
 
 	// enable snapshot for camera and radar
 
-	gameEngine->accessEngineResource([this]() {
+	gameEngine->postTask([this](float t) {
 		enablePeripherals(true);
 	});
 	
@@ -278,10 +278,8 @@ void TankControllerWorker::loop() {
 		_frameCount++;
 
 		// set commands to the tank
-		if (!IS_NULL_COMMAND(tankCommands) && _tank && _tank->isAvailable()) {
-			gameEngine->accessEngineResource([gameEngine, this, tankCommands]() {
-				if (_tank->isAvailable() == false) return;
-
+		if (_tank && _tank->isAvailable()) {
+			if (!IS_NULL_COMMAND(tankCommands)) {
 				auto t = gameEngine->getCurrentTime();
 				auto scopeCommands = tankCommands;
 				TankCommandsBuilder commandsBuilder(scopeCommands);
@@ -291,7 +289,10 @@ void TankControllerWorker::loop() {
 				if (commandsBuilder.hasFire()) {
 					_tank->fire(t);
 				}
-			});
+			}
+		}
+		else {
+			break;
 		}
 
 		// pause some moments before go to nex turn
@@ -317,6 +318,7 @@ bool stopAndWait(std::thread& worker, int milisecond) {
 	}
 	if (waitRes == WAIT_TIMEOUT) {
 		bool res = TerminateThread(hThread, 0) != FALSE;
+		ILogger::getInstance()->log(LogLevel::Error, "Warning!!! thread is force terminate!");
 		worker.join();
 		return res;
 	}
@@ -338,13 +340,15 @@ bool TankControllerWorker::stopAndWait(int milisecond) {
 		GameEngine::getInstance()->postTask(task);
 	});
 
+
 	// disable snapshot for camera and radar
-	enablePeripherals(false);
+	//enablePeripherals(false);
 
 	if (worker.joinable()) {
 		_stopSignal.signal();
-
-		return ::stopAndWait(worker, milisecond);
+		worker.join();
+		return true;
+		//return ::stopAndWait(worker, milisecond);
 	}
 
 	return false;

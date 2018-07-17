@@ -97,8 +97,8 @@ void GameEngine::run() {
 void GameEngine::stop() {
 	if (_worker.joinable()) {
 		_stopSignal.signal();
-
-		::stopAndWait(_worker, 500);
+		_worker.join();
+		//::stopAndWait(_worker, 500);
 	}
 }
 

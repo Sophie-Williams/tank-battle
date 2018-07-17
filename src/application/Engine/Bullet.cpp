@@ -67,7 +67,7 @@ void Bullet::destroy(float t) {
 
 	TexturedObject::destroy(t);
 	auto explosion = std::make_shared<Animation>();
-	Scene::getCurrentScene()->addDrawbleObject(explosion);
+	GameEngine::getInstance()->postTask([explosion](float t) {Scene::getCurrentScene()->addDrawbleObject(explosion); });
 	
 	// setup animation
 	explosion->setTexture(GameResource::getInstance()->getTexture(TEX_ID_EXPLOSION));

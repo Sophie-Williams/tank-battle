@@ -176,7 +176,7 @@ void Tank::fire(float at) {
 		auto currentScene = Scene::getCurrentScene();
 		if (currentScene) {
 			auto bullet = std::make_shared<Bullet>(at);
-			currentScene->addDrawbleObject(bullet);
+			GameEngine::getInstance()->postTask([currentScene, bullet](float t) {currentScene->addDrawbleObject(bullet); });
 
 			// ensure that the bullet destroy automatically after 5 seconds
 			auto bulletLifeTimeControl = std::make_shared<LifeTimeControlComponent>(5.0f);
@@ -208,7 +208,7 @@ void Tank::fire(float at) {
 			auto v = ci::vec3(bulletOutPosition, 0) - pivot;
 
 			// temporary fix the bug of bullet stuck in some cases after fired out
-			v = ci::normalize(v) * 5.f;
+			v = ci::normalize(v) * 4.f;
 			bullet->translate(v);
 
 			// bullet speed is 5 times faster than tank's moving speed

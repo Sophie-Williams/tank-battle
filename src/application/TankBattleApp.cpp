@@ -539,17 +539,18 @@ void BasicApp::startStopBots(bool start) {
 }
 
 void BasicApp::startRound() {
-	_gameEngine->accessEngineResource([this]() {
+	_gameEngine->postTask([this](float t) {
 		_gameStateManager->initState();
-
-		// start user's controller
-		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-			auto& worker = *it;
-			_gameStateManager->addMonitorObject(worker->getAssociatedTank());
-
-			worker->run();
-		}
-
+		_uiThreadRunner.postTask([this](float t) {
+			// start user's controller
+			for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+				auto& worker = *it;
+				_gameStateManager->addMonitorObject(worker->getAssociatedTank());
+				worker->run();
+			}
+			_controllerReadySignal->signal();
+		});
+		
 		if (_userTank) {
 			auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
 			_userTank->addComponent(controlByUser);
@@ -557,18 +558,20 @@ void BasicApp::startRound() {
 		}
 
 		// start bot tanks
-		_controllerReadySignal->signal();
 		startStopBots(true);
 	});
 }
 
 void BasicApp::stopRound() {
-	_gameEngine->accessEngineResource([this]() {
+	_uiThreadRunner.postTask([this](float t) {
 		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
 			auto& worker = *it;
 			worker->stopAndWait(100);
 		}
 		_controllerReadySignal->resetState();
+	});
+
+	_gameEngine->accessEngineResource([this]() {
 		startStopBots(false);
 		_gameStateManager->initState();
 	});
