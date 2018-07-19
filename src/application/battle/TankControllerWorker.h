@@ -6,7 +6,6 @@
 #include "TankCamera.h"
 #include "Radar.h"
 #include <thread>
-#include <mutex>
 #include <string>
 
 class TankControllerWorker {

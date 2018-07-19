@@ -434,15 +434,15 @@ void BasicApp::generateGame() {
 		}
 	}
 
-	auto tanks = generateTanks(gameScene.get(), 3, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());	
+	auto tanks = generateTanks(gameScene.get(), 2, _controlBoard->getNumberOfBot(), (float)_controlBoard->getTankHeathCapacity());	
 
 	_controllerReadySignal = make_shared<SignalAny>(true);
 
 	applyController(tanks->at(0), _selectedPlayer1.c_str(), _peripheralsview1);
 	applyController(tanks->at(1), _selectedPlayer2.c_str(), _peripheralsview2);
 
-	_userTank = tanks->at(2);
-	_userTank->setHealth(50);
+	//_userTank = tanks->at(2);
+	//_userTank->setHealth(50);
 }
 
 void BasicApp::setupGame() {
@@ -541,15 +541,23 @@ void BasicApp::startStopBots(bool start) {
 void BasicApp::startRound() {
 	_gameEngine->postTask([this](float t) {
 		_gameStateManager->initState();
-		_uiThreadRunner.postTask([this](float t) {
-			// start user's controller
-			for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
-				auto& worker = *it;
-				_gameStateManager->addMonitorObject(worker->getAssociatedTank());
-				worker->run();
-			}
-			_controllerReadySignal->signal();
-		});
+		//_uiThreadRunner.postTask([this](float t) {
+		//	// start user's controller
+		//	for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+		//		auto& worker = *it;
+		//		_gameStateManager->addMonitorObject(worker->getAssociatedTank());
+		//		worker->run();
+		//	}
+		//	_controllerReadySignal->signal();
+		//});
+
+		// start user's controller
+		for (auto it = _tankControllerWorkers.begin(); it != _tankControllerWorkers.end(); it++) {
+			auto& worker = *it;
+			_gameStateManager->addMonitorObject(worker->getAssociatedTank());
+			worker->run();
+		}
+		_controllerReadySignal->signal();
 		
 		if (_userTank) {
 			auto controlByUser = make_shared<PlayerControllerUI>(getWindow());
@@ -691,10 +699,13 @@ void BasicApp::update()
 					generatedGame = true;
 				}
 				if (timeOut && _startStopButtonState != StartState::NOT_STARTED) {
-					_uiThreadRunner.postTask([this](float t){
-						startRound();
-						_roundCountDownAt = -1;
-					});
+					//_uiThreadRunner.postTask([this](float t){
+					//	startRound();
+					//	_roundCountDownAt = -1;
+					//});
+
+					startRound();
+					_roundCountDownAt = -1;
 				}
 			});
 

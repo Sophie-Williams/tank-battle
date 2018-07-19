@@ -2,7 +2,6 @@
 #include "Engine/DrawableObject.h"
 #include "ObjectViewContainer.h"
 #include "BattlePlatform.h"
-#include <mutex>
 
 typedef std::list<std::shared_ptr<ScannedObject>> ScannedObjectGroup;
 typedef std::shared_ptr<ScannedObjectGroup> ScannedObjectGroupRef;

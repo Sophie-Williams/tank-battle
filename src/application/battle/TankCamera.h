@@ -1,7 +1,6 @@
 #pragma once
 #include "Engine/DrawableObject.h"
 #include "ObjectViewContainer.h"
-#include <mutex>
 
 typedef std::list<std::shared_ptr<SnapshotObject>> SnapshotRefObjects;
 

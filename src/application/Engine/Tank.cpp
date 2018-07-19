@@ -176,7 +176,7 @@ void Tank::fire(float at) {
 		auto currentScene = Scene::getCurrentScene();
 		if (currentScene) {
 			auto bullet = std::make_shared<Bullet>(at);
-			GameEngine::getInstance()->postTask([currentScene, bullet](float t) {currentScene->addDrawbleObject(bullet); });
+			currentScene->addDrawbleObject(bullet);
 
 			// ensure that the bullet destroy automatically after 5 seconds
 			auto bulletLifeTimeControl = std::make_shared<LifeTimeControlComponent>(5.0f);

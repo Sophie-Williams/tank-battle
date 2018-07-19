@@ -2,7 +2,6 @@
 #include "ImWidget.h"
 #include <functional>
 #include <vector>
-#include <mutex>
 
 typedef ButtonClickEventHandler FilterActiveChanged;
 

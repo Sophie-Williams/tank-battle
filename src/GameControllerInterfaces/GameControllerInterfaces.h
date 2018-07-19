@@ -93,13 +93,20 @@ void initRawArray(RawArray<T>& arr) {
 
 template <class T>
 void freeRawArray(RawArray<T>& arr) {
-	if(arr.data) free(arr.data);
+	if (arr.data) {
+		free(arr.data);
+		arr.data = nullptr;
+	}
+	arr.elmCount = 0;
 }
 
 template <class T>
 void recreateRawArray(RawArray<T>& arr, int n) {
 	if (n > 0) {
 		arr.data = (T*)malloc(sizeof(T) * n);
+	}
+	else {
+		arr.data = nullptr;
 	}
 	arr.elmCount = n;
 }

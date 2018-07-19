@@ -36,6 +36,8 @@ GameEngine::GameEngine(const char* configFile) :
 	_pauseTime(-1),
 	_stopSignal(false),
 	_expectedFrameTime(1.0f/60.0f),
+	_cpuUsage(-1),
+	_framePerSecond(-1),
 	_frameCounter({0, 0}) {
 	_collisionDetector = std::make_shared<CollisionDetector>();
 	timeAtEngineCreated = chrono::high_resolution_clock::now();
@@ -71,7 +73,8 @@ extern bool stopAndWait(std::thread& worker, int milisecond);
 
 void GameEngine::loop() {
 	float timeLeft = 0;
-
+	_framePerSecond = -1;
+	_cpuUsage = -1;
 	// check if a stop signal was sent then exit the loop
 	while (_stopSignal.waitSignal((unsigned int)(timeLeft * 1000)) == false) {
 		auto t1 = getCurrentTime();
@@ -85,6 +88,9 @@ void GameEngine::loop() {
 		auto& frame = _frameCounter.next();
 		frame.timeCap = _expectedFrameTime;
 		frame.timeConsume = timeLeft;
+
+		_framePerSecond = computeFramePerSecond();
+		_cpuUsage = computeCPUUsage();
 
 		timeLeft = timeLeft > _expectedFrameTime ? 0 : _expectedFrameTime - timeLeft;
 	}
@@ -113,6 +119,31 @@ void GameEngine::resume() {
 
 bool GameEngine::isPausing() const {
 	return (_pauseTime >= 0);
+}
+
+float GameEngine::computeFramePerSecond() const {
+	int cap = _frameCounter.cap();
+	float totalFrameTime = 0;
+	for (int i = 0; i < cap; i++) {
+		auto& frame = _frameCounter[i];
+		totalFrameTime += std::max(frame.timeCap, frame.timeConsume);
+	}
+	if (totalFrameTime == 0) return -1;
+	return cap / totalFrameTime;
+}
+
+float GameEngine::computeCPUUsage() const {
+	int cap = _frameCounter.cap();
+	float totalFrameCap = 0;
+	float totalFrameTime = 0;
+	for (int i = 0; i < cap; i++) {
+		auto& frame = _frameCounter[i];
+		totalFrameCap += frame.timeCap;
+
+		totalFrameTime += std::min(frame.timeCap, frame.timeConsume);
+	}
+	if (totalFrameCap == 0) return -1;
+	return totalFrameTime / totalFrameCap;
 }
 
 void GameEngine::doUpdate(float t) {
@@ -205,31 +236,6 @@ void GameEngine::accessEngineResource(std::function<void()>&& acessFunction) {
 	acessFunction();
 }
 
-float GameEngine::getFramePerSecond() const {
-	int cap = _frameCounter.cap();
-	float totalFrameTime = 0;
-	for (int i = 0; i < cap; i++) {
-		auto& frame = _frameCounter[i];
-		totalFrameTime += std::max(frame.timeCap, frame.timeConsume);
-	}
-	if (totalFrameTime == 0) return -1;
-	return cap / totalFrameTime;
-}
-float GameEngine::getCPUUsage() const {
-	int cap = _frameCounter.cap();
-	float totalFrameCap = 0;
-	float totalFrameTime = 0;
-	for (int i = 0; i < cap; i++) {
-		auto& frame = _frameCounter[i];
-		totalFrameCap += frame.timeCap;
-
-		totalFrameTime += std::min(frame.timeCap,frame.timeConsume);
-	}
-	if (totalFrameCap == 0) return -1;
-	return totalFrameTime / totalFrameCap;
-}
-
-
 void GameEngine::addGameObject(GameObjectRef gameObjectRef) {
 	_gameObjects.push_back(gameObjectRef);
 }
@@ -268,4 +274,12 @@ const std::list<GameObjectRef>& GameEngine::getObjects() const {
 
 std::list<GameObjectRef>& GameEngine::getObjects() {
 	return _gameObjects;
+}
+
+float GameEngine::getFramePerSecond() const {
+	return _framePerSecond;
+}
+
+float GameEngine::getCPUUsage() const {
+	return _cpuUsage;
 }

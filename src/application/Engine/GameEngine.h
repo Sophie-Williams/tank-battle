@@ -25,6 +25,8 @@ private:
 	float _pauseTime;
 	float _pauseDuration;
 	float _expectedFrameTime;
+	float _cpuUsage;
+	float _framePerSecond;
 	SpinArray<FrameInfo, 100> _frameCounter;
 private:
 	std::shared_ptr<Scene> _gameScene;
@@ -40,6 +42,8 @@ protected:
 	void loop();
 	void doUpdate(float t);
 	std::list<GameObjectRef>::const_iterator findObjectIter(const GameObject* pObject) const;
+	float computeFramePerSecond() const;
+	float computeCPUUsage() const;
 public:
 	static GameEngine* createInstance();
 	static GameEngine* getInstance();
@@ -54,6 +58,8 @@ public:
 	void setScene(const std::shared_ptr<Scene>& scene);
 	const std::shared_ptr<Scene>& getScene() const;
 	float getCurrentTime() const;
+	float getFramePerSecond() const;
+	float getCPUUsage() const;
 
 	void run();
 	void stop();
@@ -67,8 +73,5 @@ public:
 	void sendTask(UpdateTask&& task);
 
 	void accessEngineResource(std::function<void()>&& acessFunction);
-
-	float getFramePerSecond() const;
-	float getCPUUsage() const;
 };
 
