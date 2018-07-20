@@ -404,9 +404,12 @@ std::pair<float, float> CollisionDetector::findCollideTime(float beginTime, floa
 	auto& tStart = collisionTimeRange.first;
 	auto& tEnd = collisionTimeRange.second;
 
-	tStart = beginTime;
-	tEnd = colliedTime;
-	float t, duration;
+	// align tStart, tEnd to zero to fix bug loop infity
+	// if beginTime is big, about 8000 second
+	// at that time 'tStart + (tEnd - tStart)/2' equal to 'tEnd'
+	tStart = 0;
+	tEnd = colliedTime - beginTime;
+	float t, duration, tt;
 
 	// backup transformation
 	auto backupTransform = dynamicObject->getTransformation();
@@ -417,8 +420,9 @@ std::pair<float, float> CollisionDetector::findCollideTime(float beginTime, floa
 	int checkResult;
 	while (loop && (duration = (tEnd - tStart)) > smallestDuration) {
 		t = tStart + duration / 2;
+		tt = t + beginTime;
 
-		dynamicObject->update(t);
+		dynamicObject->update(tt);
 		dynamicObject->getBoundingPoly(dynamicBoundBuffer);
 		
 		checkResult = checkIntersect2d(staticBound, dynamicBoundBuffer, intersectAt);
@@ -441,7 +445,8 @@ std::pair<float, float> CollisionDetector::findCollideTime(float beginTime, floa
 		dynamicObject->update(beginTime);
 		dynamicObject->setTransformation(backupTransform);
 	}
-
+	tStart += beginTime;
+	tEnd += beginTime;
 	return collisionTimeRange;
 }
 
@@ -456,9 +461,12 @@ std::pair<float, float> CollisionDetector::findCollideTime(
 	//auto endTime = std::max(object1State, object2State);
 	auto endTime = std::min(object1State, object2State);
 
-	tStart = beginTime;
-	tEnd = endTime;
-	float t, duration;
+	// align tStart, tEnd to zero to fix bug loop infity
+	// if beginTime is big, about 8000 second
+	// at that time 'tStart + (tEnd - tStart)/2' equal to 'tEnd'
+	tStart = 0;
+	tEnd = endTime - beginTime;
+	float t, duration, tt;
 
 	// backup transformations
 	auto backupTransform1 = dynamicObject1->getTransformation();
@@ -471,20 +479,21 @@ std::pair<float, float> CollisionDetector::findCollideTime(
 
 	while (loop && (duration = (tEnd - tStart)) > smallestDuration) {
 		t = tStart + duration / 2;
+		tt = t + beginTime;
 
-		if (t > object1State) {
+		if (tt > object1State) {
 			dynamicObject1->update(object1State);
 		}
 		else {
-			dynamicObject1->update(t);
+			dynamicObject1->update(tt);
 		}
 		dynamicObject1->getBoundingPoly(dynamicBoundBuffer1);
 
-		if (t > object2State) {
+		if (tt > object2State) {
 			dynamicObject2->update(object2State);
 		}
 		else {
-			dynamicObject2->update(t);
+			dynamicObject2->update(tt);
 		}
 		dynamicObject2->getBoundingPoly(dynamicBoundBuffer2);
 
@@ -510,7 +519,8 @@ std::pair<float, float> CollisionDetector::findCollideTime(
 		dynamicObject2->update(beginTime);
 		dynamicObject2->setTransformation(backupTransform2);
 	}
-
+	tStart += beginTime;
+	tEnd += beginTime;
 	return collisionTimeRange;
 }
 
