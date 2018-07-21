@@ -42,6 +42,7 @@ public:
 
 		_myScriptLib.loadLibrary(scriptCompiler);		
 		
+		scriptCompiler->beginUserLib();
 		_program = compiler.compileProgram(scriptWstr.c_str(), scriptWstr.c_str() + scriptWstr.size());
 
 		if (_program) {
@@ -101,7 +102,7 @@ bool ScriptedPlayer::setProgramScript(const char* script) {
 		delete _pImpl;
 	}
 	
-	_pImpl = new  ScriptedPlayerImpl(script);
+	_pImpl = new ScriptedPlayerImpl(script);
 	if (_pImpl->isValidProgram() == false) {
 		return false;
 	}
@@ -110,8 +111,17 @@ bool ScriptedPlayer::setProgramScript(const char* script) {
 }
 
 void ScriptedPlayer::setup(TankPlayerContext*) {
+	setProgramScript(
+		"TankOperations frame() {" \
+		"    TankOperations operation = NULL_OPERATION;" \
+		"    freeze(operation);"\
+		"    addMove(operation, MOVE_FORWARD);"\
+		"    return operation;" \
+		"}"
+	);
 }
 
 TankOperations ScriptedPlayer::giveOperations(TankPlayerContext* player) {
 	return _pImpl->giveOperations(player);
+	//return TANK_NULL_OPERATION;
 }
