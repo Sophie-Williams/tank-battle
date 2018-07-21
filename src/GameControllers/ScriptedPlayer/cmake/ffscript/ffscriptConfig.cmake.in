@@ -1,0 +1,30 @@
+# ===================================================================================
+#  The ffscript CMake configuration file
+#
+#             ** File generated automatically, do not modify **
+#
+#  Usage from an external project:
+#    In your CMakeLists.txt, add these lines:
+#
+#    find_package(ffscript REQUIRED)
+#    include_directories(${ffscript_INCLUDE_DIRS}) # Not needed for CMake >= 2.8.11
+#    target_link_libraries(MY_TARGET_NAME ${ffscript_LIBS})
+#
+#    This file will define the following variables:
+#      - ffscript_LIBS                     : The list of all imported targets for ffscript modules.
+#      - ffscript_INCLUDE_DIRS             : The ffscript include directories.
+# ===================================================================================
+
+SET (ffscript_LIBS
+	PRIVATE debug @FFSCRIPT_LIB_X64_D_DIR@/ffscript.lib
+	PRIVATE debug @FFSCRIPT_LIB_X64_D_DIR@/ffscriptLibrary.lib	
+	PRIVATE optimized @FFSCRIPT_LIB_X64_R_DIR@/ffscript.lib
+	PRIVATE optimized @FFSCRIPT_LIB_X64_R_DIR@/ffscriptLibrary.lib
+)
+
+SET (ffscript_INCLUDE_DIRS
+    @FFSCRIPT_INCLUDE_DIR@
+)
+
+include_directories(BEFORE ${ffscript_INCLUDE_DIRS})
+
