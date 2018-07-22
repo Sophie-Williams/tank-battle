@@ -1,14 +1,18 @@
 #pragma once
 #include "TankController.h"
 
+#include <string>
+
 class TankControllerModuleWrapper : public TankController {
 private:
     class TankControllerLoader;
+	class TankControllerLoaderForScript;
 private:
     TankControllerLoader* _controllerLoader;
 	TankController* _interface;
 public:
 	TankControllerModuleWrapper(const char* module);
+	TankControllerModuleWrapper(const char* module, const std::wstring& script);
 	virtual ~TankControllerModuleWrapper();
 	
 	void setup(TankPlayerContext* player);

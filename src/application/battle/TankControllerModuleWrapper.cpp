@@ -1,6 +1,6 @@
 #include <Windows.h>
-
 #include "TankControllerModuleWrapper.h"
+#include "../GameControllers/ScriptedPlayer/ScriptedPlayer.h"
 
 typedef TankController* (*FCreateController)();
 
@@ -17,13 +17,13 @@ public:
 			_createControllerFx = nullptr;
 		}
 	}
-	~TankControllerLoader() {
+	virtual ~TankControllerLoader() {
 		if (_hLib) {
 			FreeLibrary(_hLib);
 		}
 	}
 
-	TankController* createController() {
+	virtual TankController* createController() {
 		if (_createControllerFx) {
 			return _createControllerFx();
 		}
@@ -32,9 +32,40 @@ public:
 	}
 };
 
+class TankControllerModuleWrapper::TankControllerLoaderForScript : public TankControllerModuleWrapper::TankControllerLoader {
+	const std::wstring& _script;
+public:
+	TankControllerLoaderForScript(const char* module, const std::wstring& script) :
+		TankControllerLoader(module),
+		_script(script)
+	{}
+
+	virtual ~TankControllerLoaderForScript() {
+	}
+
+	virtual TankController* createController() {
+		TankController* controller = TankControllerLoader::createController();
+		ScriptedPlayer* sciptedPlayer = dynamic_cast<ScriptedPlayer*>(controller);
+		if (sciptedPlayer) {
+			//bool res = sciptedPlayer->setProgramScript(_script.c_str(), _script.c_str() + _script.size());
+			//if (res == false) {
+			//	delete sciptedPlayer;
+			//	return nullptr;
+			//}
+		}
+
+		return controller;
+	}
+};
+
 TankControllerModuleWrapper::TankControllerModuleWrapper(const char* module)
 {
 	_controllerLoader = new TankControllerLoader(module);
+	_interface = _controllerLoader->createController();
+}
+
+TankControllerModuleWrapper::TankControllerModuleWrapper(const char* module, const std::wstring& script) {
+	_controllerLoader = new TankControllerLoaderForScript(module, script);
 	_interface = _controllerLoader->createController();
 }
 

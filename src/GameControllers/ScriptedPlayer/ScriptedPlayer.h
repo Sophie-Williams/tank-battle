@@ -12,7 +12,7 @@ protected:
 public:
 	ScriptedPlayer();
 	virtual ~ScriptedPlayer();
-	bool setProgramScript(const char* script);
+	bool setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd);
 	void setup(TankPlayerContext* player);
 	TankOperations giveOperations(TankPlayerContext* player);
 };

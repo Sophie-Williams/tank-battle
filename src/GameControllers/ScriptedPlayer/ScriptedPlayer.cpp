@@ -12,6 +12,7 @@
 #include <CompilerSuite.h>
 #include <ScriptTask.h>
 #include <Utils.h>
+#include <DefaultPreprocessor.h>
 
 #include <memory>
 
@@ -32,8 +33,8 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	TankPlayerContext* _temporaryPlayerContex;
 	PlayerContextSciptingLibrary _myScriptLib;
 public:
-	ScriptedPlayerImpl(const char* script) : _functionIdOfMainFunction(-1) {
-		wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
+	ScriptedPlayerImpl(const wchar_t* scriptStart, const wchar_t* scriptEnd) : _functionIdOfMainFunction(-1) {
+		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
 		CompilerSuite compiler;
 		compiler.initialize(1024);
 
@@ -43,7 +44,8 @@ public:
 		_myScriptLib.loadLibrary(scriptCompiler);		
 		
 		scriptCompiler->beginUserLib();
-		_program = compiler.compileProgram(scriptWstr.c_str(), scriptWstr.c_str() + scriptWstr.size());
+		compiler.setPreprocessor(std::make_shared<DefaultPreprocessor>());
+		_program = compiler.compileProgram(scriptStart, scriptEnd);
 
 		if (_program) {
 			_functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
@@ -92,12 +94,12 @@ ScriptedPlayer::~ScriptedPlayer()
 	}
 }
 
-bool ScriptedPlayer::setProgramScript(const char* script) {
+bool ScriptedPlayer::setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
 	if (_pImpl) {
 		delete _pImpl;
 	}
 	
-	_pImpl = new ScriptedPlayerImpl(script);
+	_pImpl = new ScriptedPlayerImpl(scriptStart, scriptEnd);
 	if (_pImpl->isValidProgram() == false) {
 		return false;
 	}
@@ -106,11 +108,13 @@ bool ScriptedPlayer::setProgramScript(const char* script) {
 }
 
 void ScriptedPlayer::setup(TankPlayerContext*) {
+	wstring script = L"void update(float t) {"\
+		L"    freeze();"\
+		L"    setMove(MOVE_FORWARD);"\
+		L"}";
+
 	setProgramScript(
-		"void update(float t) {"\
-		"    freeze();"\
-		"    setMove(MOVE_FORWARD);"\
-		"}"
+		script.c_str(), script.c_str() + script.size()
 	);
 }
 
