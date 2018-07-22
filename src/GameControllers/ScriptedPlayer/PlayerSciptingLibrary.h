@@ -1,10 +1,30 @@
 #pragma once
 #include <CompilerSuite.h>
+#include <GameControllerInterfaces.h>
+#include "TankCommandsBuilder.h"
 
-class PlayerSciptingLibrary
+typedef char MovingDir;
+typedef char TurningDir;
+
+class PlayerContextSciptingLibrary
 {
+private:
+	TankOperations _tankOperations;
+	TankCommandsBuilder _commandBuilder;
+private:
+
+	void setMove(MovingDir dir);
+	void setTurn(TurningDir dir);
+	void setGunTurn(TurningDir dir);
+	void freeze();
+	void fire();
+	void keepPreviousState();
+
+private:
+	void loadContextFunctions(ffscript::ScriptCompiler* scriptCompiler);
 public:
-	int TYPE_TANKOPERATIONS;
-public:
+	PlayerContextSciptingLibrary();
 	void loadLibrary(ffscript::ScriptCompiler* scriptCompiler);
+	void resetCommand();
+	TankOperations getOperations() const;
 };

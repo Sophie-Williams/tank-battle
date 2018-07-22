@@ -30,7 +30,7 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	int _functionIdOfMainFunction;
 	shared_ptr<ScriptTask> _scriptTask;
 	TankPlayerContext* _temporaryPlayerContex;
-	PlayerSciptingLibrary _myScriptLib;
+	PlayerContextSciptingLibrary _myScriptLib;
 public:
 	ScriptedPlayerImpl(const char* script) : _functionIdOfMainFunction(-1) {
 		wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
@@ -46,16 +46,9 @@ public:
 		_program = compiler.compileProgram(scriptWstr.c_str(), scriptWstr.c_str() + scriptWstr.size());
 
 		if (_program) {
-			_functionIdOfMainFunction = scriptCompiler->findFunction("frame", "");
+			_functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
 			if (_functionIdOfMainFunction >= 0) {
 				auto functionFactory = scriptCompiler->getFunctionFactory(_functionIdOfMainFunction);
-				auto& returnType = functionFactory->getReturnType();
-
-				// return type of frame function must be TankOperations
-				if (returnType.iType() != _myScriptLib.TYPE_TANKOPERATIONS) {
-					_functionIdOfMainFunction = -1;
-				}
-
 				_scriptTask = make_shared<ScriptTask>(_program);
 			}
 		}
@@ -74,10 +67,12 @@ public:
 	TankOperations giveOperations(TankPlayerContext* player) {
 		// run function and allow maxium 5mb stack size
 		_temporaryPlayerContex = player;
+		_myScriptLib.resetCommand();
+		float t = GameInterface::getInstance()->getTime();
 		try {
-			_scriptTask->runFunction(5 * 1024 * 1024, _functionIdOfMainFunction, nullptr);
-			auto pResult = (TankOperations*)_scriptTask->getTaskResult();
-			return *pResult;
+			ScriptParamBuffer paramsBuffer(&t);
+			_scriptTask->runFunction(5 * 1024 * 1024, _functionIdOfMainFunction, paramsBuffer);
+			return _myScriptLib.getOperations();
 		}
 		catch (std::exception&e) {			
 		}
@@ -112,11 +107,9 @@ bool ScriptedPlayer::setProgramScript(const char* script) {
 
 void ScriptedPlayer::setup(TankPlayerContext*) {
 	setProgramScript(
-		"TankOperations frame() {" \
-		"    TankOperations operation = NULL_OPERATION;" \
-		"    freeze(operation);"\
-		"    addMove(operation, MOVE_FORWARD);"\
-		"    return operation;" \
+		"void update(float t) {"\
+		"    freeze();"\
+		"    setMove(MOVE_FORWARD);"\
 		"}"
 	);
 }
