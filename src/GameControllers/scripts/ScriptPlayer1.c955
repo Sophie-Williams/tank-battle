@@ -1,0 +1,4 @@
+void update(float t) {
+    freeze();
+    setMove(MOVE_FORWARD);
+}

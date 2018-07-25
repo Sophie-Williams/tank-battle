@@ -148,7 +148,7 @@ add_executable(${PROJECT_NAME} WIN32  ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${GameControllerInterfaces_SOURCE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../external/spdlog/include)
-target_link_libraries(${PROJECT_NAME} GameControllerInterfaces)
+target_link_libraries(${PROJECT_NAME} GameControllerInterfaces ScriptedPlayer)
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder.cmake)
 include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder-imgui.cmake)

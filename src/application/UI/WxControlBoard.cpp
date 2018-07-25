@@ -42,8 +42,18 @@ void WxControlBoard::update() {
 	ImGui::SliderInt("round", &_round, 1, 101);
 
 	ImGui::CollapsingHeader("Players", ImGuiTreeNodeFlags_Leaf);
+
+	int oldPlayer1 = _player1;
 	showPlayers("Player 1", _player1);
+	if (oldPlayer1 != _player1 && _player1ChangedHander) {
+		_player1ChangedHander(this);
+	}
+
+	int oldPlayer2 = _player2;
 	showPlayers("Player 2", _player2);
+	if (oldPlayer2 != _player2 && _player2ChangedHander) {
+		_player2ChangedHander(this);
+	}
 
 	ImGui::NextColumn();
 	if (ImGui::Button("Generate tanks", ImVec2(130, 35))) {
@@ -61,6 +71,12 @@ void WxControlBoard::update() {
 	if (ImGui::Button(_pauseResumeButtonStr.c_str(), ImVec2(130, 35))) {
 		if (_pauseButtonClickHandler) {
 			_pauseButtonClickHandler(this);
+		}
+	}
+
+	if (_showCompileButton && ImGui::Button("Compile Script", ImVec2(130, 35))) {
+		if (_compileButtonClickHandler) {
+			_compileButtonClickHandler(this);
 		}
 	}
 	//ImGui::NextColumn();
@@ -109,6 +125,18 @@ void WxControlBoard::setOnGenerateClickHandler(ButtonClickEventHandler&& handler
 	_generateButtonClickHandler = handler;
 }
 
+void WxControlBoard::setOnCompileButtonClickHandler(ButtonClickEventHandler&& handler) {
+	_compileButtonClickHandler = handler;
+}
+
+void WxControlBoard::setOnPlayer1ChangedHandler(SelectedItemChangedHandler&& handler) {
+	_player1ChangedHander = handler;
+}
+
+void WxControlBoard::setOnPlayer2ChangedHandler(SelectedItemChangedHandler&& handler) {
+	_player2ChangedHander = handler;
+}
+
 void WxControlBoard::setStarStopButtonText(const char* buttonText) {
 	_starStopButtonStr = buttonText;
 	_starStopButtonStr.append("##" START_STOP_BUTTON_ID);
@@ -136,12 +164,16 @@ const std::vector<std::string>& WxControlBoard::getPlayers() const {
 	return _players;
 }
 
-const std::string& WxControlBoard::getPlayer1() const {
-	return _players[_player1];
+int WxControlBoard::getPlayer1() const {
+	return _player1;
 }
 
-const std::string& WxControlBoard::getPlayer2() const {
-	return _players[_player2];
+int WxControlBoard::getPlayer2() const {
+	return _player2;
+}
+
+const std::string& WxControlBoard::getPlayerName(int playerIdx) const {
+	return _players[playerIdx];
 }
 
 int WxControlBoard::getNumberOfBot() const {
@@ -154,4 +186,8 @@ int WxControlBoard::getTankHeathCapacity() const {
 
 int WxControlBoard::getRoundCount() const {
 	return _round;
+}
+
+void WxControlBoard::showCompileButton(bool show) {
+	_showCompileButton = show;
 }

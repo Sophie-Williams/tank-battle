@@ -44,10 +44,13 @@ using fs = std::filesystem;
 #include "EngineSpecific/GameStateManager.h"
 #include "Engine/GameController.h"
 #include "Engine/UIThreadRunner.h"
+#include "../GameControllers/ScriptedPlayer/ScriptedPlayer.h"
 
 using namespace ci;
 using namespace ci::app;
 using namespace std;
+
+#define SCRIPT_EXT ".c955"
 
 const char* startStopButtonTexts[] = {"Start", "Starting...", "Stop", "Stopping..."};
 enum StartState : int {
@@ -88,13 +91,16 @@ class BasicApp : public App {
 	shared_ptr<WxTankPeripheralsView> _peripheralsview2;
 	shared_ptr<GameObject> _applicationComponentContainer;
 	shared_ptr<GameStateManager> _gameStateManager;
+	shared_ptr<ScriptedPlayer> _scriptPlayer1;
+	shared_ptr<ScriptedPlayer> _scriptPlayer2;
 
-	std::string _selectedPlayer1;
-	std::string _selectedPlayer2;
+	int _selectedPlayer1;
+	int _selectedPlayer2;
 	int _selectedRoundCount = -1;
 	float _roundCountDownAt = -1;
 	UIThreadRunner _uiThreadRunner;
 	shared_ptr<Tank> _userTank;
+	vector<bool> _playerFlags;
 
 public:
 	BasicApp();
@@ -122,7 +128,7 @@ public:
 	void onWindowSizeChanged();
 	void setSSButtonState(int state);
 
-	void applyController(shared_ptr<Tank> tank, const char* controllerModule, std::shared_ptr<WxTankPeripheralsView> peripheralsview);
+	void applyController(shared_ptr<Tank> tank, int, std::shared_ptr<WxTankPeripheralsView> peripheralsview);
 };
 
 void pushLog(int logLevel, const char* fmt, ...) {
@@ -229,14 +235,14 @@ void BasicApp::setup()
 	_gameView = std::make_shared<WxGameView>(getWindow());
 
 	// arrange player information windows
-	bottomLeftSpilter->setVertical(false);
-	bottomLeftSpilter->setLayoutFixedSize(150);
+	bottomLeftSpilter->setVertical(true);
+	bottomLeftSpilter->setLayoutFixedSize(400);
 	bottomLeftSpilter->setLayoutType(Spliter::LayoutType::Panel1Fixed);
 	bottomLeftSpilter->setChild1(_controlBoard);
 	bottomLeftSpilter->setChild2(_gameStatistics);
 
 	bottomSpliter->setVertical(true);
-	bottomSpliter->setLayoutFixedSize(400);
+	bottomSpliter->setLayoutFixedSize(700);
 	bottomSpliter->setLayoutType(Spliter::LayoutType::Panel1Fixed);
 	bottomSpliter->setChild1(bottomLeftSpilter);
 	bottomSpliter->setChild2(_applog);
@@ -275,6 +281,15 @@ void BasicApp::setup()
 		}
 	});
 
+	_controlBoard->setOnPlayer1ChangedHandler([this](Widget*) {
+		if(_playerFlags[_controlBoard->getPlayer1()])
+		ILogger::getInstance()->log(LogLevel::Info, "TODO: compile the selected script\n");
+	});
+	_controlBoard->setOnPlayer2ChangedHandler([this](Widget*) {
+		if (_playerFlags[_controlBoard->getPlayer2()])
+		ILogger::getInstance()->log(LogLevel::Info, "TODO: compile the selected script\n");
+	});
+	
 	// set the first state of application
 	setSSButtonState(StartState::NOT_STARTED);
 	_controlBoard->setPauseResumeButtonText("Pause");
@@ -353,7 +368,7 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 	return tanks;
 }
 
-void BasicApp::applyController(shared_ptr<Tank> tankRef, const char* controllerModule, std::shared_ptr<WxTankPeripheralsView> peripheralsview) {
+void BasicApp::applyController(shared_ptr<Tank> tankRef, int playerIdx, std::shared_ptr<WxTankPeripheralsView> peripheralsview) {
 	auto& gameArea = _battlePlatform->getMapArea();
 	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
 
@@ -373,11 +388,25 @@ void BasicApp::applyController(shared_ptr<Tank> tankRef, const char* controllerM
 	catch (...) {
 		quit();
 	}
+	shared_ptr<TankController> tankController;
+	auto& playerNameConst = _controlBoard->getPlayerName(playerIdx);
+	if (_playerFlags[playerIdx] == false) {
+		tankController = make_shared<TankControllerModuleWrapper>(playerNameConst.c_str());
+	}
+	else {
+		auto tankControllerScript = make_shared<ScriptedPlayer>();
+		string scriptFile("./controllers/");
+		scriptFile += (playerNameConst + SCRIPT_EXT);
+		auto message = tankControllerScript->setProgramScript(scriptFile.c_str());
+		if (message) {
+			ILogger::getInstance()->logV(LogLevel::Error, "compile program failed with error: %s\n", message);
+		}
 
-	auto tankController = make_shared<TankControllerModuleWrapper>(controllerModule);
+		tankController = tankControllerScript;
+	}
 	auto worker = make_shared<TankControllerWorker>(tankRef, tankController);
 
-	std::string playerName(controllerModule);
+	std::string playerName = playerNameConst;
 	playerName.append("(");
 	playerName.append(std::to_string((int)_tankControllerWorkers.size()));
 	playerName.append(")");
@@ -390,6 +419,8 @@ void BasicApp::applyController(shared_ptr<Tank> tankRef, const char* controllerM
 void BasicApp::loadPlayers() {
 	vector<string> players;
 
+	_playerFlags.clear();
+
 	fs::path controllersPath(_workingDir);
 	controllersPath.append("controllers");
 	if (fs::exists(controllersPath) && fs::is_directory(controllersPath)) {
@@ -398,13 +429,18 @@ void BasicApp::loadPlayers() {
 			auto ext = file.extension().string();
 			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 #ifdef WIN32
-			if (ext == ".dll") {
+			if (ext == ".dll" || ext == SCRIPT_EXT)
 #else
-			if (ext == ".so") {
+			if (ext == ".so" || ext == SCRIPT_EXT)
 #endif
+
+			{
 				auto fileWithoutExt = file.string();
 				fileWithoutExt = fileWithoutExt.substr(0, fileWithoutExt.size() - ext.size());
 				players.push_back(fileWithoutExt);
+
+				// set player flag to true if the file is a script file
+				_playerFlags.push_back(ext == SCRIPT_EXT);
 			}
 		}
 #ifdef WIN32
@@ -438,8 +474,8 @@ void BasicApp::generateGame() {
 
 	_controllerReadySignal = make_shared<SignalAny>(true);
 
-	applyController(tanks->at(0), _selectedPlayer1.c_str(), _peripheralsview1);
-	applyController(tanks->at(1), _selectedPlayer2.c_str(), _peripheralsview2);
+	applyController(tanks->at(0), _selectedPlayer1, _peripheralsview1);
+	applyController(tanks->at(1), _selectedPlayer2, _peripheralsview2);
 
 	//_userTank = tanks->at(2);
 	//_userTank->setHealth(50);

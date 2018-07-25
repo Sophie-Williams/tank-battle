@@ -58,7 +58,7 @@ void WxGameStatistics::update() {
 	ImGui::CollapsingHeader("Game statistics", ImGuiTreeNodeFlags_Leaf);
 	if (ImGui::TreeNode(buffer)) {
 		ImGui::Columns(3, nullptr, false);
-		ImGui::SetColumnWidth(0, 250);
+		ImGui::SetColumnWidth(0, 150);
 		ImGui::SetColumnWidth(1, 30);
 		ImGui::Text("Player"); ImGui::NextColumn();
 		ImGui::Text("Win"); ImGui::NextColumn();
@@ -110,8 +110,8 @@ void WxGameStatistics::update() {
 
 		if (ImGui::TreeNode(buffer)) {
 			ImGui::Columns(3, nullptr, false);
-			ImGui::SetColumnWidth(0, 210);
-			ImGui::SetColumnWidth(1, 40);
+			ImGui::SetColumnWidth(0, 150);
+			ImGui::SetColumnWidth(1, 30);
 			ImGui::Text("Player"); ImGui::NextColumn();
 			ImGui::Text("Kill"); ImGui::NextColumn();
 			ImGui::Text("Time per frame"); ImGui::NextColumn();

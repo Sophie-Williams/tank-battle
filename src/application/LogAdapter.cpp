@@ -95,26 +95,26 @@ _fileLogger->setLogLevel(_currenLoglevel); \
 }
 
 void LogAdapter::log(LogLevel logLevel, const char* message) {
-	//_appLog->addLog((WxAppLog::LogLevel)logLevel, message);
+	_appLog->addLog((WxAppLog::LogLevel)logLevel, message);
 
-	//UPDATE_LOGLEVEL();
-	//_fileLogger->log(logLevel, message);
+	UPDATE_LOGLEVEL();
+	_fileLogger->log(logLevel, message);
 }
 
  void LogAdapter::logV(LogLevel logLevel, const char* fmt, ...) {
-	 //va_list args;
-	 //va_start(args, fmt);
-	 //_appLog->addLogV((WxAppLog::LogLevel)logLevel, fmt, args);
+	 va_list args;
+	 va_start(args, fmt);
+	 _appLog->addLogV((WxAppLog::LogLevel)logLevel, fmt, args);
 
-	 //UPDATE_LOGLEVEL();
-	 //_fileLogger->logVA(logLevel, fmt, args);
+	 UPDATE_LOGLEVEL();
+	 _fileLogger->logVA(logLevel, fmt, args);
 
-	 //va_end(args);
+	 va_end(args);
 }
 
  void LogAdapter::logVA(LogLevel logLevel, const char* fmt, va_list args) {
-	 //_appLog->addLogV((WxAppLog::LogLevel)logLevel, fmt, args);
+	 _appLog->addLogV((WxAppLog::LogLevel)logLevel, fmt, args);
 
-	 //UPDATE_LOGLEVEL();
-	 //_fileLogger->logVA(logLevel, fmt, args);
+	 UPDATE_LOGLEVEL();
+	 _fileLogger->logVA(logLevel, fmt, args);
  }

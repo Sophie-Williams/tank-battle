@@ -3,8 +3,9 @@
 #include "TankCommandsBuilder.h"
 #include "PlayerContext.h"
 #include "TankController.h"
+#include "../GameControllers.h"
 
-class ScriptedPlayer : public TankController
+class GAME_CONTROLLER_API ScriptedPlayer : public TankController
 {	
 	class ScriptedPlayerImpl;
 protected:
@@ -12,7 +13,8 @@ protected:
 public:
 	ScriptedPlayer();
 	virtual ~ScriptedPlayer();
-	bool setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd);
+	const char* setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd);
+	const char* setProgramScript(const char* file);
 	void setup(TankPlayerContext* player);
 	TankOperations giveOperations(TankPlayerContext* player);
 };

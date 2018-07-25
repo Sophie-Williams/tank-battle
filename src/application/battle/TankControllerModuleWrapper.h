@@ -12,7 +12,6 @@ private:
 	TankController* _interface;
 public:
 	TankControllerModuleWrapper(const char* module);
-	TankControllerModuleWrapper(const char* module, const std::wstring& script);
 	virtual ~TankControllerModuleWrapper();
 	
 	void setup(TankPlayerContext* player);

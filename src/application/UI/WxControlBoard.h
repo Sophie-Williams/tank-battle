@@ -11,6 +11,9 @@ class WxControlBoard :
 	ButtonClickEventHandler _startButtonClickHandler;
 	ButtonClickEventHandler _pauseButtonClickHandler;
 	ButtonClickEventHandler _generateButtonClickHandler;
+	ButtonClickEventHandler _compileButtonClickHandler;
+	SelectedItemChangedHandler _player1ChangedHander;
+	SelectedItemChangedHandler _player2ChangedHander;
 	
 	std::string _starStopButtonStr;
 	std::string _pauseResumeButtonStr;
@@ -21,6 +24,8 @@ class WxControlBoard :
 	int _round = 1;
 	int _player1 = -1;
 	int _player2 = -1;
+
+	bool _showCompileButton = false;
 
 private:
 	void showPlayers(const char* label, int& selected);
@@ -34,17 +39,23 @@ public:
 	void setOnStartStopButtonClickHandler(ButtonClickEventHandler&& handler);
 	void setOnPauseResumeClickHandler(ButtonClickEventHandler&& handler);
 	void setOnGenerateClickHandler(ButtonClickEventHandler&& handler);
+	void setOnCompileButtonClickHandler(ButtonClickEventHandler&& handler);
+	void setOnPlayer1ChangedHandler(SelectedItemChangedHandler&& handler);
+	void setOnPlayer2ChangedHandler(SelectedItemChangedHandler&& handler);
 
 	void setStarStopButtonText(const char* buttonText);
 	void setPauseResumeButtonText(const char* buttonText);
 
 	void setPlayers(const std::vector<std::string>& players);
 	const std::vector<std::string>& getPlayers() const;
-	const std::string& getPlayer1() const;
-	const std::string& getPlayer2() const;
+	int getPlayer1() const;
+	int getPlayer2() const;
+	const std::string& getPlayerName(int) const;
 
 	int getNumberOfBot() const;
 	int getTankHeathCapacity() const;
 	int getRoundCount() const;
+
+	void showCompileButton(bool show);
 };
 

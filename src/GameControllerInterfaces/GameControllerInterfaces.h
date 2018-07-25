@@ -9,7 +9,7 @@
 #endif // EXPORT_GAME_CONTROLLER_INTERFACES
 #else
 #define TEMPLATE_EXTERN extern
-#define GAME_CONTROLLER_API
+#define GAME_CONTROLLER_INTERFACE
 #endif // _WIN32
 
 typedef int GameObjectId;

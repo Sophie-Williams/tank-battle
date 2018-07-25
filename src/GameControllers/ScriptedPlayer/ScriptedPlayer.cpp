@@ -19,12 +19,6 @@
 using namespace ffscript;
 using namespace std;
 
-extern "C" {
-	GAME_CONTROLLER_API ScriptedPlayer* createController() {
-		return new ScriptedPlayer();
-	}
-}
-
 class ScriptedPlayer::ScriptedPlayerImpl {
 	GlobalScopeRef rootScope;
 	Program* _program;
@@ -32,32 +26,47 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	shared_ptr<ScriptTask> _scriptTask;
 	TankPlayerContext* _temporaryPlayerContex;
 	PlayerContextSciptingLibrary _myScriptLib;
+	CompilerSuite _compiler;
+	string _errorMessage;
 public:
-	ScriptedPlayerImpl(const wchar_t* scriptStart, const wchar_t* scriptEnd) : _functionIdOfMainFunction(-1) {
+	ScriptedPlayerImpl() : _functionIdOfMainFunction(-1) {
 		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
-		CompilerSuite compiler;
-		compiler.initialize(1024);
+		_compiler.initialize(1024);
 
-		rootScope = compiler.getGlobalScope();
+		rootScope = _compiler.getGlobalScope();
 		auto scriptCompiler = rootScope->getCompiler();
 
 		_myScriptLib.loadLibrary(scriptCompiler);		
 		
 		scriptCompiler->beginUserLib();
-		compiler.setPreprocessor(std::make_shared<DefaultPreprocessor>());
-		_program = compiler.compileProgram(scriptStart, scriptEnd);
+		_compiler.setPreprocessor(std::make_shared<DefaultPreprocessor>());
+	}
 
+	const char* setProgramScipt(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
+		auto scriptCompiler = rootScope->getCompiler();
+		scriptCompiler->setErrorText("");
+
+		_functionIdOfMainFunction = -1;
+		_program = _compiler.compileProgram(scriptStart, scriptEnd);
 		if (_program) {
 			_functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
 			if (_functionIdOfMainFunction >= 0) {
 				auto functionFactory = scriptCompiler->getFunctionFactory(_functionIdOfMainFunction);
 				_scriptTask = make_shared<ScriptTask>(_program);
 			}
+			else {
+				_errorMessage = "function 'void update(float)' is not found";
+			}
 		}
-	}
+		else {
+			_errorMessage = scriptCompiler->getLastError();
+		}
 
-	bool isValidProgram() {
-		return _functionIdOfMainFunction >= 0;
+		if (_functionIdOfMainFunction < 0) {
+			return _errorMessage.c_str();
+		}
+
+		return nullptr;
 	}
 
 	~ScriptedPlayerImpl(){
@@ -67,16 +76,18 @@ public:
 	}
 
 	TankOperations giveOperations(TankPlayerContext* player) {
-		// run function and allow maxium 5mb stack size
-		_temporaryPlayerContex = player;
-		_myScriptLib.resetCommand();
-		float t = GameInterface::getInstance()->getTime();
-		try {
-			ScriptParamBuffer paramsBuffer(&t);
-			_scriptTask->runFunction(5 * 1024 * 1024, _functionIdOfMainFunction, paramsBuffer);
-			return _myScriptLib.getOperations();
-		}
-		catch (std::exception&e) {			
+		if (_program && _functionIdOfMainFunction >= 0) {
+			// run function and allow maxium 5mb stack size
+			_temporaryPlayerContex = player;
+			_myScriptLib.resetCommand();
+			float t = GameInterface::getInstance()->getTime();
+			try {
+				ScriptParamBuffer paramsBuffer(&t);
+				_scriptTask->runFunction(5 * 1024 * 1024, _functionIdOfMainFunction, paramsBuffer);
+				return _myScriptLib.getOperations();
+			}
+			catch (std::exception&e) {
+			}
 		}
 
 		return TANK_NULL_OPERATION;
@@ -85,6 +96,7 @@ public:
 
 ScriptedPlayer::ScriptedPlayer() : _pImpl(nullptr)
 {
+	_pImpl = new ScriptedPlayerImpl();
 }
 
 ScriptedPlayer::~ScriptedPlayer()
@@ -94,17 +106,14 @@ ScriptedPlayer::~ScriptedPlayer()
 	}
 }
 
-bool ScriptedPlayer::setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
-	if (_pImpl) {
-		delete _pImpl;
-	}
-	
-	_pImpl = new ScriptedPlayerImpl(scriptStart, scriptEnd);
-	if (_pImpl->isValidProgram() == false) {
-		return false;
-	}
+const char* ScriptedPlayer::setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
+	return _pImpl->setProgramScipt(scriptStart, scriptEnd);
+}
 
-	return false;
+const char* ScriptedPlayer::setProgramScript(const char* file) {
+	auto wstr = readCodeFromUtf8File(file);
+
+	return setProgramScript(wstr.c_str(), wstr.c_str() + wstr.size());
 }
 
 void ScriptedPlayer::setup(TankPlayerContext*) {
@@ -113,9 +122,9 @@ void ScriptedPlayer::setup(TankPlayerContext*) {
 		L"    setMove(MOVE_FORWARD);"\
 		L"}";
 
-	setProgramScript(
-		script.c_str(), script.c_str() + script.size()
-	);
+	//setProgramScript(
+	//	script.c_str(), script.c_str() + script.size()
+	//);
 }
 
 TankOperations ScriptedPlayer::giveOperations(TankPlayerContext* player) {
