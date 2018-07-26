@@ -88,6 +88,7 @@ ConstOperandBase* createTurningConsant(TurningDir cosnt_val) {
 void PlayerContextSciptingLibrary::loadContextFunctions(ScriptCompiler* scriptCompiler) {
 	FunctionRegisterHelper helper(scriptCompiler);
 	REGIST_CONTEXT_FUNCTION0(helper, freeze, void);
+	REGIST_CONTEXT_FUNCTION0(helper, fire, void);
 	REGIST_CONTEXT_FUNCTION1(helper, setMove, void, MovingDir);
 	REGIST_CONTEXT_FUNCTION1(helper, setTurn, void, TurningDir);
 	REGIST_CONTEXT_FUNCTION1(helper, setGunTurn, void, TurningDir);
