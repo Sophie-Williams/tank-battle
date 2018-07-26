@@ -25,7 +25,7 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	int _functionIdOfMainFunction;
 	shared_ptr<ScriptTask> _scriptTask;
 	TankPlayerContext* _temporaryPlayerContex;
-	PlayerContextSciptingLibrary _myScriptLib;
+	ScriptingLib::PlayerContextSciptingLibrary _myScriptLib;
 	CompilerSuite _compiler;
 	string _errorMessage;
 public:
