@@ -91,6 +91,18 @@ namespace ScriptingLib {
 		_tankOperations = TANK_NULL_OPERATION;
 	}
 
+	MovingDir PlayerContextSciptingLibrary::getMovingDir() {
+		return _commandBuilder.getMovingDir();
+	}
+
+	TurningDir PlayerContextSciptingLibrary::getTurnDir() {
+		return _commandBuilder.getTurnDir();
+	}
+
+	RotatingDir PlayerContextSciptingLibrary::getRotatingGunDir() {
+		return _commandBuilder.getSpinningGunDir();
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////
 	Ray PlayerContextSciptingLibrary::gun() {
 		return _temporaryPlayerContex->getMyGun();
@@ -112,10 +124,6 @@ namespace ScriptingLib {
 		return _temporaryPlayerContex->getTurningSpeed();
 	}
 
-	TankOperations PlayerContextSciptingLibrary::currentOperations() {
-		return _temporaryPlayerContex->getCurrentOperations();
-	}
-
 	bool PlayerContextSciptingLibrary::isAlly(GameObjectId id) {
 		return _temporaryPlayerContex->isAlly(id);
 	}
@@ -129,9 +137,21 @@ namespace ScriptingLib {
 		FunctionRegisterHelper helper(scriptCompiler);
 		REGIST_CONTEXT_FUNCTION0(helper, freeze, void);
 		REGIST_CONTEXT_FUNCTION0(helper, fire, void);
+		REGIST_CONTEXT_FUNCTION0(helper, keepPreviousState, void);
 		REGIST_CONTEXT_FUNCTION1(helper, move, void, MovingDir);
 		REGIST_CONTEXT_FUNCTION1(helper, turn, void, TurningDir);
 		REGIST_CONTEXT_FUNCTION1(helper, rotateGun, void, RotatingDir);
+		REGIST_CONTEXT_FUNCTION0(helper, getMovingDir, MovingDir);
+		REGIST_CONTEXT_FUNCTION0(helper, getTurnDir, TurningDir);
+		REGIST_CONTEXT_FUNCTION0(helper, getRotatingGunDir, RotatingDir);
+
+		REGIST_CONTEXT_FUNCTION0(helper, gun, Ray);
+		REGIST_CONTEXT_FUNCTION0(helper, health, float);
+		REGIST_CONTEXT_FUNCTION0(helper, geometry, GeometryInfo);
+		REGIST_CONTEXT_FUNCTION0(helper, movingSpeed, float);
+		REGIST_CONTEXT_FUNCTION0(helper, turningSpeed, float);
+		REGIST_CONTEXT_FUNCTION1(helper, isAlly, bool, GameObjectId);
+		REGIST_CONTEXT_FUNCTION1(helper, isEnemy, bool, GameObjectId);
 	}
 
 	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : _commandBuilder(_tankOperations) {
@@ -147,7 +167,6 @@ namespace ScriptingLib {
 	}
 
 	void PlayerContextSciptingLibrary::loadLibrary(ScriptCompiler* scriptCompiler) {
-
 		// register types
 		auto type = scriptCompiler->registType("MovingDir");
 		scriptCompiler->setTypeSize(type, 1);
@@ -158,7 +177,32 @@ namespace ScriptingLib {
 		type = scriptCompiler->registType("RotatingDir");
 		scriptCompiler->setTypeSize(type, 1);
 
+		type = scriptCompiler->registType("GameObjectId");
+		scriptCompiler->setTypeSize(type, sizeof(GameObjectId));
 
+		auto& typeManager = scriptCompiler->getTypeManager();
+		auto& basicTypes = typeManager->getBasicTypes();
+
+		ScriptType typeFloat(basicTypes.TYPE_FLOAT, scriptCompiler->getType(basicTypes.TYPE_FLOAT).c_str());
+
+		// register struct Point must be same as RawPoint
+		StructClass* pointStruct = new StructClass(scriptCompiler, "Point");
+		pointStruct->addMember(typeFloat, "x");
+		pointStruct->addMember(typeFloat, "y");
+		auto iTypePoint = scriptCompiler->registStruct(pointStruct);
+		ScriptType typePoint(iTypePoint, scriptCompiler->getType(iTypePoint).c_str());
+
+		// register struct Ray must be same as RawRay
+		StructClass* rayStruct = new StructClass(scriptCompiler, "Ray");
+		rayStruct->addMember(typePoint, "start");
+		rayStruct->addMember(typePoint, "dir");
+		auto iTypeRay = scriptCompiler->registStruct(rayStruct);
+
+		// register struct GeometryInfo must be same as GeometryInfo of C++ type
+		StructClass* geometryInfoStruct = new StructClass(scriptCompiler, "GeometryInfo");
+		geometryInfoStruct->addMember(typePoint, "coord");
+		geometryInfoStruct->addMember(typeFloat, "rotation");
+		auto iGeometryInfoType = scriptCompiler->registStruct(geometryInfoStruct);
 
 		// register contants
 		// moving contants

@@ -26,13 +26,16 @@ namespace ScriptingLib {
 		void fire();
 		void keepPreviousState();
 
+		MovingDir getMovingDir();
+		TurningDir getTurnDir();
+		RotatingDir getRotatingGunDir();
+
 		// getter functions of player's information
 		Ray gun();
 		float health();
 		GeometryInfo geometry();
 		float movingSpeed();
 		float turningSpeed();
-		TankOperations currentOperations();
 		bool isAlly(GameObjectId id);
 		bool isEnemy(GameObjectId id);
 
