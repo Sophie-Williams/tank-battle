@@ -13,6 +13,7 @@
 #include <ScriptTask.h>
 #include <Utils.h>
 #include <DefaultPreprocessor.h>
+#include <RawStringLib.h>
 
 #include <memory>
 
@@ -35,6 +36,7 @@ public:
 
 		rootScope = _compiler.getGlobalScope();
 		auto scriptCompiler = rootScope->getCompiler();
+		includeRawStringToCompiler(scriptCompiler);
 
 		_myScriptLib.loadLibrary(scriptCompiler);		
 		
@@ -75,14 +77,18 @@ public:
 		}
 	}
 
+	void setup(TankPlayerContext* player){
+		rootScope->runGlobalCode();
+		_myScriptLib.resetCommand();
+	}
+
 	TankOperations giveOperations(TankPlayerContext* player) {
 		if (_program && _functionIdOfMainFunction >= 0) {
 			// run function and allow maxium 5mb stack size
 			_temporaryPlayerContex = player;
-			_myScriptLib.resetCommand();
 			float t = GameInterface::getInstance()->getTime();
 			try {
-				ScriptParamBuffer paramsBuffer(&t);
+				ScriptParamBuffer paramsBuffer(t);
 				_scriptTask->runFunction(5 * 1024 * 1024, _functionIdOfMainFunction, paramsBuffer);
 				return _myScriptLib.getOperations();
 			}
@@ -116,15 +122,8 @@ const char* ScriptedPlayer::setProgramScript(const char* file) {
 	return setProgramScript(wstr.c_str(), wstr.c_str() + wstr.size());
 }
 
-void ScriptedPlayer::setup(TankPlayerContext*) {
-	wstring script = L"void update(float t) {"\
-		L"    freeze();"\
-		L"    setMove(MOVE_FORWARD);"\
-		L"}";
-
-	//setProgramScript(
-	//	script.c_str(), script.c_str() + script.size()
-	//);
+void ScriptedPlayer::setup(TankPlayerContext* player) {
+	_pImpl->setup(player);
 }
 
 TankOperations ScriptedPlayer::giveOperations(TankPlayerContext* player) {

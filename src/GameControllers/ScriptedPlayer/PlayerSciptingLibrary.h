@@ -43,6 +43,7 @@ namespace ScriptingLib {
 		void loadContextFunctions(ffscript::ScriptCompiler* scriptCompiler);
 	public:
 		PlayerContextSciptingLibrary();
+		void setContext(TankPlayerContext* context);
 		void loadLibrary(ffscript::ScriptCompiler* scriptCompiler);
 		void resetCommand();
 		TankOperations getOperations() const;

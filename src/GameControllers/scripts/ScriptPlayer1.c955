@@ -1,4 +1,59 @@
+float previousT = -1;
+
+float lastMoveAction = -1;
+float moveChangingDuration = -1;
+
+float lastTurnAction = -1;
+float turnChangingDuration = -1;
+
+array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
+array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
+
 void update(float t) {
-    freeze();
-    setMove(MOVE_FORWARD);
+    if(previousT == -1) {
+        freeze();
+        previousT = t;
+        println(L"first time of update t = " + t);
+    }
+    else if(t - previousT > 1.0f) {
+        previousT = t;
+        println(L"processing frame t = " + t);
+        fire();
+    }
+    
+    if(moveChangingDuration == -1) {
+        // random a duration between 3 and 7 seconds
+        moveChangingDuration = random(3, 7);
+    }
+    
+    // change the move direction each period of time 
+    if(lastMoveAction == -1 || t - lastMoveAction > moveChangingDuration) {
+        lastMoveAction = t;
+        
+        MovingDir movingDir = movingDirs[random(0,2)];
+        println(String(movingDir));
+        
+        move(movingDir);
+        
+        // reset duration
+        moveChangingDuration = -1;
+    }
+    
+    if(turnChangingDuration == -1) {
+        // random a duration between 3 and 7 seconds
+        turnChangingDuration = random(3, 7);
+    }
+    
+    // change the turn direction each period of time
+    if(lastTurnAction == -1 || t - lastTurnAction > turnChangingDuration) {
+        lastTurnAction = t;
+        
+        TurningDir turningDir = turningDirs[random(0,2)];
+        println(String(turningDir));
+        
+        turn(turningDir);
+        
+        // reset duration
+        turnChangingDuration = -1;
+    }
 }

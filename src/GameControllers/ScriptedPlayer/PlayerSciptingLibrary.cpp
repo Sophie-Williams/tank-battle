@@ -1,13 +1,17 @@
 #include "PlayerSciptingLibrary.h"
 #include "../common/GameUtil.hpp"
+#include "GameInterface.h"
 
 #include <function/CdeclFunction.hpp>
 #include <function/MemberFunction2.hpp>
-#include "BasicFunction.h"
+#include <BasicFunction.h>
+#include <Utils.h>
 
 #include <memory>
 #include <functional>
 #include <random>
+
+#include <RawStringLib.h>
 
 using namespace ffscript;
 using namespace std;
@@ -37,6 +41,17 @@ public:
 };
 
 #define SIZE_OF_ARGS(...) ArgumentFunctionCounter<__VA_ARGS__>::ArgumentSize
+
+#define REGIST_GLOBAL_FUNCTION0(helper, func, returnType) \
+	helper.registFunction(\
+		#func, "",\
+		new TankPlayerFunctionFactory(\
+			[](){ return new CdeclFunction2<returnType>(func);},\
+			helper.getSriptCompiler(), \
+			#returnType,\
+			0\
+		)\
+	)
 #define REGIST_GLOBAL_FUNCTION1(helper, func, returnType , ...) helper.registFunction(#func, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new CdeclFunction2<returnType, __VA_ARGS__>(func), helper.getSriptCompiler()))
 
 #define REGIST_CONTEXT_FUNCTION0(helper, func, returnType) \
@@ -53,6 +68,7 @@ public:
 #define REGIST_CONTEXT_FUNCTION1(helper, func, returnType , ...) helper.registFunction(#func, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new MFunction2<returnType, PlayerContextSciptingLibrary, __VA_ARGS__>(this, &PlayerContextSciptingLibrary::func), helper.getSriptCompiler()))
 
 namespace ScriptingLib {
+	typedef RawString String;
 	///////////////////////////////////////////////////////////////////////////////////////////
 	ConstOperandBase* createMovingConsant(MovingDir cosnt_val) {
 		return new CConstOperand<MovingDir>(cosnt_val, "MovingDir");
@@ -129,7 +145,62 @@ namespace ScriptingLib {
 	}
 
 	bool PlayerContextSciptingLibrary::isEnemy(GameObjectId id) {
+		_temporaryPlayerContex->getCameraSnapshot();
 		return _temporaryPlayerContex->isEnemy(id);
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	void println(String& rws) {
+		auto str = convertToAscii(rws.elms, rws.size);
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(str.c_str());
+	}
+
+	int random(int a, int b) {
+		std::uniform_int_distribution<int> distribution(a, b);
+		return distribution(generator);
+	}
+
+	int random() {
+		return random(INT_MIN, INT_MAX);
+	}
+
+	RawString ToString(MovingDir dir) {
+		RawString rws;
+		if (dir == 0) {
+			constantConstructor(rws, L"NO_MOVE");
+		}
+		else if (dir == 1) {
+			constantConstructor(rws, L"MOVE_FORWARD");
+			
+		}
+		else if (dir == -1) {
+			constantConstructor(rws, L"MOVE_BACKWARD");
+		}
+		else {
+			constantConstructor(rws, L"UNKNOWN");
+		}
+
+		return rws;
+	}
+
+	RawString turnToString(TurningDir dir) {
+		RawString rws;
+		if (dir == 0) {
+			constantConstructor(rws, L"NO_TURN");
+		}
+		else if (dir == 1) {
+			constantConstructor(rws, L"TURN_LEFT");
+
+		}
+		else if (dir == -1) {
+			constantConstructor(rws, L"TURN_RIGHT");
+		}
+		else {
+			constantConstructor(rws, L"UNKNOWN");
+		}
+
+		return rws;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +225,24 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION1(helper, isEnemy, bool, GameObjectId);
 	}
 
-	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : _commandBuilder(_tankOperations) {
+	void loadGlobalFunctions(ScriptCompiler* scriptCompiler) {
+		FunctionRegisterHelper helper(scriptCompiler);
+
+		auto& basicTypes = scriptCompiler->getTypeManager()->getBasicTypes();
+		int iTypeString = basicTypes.TYPE_RAWSTRING;
+
+		// type string object
+		ScriptType typeString(iTypeString, scriptCompiler->getType(iTypeString));
+
+		REGIST_GLOBAL_FUNCTION1(helper, println, void, String&);
+		REGIST_GLOBAL_FUNCTION0(helper, random, int);
+		REGIST_GLOBAL_FUNCTION1(helper, random, int, int, int);
+
+		helper.registFunction("String", "MovingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<MovingDir>(ToString), typeString));
+		helper.registFunction("String", "TurningDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<TurningDir>(turnToString), typeString));
+	}
+
+	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : _commandBuilder(_tankOperations), _temporaryPlayerContex(nullptr){
 		resetCommand();
 	}
 
@@ -164,6 +252,10 @@ namespace ScriptingLib {
 
 	TankOperations PlayerContextSciptingLibrary::getOperations() const {
 		return _tankOperations;
+	}
+
+	void PlayerContextSciptingLibrary::setContext(TankPlayerContext* context) {
+		_temporaryPlayerContex = context;
 	}
 
 	void PlayerContextSciptingLibrary::loadLibrary(ScriptCompiler* scriptCompiler) {
@@ -242,6 +334,9 @@ namespace ScriptingLib {
 		auto ROTATE_RIGHT = make_shared<CdeclFunction<ConstOperandBase*, RotatingDir>>(createRotatingConsant);
 		ROTATE_RIGHT->pushParam((void*)-1);
 		scriptCompiler->setConstantMap("ROTATE_RIGHT", ROTATE_RIGHT);
+
+		// register global functions
+		loadGlobalFunctions(scriptCompiler);
 
 		// register global functions
 		loadContextFunctions(scriptCompiler);
