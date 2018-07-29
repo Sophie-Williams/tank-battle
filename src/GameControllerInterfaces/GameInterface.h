@@ -12,4 +12,5 @@ public:
 	virtual float getTime() const = 0;
 
 	virtual GameObjectType getObjectype(GameObjectId id) const = 0;
+	virtual void printMessage(const char*) const = 0;
 };

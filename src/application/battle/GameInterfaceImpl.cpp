@@ -4,6 +4,7 @@
 #include "Engine/Tank.h"
 #include "Engine/Barrier.h"
 #include "Engine/Bullet.h"
+#include "../common/ILogger.h"
 
 static GameInterfaceImpl gameInterface;
 
@@ -84,4 +85,8 @@ DrawableObjectRef GameInterfaceImpl::getObject(GameObjectId id) const {
 	}
 
 	return nullptr;
+}
+
+void GameInterfaceImpl::printMessage(const char* message) const {
+	ILogger::getInstance()->log(LogLevel::Info, message);
 }
