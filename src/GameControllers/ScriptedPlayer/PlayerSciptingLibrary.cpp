@@ -42,17 +42,21 @@ public:
 
 #define SIZE_OF_ARGS(...) ArgumentFunctionCounter<__VA_ARGS__>::ArgumentSize
 
-#define REGIST_GLOBAL_FUNCTION0(helper, func, returnType) \
+#define REGIST_GLOBAL_FUNCTION00(helper, nativeFunc, scriptFunc, returnType) \
 	helper.registFunction(\
-		#func, "",\
+		scriptFunc, "",\
 		new TankPlayerFunctionFactory(\
-			[](){ return new CdeclFunction2<returnType>(func);},\
+			[](){ return new CdeclFunction2<returnType>(nativeFunc);},\
 			helper.getSriptCompiler(), \
 			#returnType,\
 			0\
 		)\
 	)
-#define REGIST_GLOBAL_FUNCTION1(helper, func, returnType , ...) helper.registFunction(#func, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new CdeclFunction2<returnType, __VA_ARGS__>(func), helper.getSriptCompiler()))
+
+#define REGIST_GLOBAL_FUNCTION01(helper, func, returnType) REGIST_GLOBAL_FUNCTION00(helper, func, #func, returnType)
+
+#define REGIST_GLOBAL_FUNCTION10(helper, nativeFunc, scriptFunc, returnType , ...) helper.registFunction(scriptFunc, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new CdeclFunction2<returnType, __VA_ARGS__>(nativeFunc), helper.getSriptCompiler()))
+#define REGIST_GLOBAL_FUNCTION11(helper, func, returnType , ...) REGIST_GLOBAL_FUNCTION10(helper, func, #func, returnType, __VA_ARGS__)
 
 #define REGIST_CONTEXT_FUNCTION0(helper, func, returnType) \
 	helper.registFunction(\
@@ -165,42 +169,82 @@ namespace ScriptingLib {
 		return random(INT_MIN, INT_MAX);
 	}
 
-	RawString ToString(MovingDir dir) {
-		RawString rws;
+	const char* moveToText(MovingDir dir) {
 		if (dir == 0) {
-			constantConstructor(rws, L"NO_MOVE");
+			return "NO_MOVE";
 		}
 		else if (dir == 1) {
-			constantConstructor(rws, L"MOVE_FORWARD");
+			return "MOVE_FORWARD";
 			
 		}
 		else if (dir == -1) {
-			constantConstructor(rws, L"MOVE_BACKWARD");
+			return "MOVE_BACKWARD";
 		}
-		else {
-			constantConstructor(rws, L"UNKNOWN");
-		}
+		return "UNKNOWN";
+	}
 
+	RawString moveToString(MovingDir dir) {
+		RawString rws;
+		constantConstructor(rws, moveToText(dir));
 		return rws;
+	}
+
+	const char* turnToText(TurningDir dir) {
+		if (dir == 0) {
+			return "NO_TURN";
+		}
+		else if (dir == 1) {
+			return "TURN_LEFT";
+
+		}
+		else if (dir == -1) {
+			return "TURN_RIGHT";
+		}
+		return "UNKNOWN";
 	}
 
 	RawString turnToString(TurningDir dir) {
 		RawString rws;
+		constantConstructor(rws, turnToText(dir));
+		return rws;
+	}
+
+	const char* rotateToTex(RotatingDir dir) {
 		if (dir == 0) {
-			constantConstructor(rws, L"NO_TURN");
+			return "NO_ROTATE";
 		}
 		else if (dir == 1) {
-			constantConstructor(rws, L"TURN_LEFT");
+			return "ROTATE_LEFT";
 
 		}
 		else if (dir == -1) {
-			constantConstructor(rws, L"TURN_RIGHT");
+			return "ROTATE_RIGHT";
 		}
-		else {
-			constantConstructor(rws, L"UNKNOWN");
-		}
+		return "UNKNOWN";
+	}
 
+	RawString rotateToString(RotatingDir dir) {
+		RawString rws;
+		constantConstructor(rws, rotateToTex(dir));
 		return rws;
+	}
+
+	void printMovingDir(MovingDir dir) {
+		std::string str = moveToText(dir);
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(str.c_str());
+	}
+
+	void printTurningDir(TurningDir dir) {
+		std::string str = turnToText(dir);
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(str.c_str());
+	}
+
+	void printRotatingDir(RotatingDir dir) {
+		std::string str = rotateToTex(dir);
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(str.c_str());
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -234,12 +278,17 @@ namespace ScriptingLib {
 		// type string object
 		ScriptType typeString(iTypeString, scriptCompiler->getType(iTypeString));
 
-		REGIST_GLOBAL_FUNCTION1(helper, println, void, String&);
-		REGIST_GLOBAL_FUNCTION0(helper, random, int);
-		REGIST_GLOBAL_FUNCTION1(helper, random, int, int, int);
+		REGIST_GLOBAL_FUNCTION11(helper, println, void, String&);
+		REGIST_GLOBAL_FUNCTION01(helper, random, int);
+		REGIST_GLOBAL_FUNCTION11(helper, random, int, int, int);
 
-		helper.registFunction("String", "MovingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<MovingDir>(ToString), typeString));
+		helper.registFunction("String", "MovingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<MovingDir>(moveToString), typeString));
 		helper.registFunction("String", "TurningDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<TurningDir>(turnToString), typeString));
+		helper.registFunction("String", "RotatingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<RotatingDir>(rotateToString), typeString));
+
+		REGIST_GLOBAL_FUNCTION10(helper, printMovingDir, "println", void, MovingDir);
+		REGIST_GLOBAL_FUNCTION10(helper, printTurningDir, "println", void, TurningDir);
+		REGIST_GLOBAL_FUNCTION10(helper, printRotatingDir, "println", void, RotatingDir);
 	}
 
 	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : _commandBuilder(_tankOperations), _temporaryPlayerContex(nullptr){
@@ -256,6 +305,13 @@ namespace ScriptingLib {
 
 	void PlayerContextSciptingLibrary::setContext(TankPlayerContext* context) {
 		_temporaryPlayerContex = context;
+	}
+
+	inline void addDirConstant(ScriptCompiler* scriptCompiler, char dir,
+		const char* (*fDir2Text)(char), ConstOperandBase* (*fCreateDirConsant)(char)) {
+		auto createConstantFuncObj = make_shared<CdeclFunction<ConstOperandBase*, MovingDir>>(fCreateDirConsant);
+		createConstantFuncObj->pushParam((void*)dir);
+		scriptCompiler->setConstantMap(fDir2Text(dir), createConstantFuncObj);
 	}
 
 	void PlayerContextSciptingLibrary::loadLibrary(ScriptCompiler* scriptCompiler) {
@@ -298,42 +354,19 @@ namespace ScriptingLib {
 
 		// register contants
 		// moving contants
-		auto NO_MOVE = make_shared<CdeclFunction<ConstOperandBase*, MovingDir>>(createMovingConsant);
-		NO_MOVE->pushParam((void*)0);
-		scriptCompiler->setConstantMap("NO_MOVE", NO_MOVE);
-
-		auto MOVE_FORWARD = make_shared<CdeclFunction<ConstOperandBase*, MovingDir>>(createMovingConsant);
-		MOVE_FORWARD->pushParam((void*)1);
-		scriptCompiler->setConstantMap("MOVE_FORWARD", MOVE_FORWARD);
-
-		auto MOVE_BACKWARD = make_shared<CdeclFunction<ConstOperandBase*, MovingDir>>(createMovingConsant);
-		MOVE_BACKWARD->pushParam((void*)-1);
-		scriptCompiler->setConstantMap("MOVE_BACKWARD", MOVE_BACKWARD);
-		// turning consants
-		auto NO_TURN = make_shared<CdeclFunction<ConstOperandBase*, TurningDir>>(createTurningConsant);
-		NO_TURN->pushParam((void*)0);
-		scriptCompiler->setConstantMap("NO_TURN", NO_TURN);
-
-		auto TURN_LEFT = make_shared<CdeclFunction<ConstOperandBase*, TurningDir>>(createTurningConsant);
-		TURN_LEFT->pushParam((void*)1);
-		scriptCompiler->setConstantMap("TURN_LEFT", TURN_LEFT);
-
-		auto TURN_RIGHT = make_shared<CdeclFunction<ConstOperandBase*, TurningDir>>(createTurningConsant);
-		TURN_RIGHT->pushParam((void*)-1);
-		scriptCompiler->setConstantMap("TURN_RIGHT", TURN_RIGHT);
+		addDirConstant(scriptCompiler, 0, moveToText, createMovingConsant);
+		addDirConstant(scriptCompiler, 1, moveToText, createMovingConsant);
+		addDirConstant(scriptCompiler, -1, moveToText, createMovingConsant);
 
 		// turning consants
-		auto NO_ROTATE = make_shared<CdeclFunction<ConstOperandBase*, RotatingDir>>(createRotatingConsant);
-		NO_ROTATE->pushParam((void*)0);
-		scriptCompiler->setConstantMap("NO_ROTATE", NO_ROTATE);
-
-		auto ROTATE_LEFT = make_shared<CdeclFunction<ConstOperandBase*, RotatingDir>>(createRotatingConsant);
-		ROTATE_LEFT->pushParam((void*)1);
-		scriptCompiler->setConstantMap("ROTATE_LEFT", ROTATE_LEFT);
-
-		auto ROTATE_RIGHT = make_shared<CdeclFunction<ConstOperandBase*, RotatingDir>>(createRotatingConsant);
-		ROTATE_RIGHT->pushParam((void*)-1);
-		scriptCompiler->setConstantMap("ROTATE_RIGHT", ROTATE_RIGHT);
+		addDirConstant(scriptCompiler, 0, turnToText, createTurningConsant);
+		addDirConstant(scriptCompiler, 1, turnToText, createTurningConsant);
+		addDirConstant(scriptCompiler, -1, turnToText, createTurningConsant);
+		
+		// turning consants
+		addDirConstant(scriptCompiler, 0, rotateToTex, createRotatingConsant);
+		addDirConstant(scriptCompiler, 1, rotateToTex, createRotatingConsant);
+		addDirConstant(scriptCompiler, -1, rotateToTex, createRotatingConsant);
 
 		// register global functions
 		loadGlobalFunctions(scriptCompiler);

@@ -6,8 +6,12 @@ float moveChangingDuration = -1;
 float lastTurnAction = -1;
 float turnChangingDuration = -1;
 
+float lastRotateGunAction = -1;
+float rotateGunChangingDuration = -1;
+
 array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
 array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
+array<RotatingDir,6> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
 
 void update(float t) {
     if(previousT == -1) {
@@ -18,12 +22,14 @@ void update(float t) {
     else if(t - previousT > 1.0f) {
         previousT = t;
         println(L"processing frame t = " + t);
+        
+        // fire each second
         fire();
     }
     
     if(moveChangingDuration == -1) {
         // random a duration between 3 and 7 seconds
-        moveChangingDuration = random(3, 7);
+        moveChangingDuration = random(2, 4);
     }
     
     // change the move direction each period of time 
@@ -31,7 +37,7 @@ void update(float t) {
         lastMoveAction = t;
         
         MovingDir movingDir = movingDirs[random(0,2)];
-        println(String(movingDir));
+        println(movingDir);
         
         move(movingDir);
         
@@ -49,11 +55,29 @@ void update(float t) {
         lastTurnAction = t;
         
         TurningDir turningDir = turningDirs[random(0,2)];
-        println(String(turningDir));
+        println(turningDir);
         
         turn(turningDir);
         
         // reset duration
         turnChangingDuration = -1;
+    }
+    
+    if(rotateGunChangingDuration == -1) {
+        // random a duration between 3 and 5 seconds
+        rotateGunChangingDuration = random(3, 7);
+    }
+    
+    // change the turn direction each period of time
+    if(lastRotateGunAction == -1 || t - lastRotateGunAction > rotateGunChangingDuration) {
+        lastRotateGunAction = t;
+        
+        RotatingDir rotateDir = rotatingDirs[random(0,5)];
+        println(rotateDir);
+        
+        rotateGun(rotateDir);
+        
+        // reset duration
+        rotateGunChangingDuration = -1;
     }
 }
