@@ -160,6 +160,18 @@ namespace ScriptingLib {
 		GameInterface::getInstance()->printMessage(str.c_str());
 	}
 
+	void println(wstring& s) {
+		auto str = convertToAscii(s.c_str(), (int)s.size());
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(str.c_str());
+	}
+
+	void println(string& s) {
+		auto str = s;
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(str.c_str());
+	}
+
 	int random(int a, int b) {
 		std::uniform_int_distribution<int> distribution(a, b);
 		return distribution(generator);
@@ -247,6 +259,10 @@ namespace ScriptingLib {
 		GameInterface::getInstance()->printMessage(str.c_str());
 	}
 
+	float getTime() {
+		return GameInterface::getInstance()->getTime();
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////
 	void PlayerContextSciptingLibrary::loadContextFunctions(ScriptCompiler* scriptCompiler) {
 		FunctionRegisterHelper helper(scriptCompiler);
@@ -279,8 +295,11 @@ namespace ScriptingLib {
 		ScriptType typeString(iTypeString, scriptCompiler->getType(iTypeString));
 
 		REGIST_GLOBAL_FUNCTION11(helper, println, void, String&);
+		REGIST_GLOBAL_FUNCTION11(helper, println, void, wstring&);
+		REGIST_GLOBAL_FUNCTION11(helper, println, void, string&);
 		REGIST_GLOBAL_FUNCTION01(helper, random, int);
 		REGIST_GLOBAL_FUNCTION11(helper, random, int, int, int);
+		REGIST_GLOBAL_FUNCTION01(helper, getTime, float);
 
 		helper.registFunction("String", "MovingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<MovingDir>(moveToString), typeString));
 		helper.registFunction("String", "TurningDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<TurningDir>(turnToString), typeString));

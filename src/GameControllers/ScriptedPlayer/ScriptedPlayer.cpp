@@ -24,6 +24,9 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	GlobalScopeRef rootScope;
 	Program* _program;
 	int _functionIdOfMainFunction;
+	int _setupFunctionId = -1;
+	int _cleanupFunctionId = -1;
+
 	shared_ptr<ScriptTask> _scriptTask;
 	TankPlayerContext* _temporaryPlayerContex;
 	ScriptingLib::PlayerContextSciptingLibrary _myScriptLib;
@@ -59,6 +62,16 @@ public:
 			else {
 				_errorMessage = "function 'void update(float)' is not found";
 			}
+
+			_setupFunctionId = scriptCompiler->findFunction("setup", "");
+			_cleanupFunctionId = scriptCompiler->findFunction("cleanup", "");
+
+			if(_setupFunctionId < 0) {
+				GameInterface::getInstance()->printMessage("function 'void setup()' is not found\n");
+			}
+			if (_cleanupFunctionId < 0) {
+				GameInterface::getInstance()->printMessage("function 'void cleanup()' is not found\n");
+			}
 		}
 		else {
 			_errorMessage = scriptCompiler->getLastError();
@@ -80,6 +93,32 @@ public:
 	void setup(TankPlayerContext* player){
 		rootScope->runGlobalCode();
 		_myScriptLib.resetCommand();
+
+		if (_setupFunctionId >= 0) {
+			try {
+				_scriptTask->runFunction(5 * 1024 * 1024, _setupFunctionId, nullptr);
+			}
+			catch (std::exception&e) {
+				string message = "setup funtion failed to execute:";
+				message += e.what();
+				message += "\n";
+				GameInterface::getInstance()->printMessage(message.c_str());
+			}
+		}
+	}
+
+	void cleanup(TankPlayerContext* player) {
+		if (_cleanupFunctionId >= 0) {
+			try {
+				_scriptTask->runFunction(5 * 1024 * 1024, _cleanupFunctionId, nullptr);
+			}
+			catch (std::exception&e) {
+				string message = "clean funtion failed to execute:";
+				message += e.what();
+				message += "\n";
+				GameInterface::getInstance()->printMessage(message.c_str());
+			}
+		}
 	}
 
 	TankOperations giveOperations(TankPlayerContext* player) {
@@ -93,6 +132,10 @@ public:
 				return _myScriptLib.getOperations();
 			}
 			catch (std::exception&e) {
+				string message = "update funtion failed to execute:";
+				message += e.what();
+				message += "\n";
+				GameInterface::getInstance()->printMessage(message.c_str());
 			}
 		}
 
@@ -124,6 +167,10 @@ const char* ScriptedPlayer::setProgramScript(const char* file) {
 
 void ScriptedPlayer::setup(TankPlayerContext* player) {
 	_pImpl->setup(player);
+}
+
+void ScriptedPlayer::cleanup(TankPlayerContext* player) {
+	_pImpl->cleanup(player);
 }
 
 TankOperations ScriptedPlayer::giveOperations(TankPlayerContext* player) {

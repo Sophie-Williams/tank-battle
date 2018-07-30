@@ -301,6 +301,8 @@ void TankControllerWorker::loop() {
 		timeLeft = timeLeft > requestControlInterval ? 0 : requestControlInterval - timeLeft;
 		// check if a stop signal was sent then exit the loop
 	}
+
+	_tankController->cleanup(&playerContext);
 }
 
 void TankControllerWorker::run() {

@@ -16,5 +16,6 @@ public:
 	const char* setProgramScript(const wchar_t* scriptStart, const wchar_t* scriptEnd);
 	const char* setProgramScript(const char* file);
 	void setup(TankPlayerContext* player);
+	void cleanup(TankPlayerContext* player);
 	TankOperations giveOperations(TankPlayerContext* player);
 };

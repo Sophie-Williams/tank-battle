@@ -1,0 +1,90 @@
+float previousT = -1;
+
+float lastMoveAction = -1;
+float moveChangingDuration = -1;
+
+float lastTurnAction = -1;
+float turnChangingDuration = -1;
+
+float lastRotateGunAction = -1;
+float rotateGunChangingDuration = -1;
+
+array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
+array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
+array<RotatingDir,6> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
+
+void setup() {   
+    // random a duration between 3 and 7 seconds
+    moveChangingDuration = random(2, 4);
+    
+    // random a duration between 3 and 7 seconds
+    turnChangingDuration = random(3, 7);
+    
+    // random a duration between 3 and 7 seconds
+    rotateGunChangingDuration = random(3, 7);
+    
+    // get current time
+    // use auto data type
+    t = getTime();
+    lastRotateGunAction = lastTurnAction = lastMoveAction = t;
+    
+    println(L"script has been setup");
+}
+
+void cleanup() {
+    println(L"script has been cleanup");
+}
+
+void update(float t) {
+    if(previousT == -1) {
+        freeze();
+        previousT = t;
+        println(L"first time of update t = " + t);
+    }
+    else if(t - previousT > 1.0f) {
+        previousT = t;
+        println(L"processing frame t = " + t);
+        
+        // fire each second
+        fire();
+    }
+    
+    // change the move direction each period of time 
+    if(t - lastMoveAction > moveChangingDuration) {
+        lastMoveAction = t;
+        
+        MovingDir movingDir = movingDirs[random(0,2)];
+        println(movingDir);
+        
+        move(movingDir);
+        
+        // remake duration
+        moveChangingDuration = random(2, 4);
+    }
+    
+    // change the turn direction each period of time
+    if(t - lastTurnAction > turnChangingDuration) {
+        lastTurnAction = t;
+        
+        TurningDir turningDir = turningDirs[random(0,2)];
+        println(turningDir);
+        
+        turn(turningDir);
+        
+        // remake duration
+        turnChangingDuration = random(3, 7);
+    }
+    
+    // change the turn direction each period of time
+    if(t - lastRotateGunAction > rotateGunChangingDuration) {
+        lastRotateGunAction = t;
+        
+        RotatingDir rotateDir = rotatingDirs[random(0,5)];
+        println(rotateDir);
+        
+        rotateGun(rotateDir);
+        
+        // reset duration
+        rotateGunChangingDuration = random(3, 7);
+    }
+}

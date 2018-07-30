@@ -10,5 +10,6 @@ public:
 	TankController();
 	virtual ~TankController();
 	virtual void setup(TankPlayerContext* player);
+	virtual void cleanup(TankPlayerContext* player);
 	virtual TankOperations giveOperations(TankPlayerContext* player) = 0;
 };
