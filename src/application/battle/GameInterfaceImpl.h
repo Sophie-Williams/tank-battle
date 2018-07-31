@@ -25,5 +25,5 @@ public:
 
 	GameObjectType getObjectype(GameObjectId id) const;
 	DrawableObjectRef getObject(GameObjectId id) const;
-	void printMessage(const char*) const;
+	void printMessage(const char* header, const char* message) const;
 };

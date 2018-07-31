@@ -128,7 +128,7 @@ public:
 	void onWindowSizeChanged();
 	void setSSButtonState(int state);
 
-	void applyController(shared_ptr<Tank> tank, int, std::shared_ptr<WxTankPeripheralsView> peripheralsview);
+	void applyController(shared_ptr<Tank> tank, int, std::shared_ptr<WxTankPeripheralsView> peripheralsview, int playerId);
 };
 
 void pushLog(int logLevel, const char* fmt, ...) {
@@ -368,7 +368,8 @@ std::shared_ptr<std::vector<std::shared_ptr<Tank>>> generateTanks(Scene* scene, 
 	return tanks;
 }
 
-void BasicApp::applyController(shared_ptr<Tank> tankRef, int playerIdx, std::shared_ptr<WxTankPeripheralsView> peripheralsview) {
+void BasicApp::applyController(shared_ptr<Tank> tankRef, int playerIdx,
+	std::shared_ptr<WxTankPeripheralsView> peripheralsview, int playerId) {
 	auto& gameArea = _battlePlatform->getMapArea();
 	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
 
@@ -390,11 +391,18 @@ void BasicApp::applyController(shared_ptr<Tank> tankRef, int playerIdx, std::sha
 	}
 	shared_ptr<TankController> tankController;
 	auto& playerNameConst = _controlBoard->getPlayerName(playerIdx);
+	auto playerIdStr = playerNameConst + "(";
+	playerIdStr.append(std::to_string(playerId));
+	playerIdStr.append(")");
+
 	if (_playerFlags[playerIdx] == false) {
 		tankController = make_shared<TankControllerModuleWrapper>(playerNameConst.c_str());
+		tankController->setName(playerIdStr.c_str());
 	}
 	else {
 		auto tankControllerScript = make_shared<ScriptedPlayer>();
+		tankControllerScript->setName(playerIdStr.c_str());
+
 		string scriptFile("./controllers/");
 		scriptFile += (playerNameConst + SCRIPT_EXT);
 		auto message = tankControllerScript->setProgramScript(scriptFile.c_str());
@@ -474,8 +482,8 @@ void BasicApp::generateGame() {
 
 	_controllerReadySignal = make_shared<SignalAny>(true);
 
-	applyController(tanks->at(0), _selectedPlayer1, _peripheralsview1);
-	applyController(tanks->at(1), _selectedPlayer2, _peripheralsview2);
+	applyController(tanks->at(0), _selectedPlayer1, _peripheralsview1, 0);
+	applyController(tanks->at(1), _selectedPlayer2, _peripheralsview2, 1);
 
 	//_userTank = tanks->at(2);
 	//_userTank->setHealth(50);

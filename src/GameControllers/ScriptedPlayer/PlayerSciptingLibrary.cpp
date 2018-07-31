@@ -11,8 +11,6 @@
 #include <functional>
 #include <random>
 
-#include <RawStringLib.h>
-
 using namespace ffscript;
 using namespace std;
 
@@ -69,10 +67,10 @@ public:
 		)\
 	)
 
-#define REGIST_CONTEXT_FUNCTION1(helper, func, returnType , ...) helper.registFunction(#func, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new MFunction2<returnType, PlayerContextSciptingLibrary, __VA_ARGS__>(this, &PlayerContextSciptingLibrary::func), helper.getSriptCompiler()))
+#define REGIST_CONTEXT_FUNCTION10(helper, func, nativeFunc, returnType , ...) helper.registFunction(nativeFunc, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new MFunction2<returnType, PlayerContextSciptingLibrary, __VA_ARGS__>(this, &PlayerContextSciptingLibrary::func), helper.getSriptCompiler()))
+#define REGIST_CONTEXT_FUNCTION11(helper, func, returnType , ...) REGIST_CONTEXT_FUNCTION10(helper, func, #func, returnType, __VA_ARGS__)
 
 namespace ScriptingLib {
-	typedef RawString String;
 	///////////////////////////////////////////////////////////////////////////////////////////
 	ConstOperandBase* createMovingConsant(MovingDir cosnt_val) {
 		return new CConstOperand<MovingDir>(cosnt_val, "MovingDir");
@@ -154,22 +152,22 @@ namespace ScriptingLib {
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
-	void println(String& rws) {
+	void PlayerContextSciptingLibrary::println(String& rws) {
 		auto str = convertToAscii(rws.elms, rws.size);
 		str.append(1, '\n');
-		GameInterface::getInstance()->printMessage(str.c_str());
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
-	void println(wstring& s) {
+	void PlayerContextSciptingLibrary::println(wstring& s) {
 		auto str = convertToAscii(s.c_str(), (int)s.size());
 		str.append(1, '\n');
-		GameInterface::getInstance()->printMessage(str.c_str());
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
-	void println(string& s) {
+	void PlayerContextSciptingLibrary::println(string& s) {
 		auto str = s;
 		str.append(1, '\n');
-		GameInterface::getInstance()->printMessage(str.c_str());
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
 	int random(int a, int b) {
@@ -241,22 +239,22 @@ namespace ScriptingLib {
 		return rws;
 	}
 
-	void printMovingDir(MovingDir dir) {
+	void PlayerContextSciptingLibrary::printMovingDir(MovingDir dir) {
 		std::string str = moveToText(dir);
 		str.append(1, '\n');
-		GameInterface::getInstance()->printMessage(str.c_str());
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
-	void printTurningDir(TurningDir dir) {
+	void PlayerContextSciptingLibrary::printTurningDir(TurningDir dir) {
 		std::string str = turnToText(dir);
 		str.append(1, '\n');
-		GameInterface::getInstance()->printMessage(str.c_str());
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
-	void printRotatingDir(RotatingDir dir) {
+	void PlayerContextSciptingLibrary::printRotatingDir(RotatingDir dir) {
 		std::string str = rotateToTex(dir);
 		str.append(1, '\n');
-		GameInterface::getInstance()->printMessage(str.c_str());
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
 	float getTime() {
@@ -269,9 +267,9 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION0(helper, freeze, void);
 		REGIST_CONTEXT_FUNCTION0(helper, fire, void);
 		REGIST_CONTEXT_FUNCTION0(helper, keepPreviousState, void);
-		REGIST_CONTEXT_FUNCTION1(helper, move, void, MovingDir);
-		REGIST_CONTEXT_FUNCTION1(helper, turn, void, TurningDir);
-		REGIST_CONTEXT_FUNCTION1(helper, rotateGun, void, RotatingDir);
+		REGIST_CONTEXT_FUNCTION11(helper, move, void, MovingDir);
+		REGIST_CONTEXT_FUNCTION11(helper, turn, void, TurningDir);
+		REGIST_CONTEXT_FUNCTION11(helper, rotateGun, void, RotatingDir);
 		REGIST_CONTEXT_FUNCTION0(helper, getMovingDir, MovingDir);
 		REGIST_CONTEXT_FUNCTION0(helper, getTurnDir, TurningDir);
 		REGIST_CONTEXT_FUNCTION0(helper, getRotatingGunDir, RotatingDir);
@@ -281,11 +279,11 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION0(helper, geometry, GeometryInfo);
 		REGIST_CONTEXT_FUNCTION0(helper, movingSpeed, float);
 		REGIST_CONTEXT_FUNCTION0(helper, turningSpeed, float);
-		REGIST_CONTEXT_FUNCTION1(helper, isAlly, bool, GameObjectId);
-		REGIST_CONTEXT_FUNCTION1(helper, isEnemy, bool, GameObjectId);
+		REGIST_CONTEXT_FUNCTION11(helper, isAlly, bool, GameObjectId);
+		REGIST_CONTEXT_FUNCTION11(helper, isEnemy, bool, GameObjectId);
 	}
 
-	void loadGlobalFunctions(ScriptCompiler* scriptCompiler) {
+	void PlayerContextSciptingLibrary::loadGlobalFunctions(ScriptCompiler* scriptCompiler) {
 		FunctionRegisterHelper helper(scriptCompiler);
 
 		auto& basicTypes = scriptCompiler->getTypeManager()->getBasicTypes();
@@ -294,9 +292,9 @@ namespace ScriptingLib {
 		// type string object
 		ScriptType typeString(iTypeString, scriptCompiler->getType(iTypeString));
 
-		REGIST_GLOBAL_FUNCTION11(helper, println, void, String&);
-		REGIST_GLOBAL_FUNCTION11(helper, println, void, wstring&);
-		REGIST_GLOBAL_FUNCTION11(helper, println, void, string&);
+		REGIST_CONTEXT_FUNCTION11(helper, println, void, String&);
+		REGIST_CONTEXT_FUNCTION11(helper, println, void, wstring&);
+		REGIST_CONTEXT_FUNCTION11(helper, println, void, string&);
 		REGIST_GLOBAL_FUNCTION01(helper, random, int);
 		REGIST_GLOBAL_FUNCTION11(helper, random, int, int, int);
 		REGIST_GLOBAL_FUNCTION01(helper, getTime, float);
@@ -305,12 +303,13 @@ namespace ScriptingLib {
 		helper.registFunction("String", "TurningDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<TurningDir>(turnToString), typeString));
 		helper.registFunction("String", "RotatingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<RotatingDir>(rotateToString), typeString));
 
-		REGIST_GLOBAL_FUNCTION10(helper, printMovingDir, "println", void, MovingDir);
-		REGIST_GLOBAL_FUNCTION10(helper, printTurningDir, "println", void, TurningDir);
-		REGIST_GLOBAL_FUNCTION10(helper, printRotatingDir, "println", void, RotatingDir);
+		REGIST_CONTEXT_FUNCTION10(helper, printMovingDir, "println", void, MovingDir);
+		REGIST_CONTEXT_FUNCTION10(helper, printTurningDir, "println", void, TurningDir);
+		REGIST_CONTEXT_FUNCTION10(helper, printRotatingDir, "println", void, RotatingDir);
 	}
 
-	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : _commandBuilder(_tankOperations), _temporaryPlayerContex(nullptr){
+	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : 
+		_commandBuilder(_tankOperations), _temporaryPlayerContex(nullptr), _theController(nullptr) {
 		resetCommand();
 	}
 
@@ -324,6 +323,14 @@ namespace ScriptingLib {
 
 	void PlayerContextSciptingLibrary::setContext(TankPlayerContext* context) {
 		_temporaryPlayerContex = context;
+	}
+
+	void PlayerContextSciptingLibrary::setController(TankController* controler) {
+		_theController = controler;
+	}
+
+	TankController* PlayerContextSciptingLibrary::getController() const {
+		return _theController;
 	}
 
 	inline void addDirConstant(ScriptCompiler* scriptCompiler, char dir,

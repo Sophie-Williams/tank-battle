@@ -17,11 +17,9 @@ void update(float t) {
     if(previousT == -1) {
         freeze();
         previousT = t;
-        println(L"first time of update t = " + t);
     }
     else if(t - previousT > 1.0f) {
         previousT = t;
-        println(L"processing frame t = " + t);
         
         // fire each second
         fire();

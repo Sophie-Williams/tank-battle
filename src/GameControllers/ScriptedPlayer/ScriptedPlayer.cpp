@@ -28,12 +28,12 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	int _cleanupFunctionId = -1;
 
 	shared_ptr<ScriptTask> _scriptTask;
-	TankPlayerContext* _temporaryPlayerContex;
+	TankController* _theController;
 	ScriptingLib::PlayerContextSciptingLibrary _myScriptLib;
 	CompilerSuite _compiler;
 	string _errorMessage;
 public:
-	ScriptedPlayerImpl() : _functionIdOfMainFunction(-1) {
+	ScriptedPlayerImpl(TankController* controller) : _functionIdOfMainFunction(-1), _theController() {
 		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
 		_compiler.initialize(1024);
 
@@ -41,6 +41,7 @@ public:
 		auto scriptCompiler = rootScope->getCompiler();
 		includeRawStringToCompiler(scriptCompiler);
 
+		_myScriptLib.setController(controller);
 		_myScriptLib.loadLibrary(scriptCompiler);		
 		
 		scriptCompiler->beginUserLib();
@@ -67,10 +68,10 @@ public:
 			_cleanupFunctionId = scriptCompiler->findFunction("cleanup", "");
 
 			if(_setupFunctionId < 0) {
-				GameInterface::getInstance()->printMessage("function 'void setup()' is not found\n");
+				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), "function 'void setup()' is not found\n");
 			}
 			if (_cleanupFunctionId < 0) {
-				GameInterface::getInstance()->printMessage("function 'void cleanup()' is not found\n");
+				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), "function 'void cleanup()' is not found\n");
 			}
 		}
 		else {
@@ -93,6 +94,7 @@ public:
 	void setup(TankPlayerContext* player){
 		rootScope->runGlobalCode();
 		_myScriptLib.resetCommand();
+		_myScriptLib.setContext(player);
 
 		if (_setupFunctionId >= 0) {
 			try {
@@ -102,12 +104,14 @@ public:
 				string message = "setup funtion failed to execute:";
 				message += e.what();
 				message += "\n";
-				GameInterface::getInstance()->printMessage(message.c_str());
+				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
 			}
 		}
 	}
 
 	void cleanup(TankPlayerContext* player) {
+		_myScriptLib.setContext(player);
+
 		if (_cleanupFunctionId >= 0) {
 			try {
 				_scriptTask->runFunction(5 * 1024 * 1024, _cleanupFunctionId, nullptr);
@@ -116,15 +120,16 @@ public:
 				string message = "clean funtion failed to execute:";
 				message += e.what();
 				message += "\n";
-				GameInterface::getInstance()->printMessage(message.c_str());
+				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
 			}
 		}
 	}
 
 	TankOperations giveOperations(TankPlayerContext* player) {
+		_myScriptLib.setContext(player);
+
 		if (_program && _functionIdOfMainFunction >= 0) {
 			// run function and allow maxium 5mb stack size
-			_temporaryPlayerContex = player;
 			float t = GameInterface::getInstance()->getTime();
 			try {
 				ScriptParamBuffer paramsBuffer(t);
@@ -135,7 +140,7 @@ public:
 				string message = "update funtion failed to execute:";
 				message += e.what();
 				message += "\n";
-				GameInterface::getInstance()->printMessage(message.c_str());
+				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
 			}
 		}
 
@@ -145,7 +150,7 @@ public:
 
 ScriptedPlayer::ScriptedPlayer() : _pImpl(nullptr)
 {
-	_pImpl = new ScriptedPlayerImpl();
+	_pImpl = new ScriptedPlayerImpl(this);
 }
 
 ScriptedPlayer::~ScriptedPlayer()

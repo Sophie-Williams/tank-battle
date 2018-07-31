@@ -13,37 +13,14 @@ array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
 array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
 array<RotatingDir,6> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
 
-void setup() {   
-    // random a duration between 3 and 7 seconds
-    moveChangingDuration = random(2, 4);
-    
-    // random a duration between 3 and 7 seconds
-    turnChangingDuration = random(3, 7);
-    
-    // random a duration between 3 and 7 seconds
-    rotateGunChangingDuration = random(3, 7);
-    
-    // get current time
-    // use auto data type
-    t = getTime();
-    lastRotateGunAction = lastTurnAction = lastMoveAction = t;
-    
-    println(L"script has been setup");
-}
-
-void cleanup() {
-    println(L"script has been cleanup");
-}
 
 void update(float t) {
     if(previousT == -1) {
         freeze();
         previousT = t;
-        println(L"first time of update t = " + t);
     }
     else if(t - previousT > 1.0f) {
         previousT = t;
-        println(L"processing frame t = " + t);
         
         // fire each second
         fire();
@@ -87,4 +64,29 @@ void update(float t) {
         // reset duration
         rotateGunChangingDuration = random(3, 7);
     }
+}
+
+void setup() {
+    // random a duration between 3 and 7 seconds
+    moveChangingDuration = random(2, 4);
+    
+    // random a duration between 3 and 7 seconds
+    turnChangingDuration = random(3, 7);
+    
+    // random a duration between 3 and 7 seconds
+    rotateGunChangingDuration = random(3, 7);
+    
+    // get current time
+    // use auto data type
+    t = getTime();
+    lastRotateGunAction = lastTurnAction = lastMoveAction = t - 100;
+    
+    // call update at first time to initialize action
+    update(t);
+    
+    println(L"script has been setup");
+}
+
+void cleanup() {
+    println(L"script has been cleanup");
 }

@@ -3,6 +3,10 @@
 #include <GameControllerInterfaces.h>
 #include "TankCommandsBuilder.h"
 #include "PlayerContext.h"
+#include "TankController.h"
+#include <string>
+#include <RawStringLib.h>
+#include <ffscript.h>
 
 namespace ScriptingLib {
 	typedef char MovingDir;
@@ -10,6 +14,7 @@ namespace ScriptingLib {
 	typedef char RotatingDir;
 	typedef RawRay Ray;
 	typedef RawPoint Point;
+	typedef ffscript::RawString String;
 
 	class PlayerContextSciptingLibrary
 	{
@@ -17,6 +22,7 @@ namespace ScriptingLib {
 		TankOperations _tankOperations;
 		TankCommandsBuilder _commandBuilder;
 		TankPlayerContext* _temporaryPlayerContex;
+		TankController* _theController;
 	private:
 		// operation functions
 		void move(MovingDir dir);
@@ -41,9 +47,18 @@ namespace ScriptingLib {
 
 	private:
 		void loadContextFunctions(ffscript::ScriptCompiler* scriptCompiler);
+		void loadGlobalFunctions(ffscript::ScriptCompiler* scriptCompiler);
+		void printMovingDir(MovingDir dir);
+		void printTurningDir(TurningDir dir);
+		void printRotatingDir(RotatingDir dir);
+		void println(String& rws);
+		void println(std::wstring& s);
+		void println(std::string& s);
 	public:
 		PlayerContextSciptingLibrary();
 		void setContext(TankPlayerContext* context);
+		void setController(TankController* controler);
+		TankController* getController() const;
 		void loadLibrary(ffscript::ScriptCompiler* scriptCompiler);
 		void resetCommand();
 		TankOperations getOperations() const;
