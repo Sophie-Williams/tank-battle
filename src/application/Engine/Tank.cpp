@@ -145,6 +145,8 @@ void Tank::setComponentTextures() {
 }
 
 void Tank::move(char direction, float at) {
+	if (abs((int)direction) > 1) return;
+
 	if (_movingDir == direction) return;
 
 	_movingDir = direction;
@@ -154,6 +156,8 @@ void Tank::move(char direction, float at) {
 }
 
 void Tank::turn(char direction, float at) {
+	if (abs((int)direction) > 1) return;
+
 	if (_rotateDir == direction) return;
 
 	_rotateDir = direction;
@@ -163,6 +167,8 @@ void Tank::turn(char direction, float at) {
 }
 
 void Tank::spinBarrel(char direction, float at) {
+	if (abs((int)direction) > 1) return;
+
 	if (_rotateBarrelDir == direction) return;
 
 	_rotateBarrelDir = direction;

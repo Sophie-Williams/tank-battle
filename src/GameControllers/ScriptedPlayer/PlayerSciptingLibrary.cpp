@@ -17,13 +17,6 @@ using namespace std;
 // use for random functions
 std::default_random_engine generator;
 
-template <class ...Args>
-class ArgumentFunctionCounter {
-public:
-	static constexpr int ArgumentSize = sizeof...(Args);
-};
-
-
 class TankPlayerFunctionFactory : public UserFunctionFactory
 {
 	function<DFunction2*()> _makeNative;
@@ -38,7 +31,7 @@ public:
 	}
 };
 
-#define SIZE_OF_ARGS(...) ArgumentFunctionCounter<__VA_ARGS__>::ArgumentSize
+#define SIZE_OF_ARGS(...) ArgumentFunctionCounter<__VA_ARGS__>::count
 
 #define REGIST_GLOBAL_FUNCTION00(helper, nativeFunc, scriptFunc, returnType) \
 	helper.registFunction(\
@@ -86,14 +79,28 @@ namespace ScriptingLib {
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	void PlayerContextSciptingLibrary::move(MovingDir dir) {
+		if (abs(dir) > 1) {;
+			GameInterface::getInstance()->printMessage(_theController->getName(),
+				"warning!!! Moving direction is out of bound\n");
+		}
 		_commandBuilder.move(dir);
 	}
 
 	void PlayerContextSciptingLibrary::turn(TurningDir dir) {
+		if (abs(dir) > 1) {
+			;
+			GameInterface::getInstance()->printMessage(_theController->getName(),
+				"warning!!! Turning direction is out of bound\n");
+		}
 		_commandBuilder.turn(dir);
 	}
 
 	void PlayerContextSciptingLibrary::rotateGun(RotatingDir dir) {
+		if (abs(dir) > 1) {
+			;
+			GameInterface::getInstance()->printMessage(_theController->getName(),
+				"warning!!! Rotation direction is out of bound\n");
+		}
 		_commandBuilder.spinGun(dir);
 	}
 

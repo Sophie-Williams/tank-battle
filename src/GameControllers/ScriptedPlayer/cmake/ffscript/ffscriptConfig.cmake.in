@@ -24,6 +24,7 @@ SET (ffscript_LIBS
 
 SET (ffscript_INCLUDE_DIRS
     @FFSCRIPT_INCLUDE_DIR@
+    @FFSCRIPT_ROOT_ABSOLUTE@/ffscriptLibrary
 )
 
 include_directories(BEFORE ${ffscript_INCLUDE_DIRS})
