@@ -11,7 +11,7 @@ float rotateGunChangingDuration = -1;
 
 array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
 array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
-array<RotatingDir,6> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
+array<RotatingDir,5> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
 
 
 void update(float t) {
@@ -31,7 +31,7 @@ void update(float t) {
         lastMoveAction = t;
         
         MovingDir movingDir = movingDirs[random(0,2)];
-        println(movingDir);
+        println(L"move = " + String(movingDir));
         
         move(movingDir);
         
@@ -44,7 +44,7 @@ void update(float t) {
         lastTurnAction = t;
         
         TurningDir turningDir = turningDirs[random(0,2)];
-        println(turningDir);
+        println(L"turn = " + String(turningDir));
         
         turn(turningDir);
         
@@ -57,7 +57,7 @@ void update(float t) {
         lastRotateGunAction = t;
         
         RotatingDir rotateDir = rotatingDirs[random(0,5)];
-        println(rotateDir);
+        println(L"rotate gun = " + String(rotateDir));
         
         rotateGun(rotateDir);
         
