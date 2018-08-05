@@ -20,6 +20,29 @@
 using namespace ffscript;
 using namespace std;
 
+class MyComplicationLogger : public CompilationLogger {
+	TankController* _controller;
+public:
+	MyComplicationLogger(TankController* controller) : _controller(controller) {
+	}
+
+	void log(MessageType type, const wchar_t* message) {
+		string str;
+		if (type == MESSAGE_INFO) {
+			str.append("[INFO]   ");
+		}
+		else if (type == MESSAGE_WARNING) {
+			str.append("[WARNING]");
+		}
+		else if (type == MESSAGE_ERROR) {
+			str.append("[ERROR]  ");
+		}
+		str.append(convertToAscii(message));
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(_controller->getName(), str.c_str());
+	}
+};
+
 class ScriptedPlayer::ScriptedPlayerImpl {
 	GlobalScopeRef rootScope;
 	Program* _program;
@@ -28,13 +51,14 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	int _cleanupFunctionId = -1;
 
 	shared_ptr<ScriptTask> _scriptTask;
-	TankController* _theController;
 	ScriptingLib::PlayerContextSciptingLibrary _myScriptLib;
 	CompilerSuite _compiler;
+	MyComplicationLogger _compicationLoger;
 	string _errorMessage;
 public:
-	ScriptedPlayerImpl(TankController* controller) : _functionIdOfMainFunction(-1), _theController() {
+	ScriptedPlayerImpl(TankController* controller) : _functionIdOfMainFunction(-1), _compicationLoger(controller) {
 		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
+		_compiler.getCompiler()->setLogger(&_compicationLoger);
 		_compiler.initialize(1024);
 
 		rootScope = _compiler.getGlobalScope();
@@ -42,7 +66,7 @@ public:
 		includeRawStringToCompiler(scriptCompiler);
 
 		_myScriptLib.setController(controller);
-		_myScriptLib.loadLibrary(scriptCompiler);		
+		_myScriptLib.loadLibrary(scriptCompiler);
 		
 		scriptCompiler->beginUserLib();
 		_compiler.setPreprocessor(std::make_shared<DefaultPreprocessor>());

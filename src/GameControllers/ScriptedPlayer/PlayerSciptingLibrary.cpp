@@ -17,51 +17,23 @@ using namespace std;
 // use for random functions
 std::default_random_engine generator;
 
-class TankPlayerFunctionFactory : public UserFunctionFactory
-{
-	function<DFunction2*()> _makeNative;
-public:
-	TankPlayerFunctionFactory(function<DFunction2*()>&& makeNative, ScriptCompiler* scriptCompiler, const char* returnType, int paramSize) :
-		_makeNative(makeNative),
-		UserFunctionFactory(scriptCompiler, returnType, paramSize) {}
-	virtual ~TankPlayerFunctionFactory() {}
-
-	DFunction2Ref TankPlayerFunctionFactory::createNative() {
-		return DFunction2Ref(_makeNative());
-	}
-};
-
 #define SIZE_OF_ARGS(...) ArgumentFunctionCounter<__VA_ARGS__>::count
 
-#define REGIST_GLOBAL_FUNCTION00(helper, nativeFunc, scriptFunc, returnType) \
+#define REGIST_GLOBAL_FUNCTION1(helper, nativeFunc, scriptFunc, returnType,...) \
 	helper.registFunction(\
-		scriptFunc, "",\
-		new TankPlayerFunctionFactory(\
-			[](){ return new CdeclFunction2<returnType>(nativeFunc);},\
-			helper.getSriptCompiler(), \
-			#returnType,\
-			0\
-		)\
+		scriptFunc, #__VA_ARGS__,\
+		createUserFunctionFactoryCdecl<returnType, __VA_ARGS__>(helper.getSriptCompiler(), #returnType, nativeFunc)\
 	)
 
-#define REGIST_GLOBAL_FUNCTION01(helper, func, returnType) REGIST_GLOBAL_FUNCTION00(helper, func, #func, returnType)
+#define REGIST_GLOBAL_FUNCTION2(helper, func, returnType, ...) REGIST_GLOBAL_FUNCTION1(helper, func, #func, returnType, __VA_ARGS__)
 
-#define REGIST_GLOBAL_FUNCTION10(helper, nativeFunc, scriptFunc, returnType , ...) helper.registFunction(scriptFunc, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new CdeclFunction2<returnType, __VA_ARGS__>(nativeFunc), helper.getSriptCompiler()))
-#define REGIST_GLOBAL_FUNCTION11(helper, func, returnType , ...) REGIST_GLOBAL_FUNCTION10(helper, func, #func, returnType, __VA_ARGS__)
-
-#define REGIST_CONTEXT_FUNCTION0(helper, func, returnType) \
+#define REGIST_CONTEXT_FUNCTION1(helper, nativeFunc, scriptFunc, returnType,...) \
 	helper.registFunction(\
-		#func, "",\
-		new TankPlayerFunctionFactory(\
-			[this](){ return new MFunction2<returnType, PlayerContextSciptingLibrary>(this, &PlayerContextSciptingLibrary::func);},\
-			helper.getSriptCompiler(), \
-			#returnType,\
-			0\
-		)\
+		scriptFunc, #__VA_ARGS__,\
+		createUserFunctionFactoryMember<PlayerContextSciptingLibrary, returnType, __VA_ARGS__>(helper.getSriptCompiler(), this, #returnType, &PlayerContextSciptingLibrary::nativeFunc)\
 	)
 
-#define REGIST_CONTEXT_FUNCTION10(helper, func, nativeFunc, returnType , ...) helper.registFunction(nativeFunc, #__VA_ARGS__, new BasicFunctionFactory<SIZE_OF_ARGS(__VA_ARGS__)>(EXP_UNIT_ID_USER_FUNC, FUNCTION_PRIORITY_USER_FUNCTION, #returnType, new MFunction2<returnType, PlayerContextSciptingLibrary, __VA_ARGS__>(this, &PlayerContextSciptingLibrary::func), helper.getSriptCompiler()))
-#define REGIST_CONTEXT_FUNCTION11(helper, func, returnType , ...) REGIST_CONTEXT_FUNCTION10(helper, func, #func, returnType, __VA_ARGS__)
+#define REGIST_CONTEXT_FUNCTION2(helper, func, returnType, ...) REGIST_CONTEXT_FUNCTION1(helper, func, #func, returnType, __VA_ARGS__)
 
 namespace ScriptingLib {
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -271,23 +243,23 @@ namespace ScriptingLib {
 	///////////////////////////////////////////////////////////////////////////////////////////
 	void PlayerContextSciptingLibrary::loadContextFunctions(ScriptCompiler* scriptCompiler) {
 		FunctionRegisterHelper helper(scriptCompiler);
-		REGIST_CONTEXT_FUNCTION0(helper, freeze, void);
-		REGIST_CONTEXT_FUNCTION0(helper, fire, void);
-		REGIST_CONTEXT_FUNCTION0(helper, keepPreviousState, void);
-		REGIST_CONTEXT_FUNCTION11(helper, move, void, MovingDir);
-		REGIST_CONTEXT_FUNCTION11(helper, turn, void, TurningDir);
-		REGIST_CONTEXT_FUNCTION11(helper, rotateGun, void, RotatingDir);
-		REGIST_CONTEXT_FUNCTION0(helper, getMovingDir, MovingDir);
-		REGIST_CONTEXT_FUNCTION0(helper, getTurnDir, TurningDir);
-		REGIST_CONTEXT_FUNCTION0(helper, getRotatingGunDir, RotatingDir);
+		REGIST_CONTEXT_FUNCTION2(helper, freeze, void);
+		REGIST_CONTEXT_FUNCTION2(helper, fire, void);
+		REGIST_CONTEXT_FUNCTION2(helper, keepPreviousState, void);
+		REGIST_CONTEXT_FUNCTION2(helper, move, void, MovingDir);
+		REGIST_CONTEXT_FUNCTION2(helper, turn, void, TurningDir);
+		REGIST_CONTEXT_FUNCTION2(helper, rotateGun, void, RotatingDir);
+		REGIST_CONTEXT_FUNCTION2(helper, getMovingDir, MovingDir);
+		REGIST_CONTEXT_FUNCTION2(helper, getTurnDir, TurningDir);
+		REGIST_CONTEXT_FUNCTION2(helper, getRotatingGunDir, RotatingDir);
 
-		REGIST_CONTEXT_FUNCTION0(helper, gun, Ray);
-		REGIST_CONTEXT_FUNCTION0(helper, health, float);
-		REGIST_CONTEXT_FUNCTION0(helper, geometry, GeometryInfo);
-		REGIST_CONTEXT_FUNCTION0(helper, movingSpeed, float);
-		REGIST_CONTEXT_FUNCTION0(helper, turningSpeed, float);
-		REGIST_CONTEXT_FUNCTION11(helper, isAlly, bool, GameObjectId);
-		REGIST_CONTEXT_FUNCTION11(helper, isEnemy, bool, GameObjectId);
+		REGIST_CONTEXT_FUNCTION2(helper, gun, Ray);
+		REGIST_CONTEXT_FUNCTION2(helper, health, float);
+		REGIST_CONTEXT_FUNCTION2(helper, geometry, GeometryInfo);
+		REGIST_CONTEXT_FUNCTION2(helper, movingSpeed, float);
+		REGIST_CONTEXT_FUNCTION2(helper, turningSpeed, float);
+		REGIST_CONTEXT_FUNCTION2(helper, isAlly, bool, GameObjectId);
+		REGIST_CONTEXT_FUNCTION2(helper, isEnemy, bool, GameObjectId);
 	}
 
 	void PlayerContextSciptingLibrary::loadGlobalFunctions(ScriptCompiler* scriptCompiler) {
@@ -299,20 +271,20 @@ namespace ScriptingLib {
 		// type string object
 		ScriptType typeString(iTypeString, scriptCompiler->getType(iTypeString));
 
-		REGIST_CONTEXT_FUNCTION11(helper, println, void, String&);
-		REGIST_CONTEXT_FUNCTION11(helper, println, void, wstring&);
-		REGIST_CONTEXT_FUNCTION11(helper, println, void, string&);
-		REGIST_GLOBAL_FUNCTION01(helper, random, int);
-		REGIST_GLOBAL_FUNCTION11(helper, random, int, int, int);
-		REGIST_GLOBAL_FUNCTION01(helper, getTime, float);
+		REGIST_CONTEXT_FUNCTION2(helper, println, void, String&);
+		REGIST_CONTEXT_FUNCTION2(helper, println, void, wstring&);
+		REGIST_CONTEXT_FUNCTION2(helper, println, void, string&);
+		REGIST_GLOBAL_FUNCTION2(helper, random, int);
+		REGIST_GLOBAL_FUNCTION2(helper, random, int, int, int);
+		REGIST_GLOBAL_FUNCTION2(helper, getTime, float);
 
-		helper.registFunction("String", "MovingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<MovingDir>(moveToString), typeString));
-		helper.registFunction("String", "TurningDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<TurningDir>(turnToString), typeString));
-		helper.registFunction("String", "RotatingDir", new ConvertToStringFactory(scriptCompiler, createStringNativeFunc<RotatingDir>(rotateToString), typeString));
+		REGIST_GLOBAL_FUNCTION1(helper, moveToString, "String", String, MovingDir);
+		REGIST_GLOBAL_FUNCTION1(helper, turnToString, "String", String, TurningDir);
+		REGIST_GLOBAL_FUNCTION1(helper, rotateToString, "String", String, RotatingDir);
 
-		REGIST_CONTEXT_FUNCTION10(helper, printMovingDir, "println", void, MovingDir);
-		REGIST_CONTEXT_FUNCTION10(helper, printTurningDir, "println", void, TurningDir);
-		REGIST_CONTEXT_FUNCTION10(helper, printRotatingDir, "println", void, RotatingDir);
+		REGIST_CONTEXT_FUNCTION1(helper, printMovingDir, "println", void, MovingDir);
+		REGIST_CONTEXT_FUNCTION1(helper, printTurningDir, "println", void, TurningDir);
+		REGIST_CONTEXT_FUNCTION1(helper, printRotatingDir, "println", void, RotatingDir);
 	}
 
 	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : 

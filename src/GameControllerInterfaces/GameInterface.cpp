@@ -16,7 +16,7 @@ GameInterface* GameInterface::getInstance() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-GAME_CONTROLLER_INTERFACE RawPoint operator-(const RawPoint& P) {
+RawPoint operator-(const RawPoint& P) {
 	RawPoint X = { -P.x, -P.y };
 	return X;
 }
