@@ -1,0 +1,40 @@
+float previousT = -1;
+
+float lastMoveAction;
+float moveChangingDuration;
+
+float lastTurnAction;
+float turnChangingDuration;
+
+float lastRotateGunAction;
+float rotateGunChangingDuration;
+
+array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
+array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
+array<RotatingDir,5> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
+
+
+void update(float t) {
+    if(t - previousT > 1) {
+        previousT = t;
+        
+        Point p = {0,0};
+        Point u = {2,3};
+        Point A = {random(-4,4),random(-5,5)};
+        GeneralLine line = {p, u};
+        float val = compute(line, A);
+        
+        println(L"value of A" + String(A) + L" base on the line = " + val);
+    }
+}
+
+void setup() {
+    
+    //println("value of A" + String(A) + " base on line[" + String(P) + ", " + String(u) + "] = " + val);
+    previousT = getTime() - 1;
+    println(L"script has been setup");
+}
+
+void cleanup() {
+    println(L"script has been cleanup");
+}

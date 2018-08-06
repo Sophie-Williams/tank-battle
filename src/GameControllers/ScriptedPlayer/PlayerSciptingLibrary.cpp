@@ -338,18 +338,18 @@ namespace ScriptingLib {
 
 		ScriptType typeFloat(basicTypes.TYPE_FLOAT, scriptCompiler->getType(basicTypes.TYPE_FLOAT).c_str());
 
-		// register struct Point must be same as RawPoint
-		StructClass* pointStruct = new StructClass(scriptCompiler, "Point");
-		pointStruct->addMember(typeFloat, "x");
-		pointStruct->addMember(typeFloat, "y");
-		auto iTypePoint = scriptCompiler->registStruct(pointStruct);
-		ScriptType typePoint(iTypePoint, scriptCompiler->getType(iTypePoint).c_str());
+		//// register struct Point must be same as RawPoint
+		//StructClass* pointStruct = new StructClass(scriptCompiler, "Point");
+		//pointStruct->addMember(typeFloat, "x");
+		//pointStruct->addMember(typeFloat, "y");
+		//auto iTypePoint = scriptCompiler->registStruct(pointStruct);
+		ScriptType typePoint(scriptCompiler->getType("Point"),"Point");
 
-		// register struct Ray must be same as RawRay
-		StructClass* rayStruct = new StructClass(scriptCompiler, "Ray");
-		rayStruct->addMember(typePoint, "start");
-		rayStruct->addMember(typePoint, "dir");
-		auto iTypeRay = scriptCompiler->registStruct(rayStruct);
+		//// register struct Ray must be same as RawRay
+		//StructClass* rayStruct = new StructClass(scriptCompiler, "Ray");
+		//rayStruct->addMember(typePoint, "start");
+		//rayStruct->addMember(typePoint, "dir");
+		//auto iTypeRay = scriptCompiler->registStruct(rayStruct);
 
 		// register struct GeometryInfo must be same as GeometryInfo of C++ type
 		StructClass* geometryInfoStruct = new StructClass(scriptCompiler, "GeometryInfo");

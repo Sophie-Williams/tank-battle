@@ -14,6 +14,8 @@
 #include <Utils.h>
 #include <DefaultPreprocessor.h>
 #include <RawStringLib.h>
+#include <MathLib.h>
+#include <GeometryLib.h>
 
 #include <memory>
 
@@ -64,6 +66,8 @@ public:
 		rootScope = _compiler.getGlobalScope();
 		auto scriptCompiler = rootScope->getCompiler();
 		includeRawStringToCompiler(scriptCompiler);
+		includeMathToCompiler(scriptCompiler);
+		includeGeoLibToCompiler(scriptCompiler);
 
 		_myScriptLib.setController(controller);
 		_myScriptLib.loadLibrary(scriptCompiler);
