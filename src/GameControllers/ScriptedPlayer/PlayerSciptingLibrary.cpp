@@ -49,6 +49,10 @@ namespace ScriptingLib {
 		return new CConstOperand<RotatingDir>(cosnt_val, "RotatingDir");
 	}
 
+	ConstOperandBase* createCollisionPositionConsant(CollisionPosition cosnt_val) {
+		return new CConstOperand<char>((char)cosnt_val, "CollisionPosition");
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////
 	void PlayerContextSciptingLibrary::move(MovingDir dir) {
 		if (abs(dir) > 1) {;
@@ -169,7 +173,7 @@ namespace ScriptingLib {
 		else if (dir == -1) {
 			return "MOVE_BACKWARD";
 		}
-		return "UNKNOWN";
+		return "MOVE_OUT_OF_BOUND";
 	}
 
 	RawString moveToString(MovingDir dir) {
@@ -189,7 +193,7 @@ namespace ScriptingLib {
 		else if (dir == -1) {
 			return "TURN_RIGHT";
 		}
-		return "UNKNOWN";
+		return "TURN_OUT_OF_BOUND";
 	}
 
 	RawString turnToString(TurningDir dir) {
@@ -209,7 +213,7 @@ namespace ScriptingLib {
 		else if (dir == -1) {
 			return "ROTATE_RIGHT";
 		}
-		return "UNKNOWN";
+		return "ROTATE_OF_OF_BOUND";
 	}
 
 	RawString rotateToString(RotatingDir dir) {
@@ -236,8 +240,50 @@ namespace ScriptingLib {
 		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
+	const char* collisionPositionToText(CollisionPosition pos) {
+		switch (pos)
+		{
+		case CollisionPosition::Unknown:
+			return "HIT_UNKNOWN";
+		case CollisionPosition::Front:
+			return "HIT_FRONT";
+		case CollisionPosition::Right:
+			return "HIT_RIGHT";
+		case CollisionPosition::Bottom:
+			return "HIT_BOTTOM";
+		case CollisionPosition::Left:
+			return "HIT_LEFT";
+		default:
+			return "HIT_OUT_OF_BOUND";
+		}
+	}
+
+	RawString collisionPositionToString(CollisionPosition pos) {
+		RawString rws;
+		constantConstructor(rws, collisionPositionToText(pos));
+		return rws;
+	}
+
+	void PlayerContextSciptingLibrary::printCollisionPosition(CollisionPosition pos) {
+		std::string str = collisionPositionToText(pos);
+		str.append(1, '\n');
+		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
+	}
+
 	float getTime() {
 		return GameInterface::getInstance()->getTime();
+	}
+
+	const SnapshotTimeObjectPoints* PlayerContextSciptingLibrary::getRadarSnapshot() const {
+		return _temporaryPlayerContex->getRadarSnapshot();
+	}
+
+	const SnapshotObjectPoints* PlayerContextSciptingLibrary::getCameraSnapshot() const {
+		return _temporaryPlayerContex->getCameraSnapshot();
+	}
+
+	const SnapshotColissions* PlayerContextSciptingLibrary::getCollisions() const {
+		return _temporaryPlayerContex->getCollisionsAtThisTurn();
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -260,6 +306,13 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION2(helper, turningSpeed, float);
 		REGIST_CONTEXT_FUNCTION2(helper, isAlly, bool, GameObjectId);
 		REGIST_CONTEXT_FUNCTION2(helper, isEnemy, bool, GameObjectId);
+
+		helper.registFunction("getRadarSnapshot", "", 
+			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotTimeObjectPoints*>(helper.getSriptCompiler(), this, "ref GameObjectArray", &PlayerContextSciptingLibrary::getRadarSnapshot));
+		helper.registFunction("getCameraSnapshot", "", 
+			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotObjectPoints*>(helper.getSriptCompiler(), this, "ref GameSnapshotObjectArray", &PlayerContextSciptingLibrary::getCameraSnapshot));
+		helper.registFunction("getCollisions", "", 
+			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotColissions*>(helper.getSriptCompiler(), this, "ref CollissionInfoArray", &PlayerContextSciptingLibrary::getCollisions));
 	}
 
 	void PlayerContextSciptingLibrary::loadGlobalFunctions(ScriptCompiler* scriptCompiler) {
@@ -312,11 +365,100 @@ namespace ScriptingLib {
 		return _theController;
 	}
 
-	inline void addDirConstant(ScriptCompiler* scriptCompiler, char dir,
-		const char* (*fDir2Text)(char), ConstOperandBase* (*fCreateDirConsant)(char)) {
-		auto createConstantFuncObj = make_shared<CdeclFunction<ConstOperandBase*, MovingDir>>(fCreateDirConsant);
-		createConstantFuncObj->pushParam((void*)dir);
-		scriptCompiler->setConstantMap(fDir2Text(dir), createConstantFuncObj);
+	template<typename T>
+	inline void addConstant(ScriptCompiler* scriptCompiler, T constant,
+		const char* (*fConvertToText)(T), ConstOperandBase* (*fCreateConsant)(T)) {
+		auto createConstantFuncObj = make_shared<CdeclFunction<ConstOperandBase*, T>>(fCreateConsant);
+		createConstantFuncObj->pushParam((void*)constant);
+		scriptCompiler->setConstantMap(fConvertToText(constant), createConstantFuncObj);
+	}
+
+	//int registerArrayOfType(ScriptCompiler* scriptCompiler, int type) {
+	//	auto& typeManager = scriptCompiler->getTypeManager();
+	//	auto& basicTypes = typeManager->getBasicTypes();
+
+	//	ScriptType typeInt()
+
+	//	StructClass* arrayStruct = new StructClass(scriptCompiler, "GeometryInfo");
+	//	arrayStruct->addMember(basicTypes.TYPE_INT, "size");
+	//	arrayStruct->addMember(typeFloat, "ref");
+	//	auto iGeometryInfoType = scriptCompiler->registStruct(geometryInfoStruct);
+	//}
+
+	void PlayerContextSciptingLibrary::registerGeometryTypes(ScriptCompiler* scriptCompiler) {
+		auto& typeManager = scriptCompiler->getTypeManager();
+		auto& basicTypes = typeManager->getBasicTypes();
+		int type;
+
+		ScriptType typeInt(basicTypes.TYPE_INT, scriptCompiler->getType(basicTypes.TYPE_INT));
+		ScriptType typeFloat(basicTypes.TYPE_FLOAT, scriptCompiler->getType(basicTypes.TYPE_FLOAT));
+		ScriptType typeBool(basicTypes.TYPE_BOOL, scriptCompiler->getType(basicTypes.TYPE_BOOL));
+		ScriptType typePoint(scriptCompiler->getType("Point"), "Point");
+
+		type = scriptCompiler->registType("CollisionPosition");
+		scriptCompiler->setTypeSize(type, sizeof(CollisionPosition));
+		ScriptType typeCollisionPosition(type, scriptCompiler->getType(type));
+
+		type = scriptCompiler->registType("GameObjectId");
+		scriptCompiler->setTypeSize(type, sizeof(GameObjectId));
+		ScriptType typeGameObjectId(type, scriptCompiler->getType(type));
+
+		// register contants
+		// moving contants
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Unknown, collisionPositionToText, createCollisionPositionConsant);
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Front, collisionPositionToText, createCollisionPositionConsant);
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Right, collisionPositionToText, createCollisionPositionConsant);
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Bottom, collisionPositionToText, createCollisionPositionConsant);
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Left, collisionPositionToText, createCollisionPositionConsant);
+
+		// register struct GeometryInfo must be same as GeometryInfo of C++ type
+		StructClass* geometryInfoStruct = new StructClass(scriptCompiler, "GeometryInfo");
+		geometryInfoStruct->addMember(typePoint, "coord");
+		geometryInfoStruct->addMember(typeFloat, "rotation");
+		scriptCompiler->registStruct(geometryInfoStruct);
+
+		// register array point(RawArray<Point> in C++)
+		StructClass* arrayStruct = new StructClass(scriptCompiler, "PointArray");
+		arrayStruct->addMember(typeInt, "count");
+		arrayStruct->addMember(typePoint.makeRef(), "data");
+		ScriptType typePointArray(scriptCompiler->registStruct(arrayStruct), arrayStruct->getName());
+
+		// register GameObject(RawObject in C++)
+		StructClass* gameObjectStruct = new StructClass(scriptCompiler, "GameObject");
+		gameObjectStruct->addMember(typeGameObjectId, "id");
+		gameObjectStruct->addMember(typePointArray, "shape");
+		ScriptType typeGameObject(scriptCompiler->registStruct(gameObjectStruct), gameObjectStruct->getName());
+
+		// register GameSnapshotObject(RawTimeObject in C++)
+		StructClass* gameSnapshotObjectStruct = new StructClass(scriptCompiler, "GameSnapshotObject");
+		gameSnapshotObjectStruct->addMember(typeGameObjectId, "id");
+		gameSnapshotObjectStruct->addMember(typeFloat, "t");
+		gameSnapshotObjectStruct->addMember(typePointArray, "shape");
+		ScriptType typeGameSnapshotObject(scriptCompiler->registStruct(gameSnapshotObjectStruct), gameSnapshotObjectStruct->getName());
+
+		// register ColissionInfo (ColissionRawInfo in C++)
+		StructClass* colissionInfoStruct = new StructClass(scriptCompiler, "ColissionInfo");
+		colissionInfoStruct->addMember(typeCollisionPosition, "id");
+		colissionInfoStruct->addMember(typeBool, "isExplosion");
+		ScriptType typeColissionInfo(scriptCompiler->registStruct(colissionInfoStruct), colissionInfoStruct->getName());
+
+		// register array GameObject(RawArray<RawObject> in C++)
+		arrayStruct = new StructClass(scriptCompiler, "GameObjectArray");
+		arrayStruct->addMember(typeInt, "count");
+		arrayStruct->addMember(typeGameObject.makeRef(), "data");
+		scriptCompiler->registStruct(arrayStruct);
+
+		// register array GameObject(RawArray<RawTimeObject> in C++)
+		arrayStruct = new StructClass(scriptCompiler, "GameSnapshotObjectArray");
+		arrayStruct->addMember(typeInt, "count");
+		arrayStruct->addMember(typeGameSnapshotObject.makeRef(), "data");
+		scriptCompiler->registStruct(arrayStruct);
+
+		// register array ColissionInfo(RawArray<ColissionRawInfo> in C++)
+		arrayStruct = new StructClass(scriptCompiler, "CollissionInfoArray");
+		arrayStruct->addMember(typeInt, "count");
+		arrayStruct->addMember(typeColissionInfo.makeRef(), "data");
+		scriptCompiler->registStruct(arrayStruct);
 	}
 
 	void PlayerContextSciptingLibrary::loadLibrary(ScriptCompiler* scriptCompiler) {
@@ -330,48 +472,23 @@ namespace ScriptingLib {
 		type = scriptCompiler->registType("RotatingDir");
 		scriptCompiler->setTypeSize(type, 1);
 
-		type = scriptCompiler->registType("GameObjectId");
-		scriptCompiler->setTypeSize(type, sizeof(GameObjectId));
-
-		auto& typeManager = scriptCompiler->getTypeManager();
-		auto& basicTypes = typeManager->getBasicTypes();
-
-		ScriptType typeFloat(basicTypes.TYPE_FLOAT, scriptCompiler->getType(basicTypes.TYPE_FLOAT).c_str());
-
-		//// register struct Point must be same as RawPoint
-		//StructClass* pointStruct = new StructClass(scriptCompiler, "Point");
-		//pointStruct->addMember(typeFloat, "x");
-		//pointStruct->addMember(typeFloat, "y");
-		//auto iTypePoint = scriptCompiler->registStruct(pointStruct);
-		ScriptType typePoint(scriptCompiler->getType("Point"),"Point");
-
-		//// register struct Ray must be same as RawRay
-		//StructClass* rayStruct = new StructClass(scriptCompiler, "Ray");
-		//rayStruct->addMember(typePoint, "start");
-		//rayStruct->addMember(typePoint, "dir");
-		//auto iTypeRay = scriptCompiler->registStruct(rayStruct);
-
-		// register struct GeometryInfo must be same as GeometryInfo of C++ type
-		StructClass* geometryInfoStruct = new StructClass(scriptCompiler, "GeometryInfo");
-		geometryInfoStruct->addMember(typePoint, "coord");
-		geometryInfoStruct->addMember(typeFloat, "rotation");
-		auto iGeometryInfoType = scriptCompiler->registStruct(geometryInfoStruct);
-
 		// register contants
 		// moving contants
-		addDirConstant(scriptCompiler, 0, moveToText, createMovingConsant);
-		addDirConstant(scriptCompiler, 1, moveToText, createMovingConsant);
-		addDirConstant(scriptCompiler, -1, moveToText, createMovingConsant);
+		addConstant<MovingDir>(scriptCompiler, 0, moveToText, createMovingConsant);
+		addConstant<MovingDir>(scriptCompiler, 1, moveToText, createMovingConsant);
+		addConstant<MovingDir>(scriptCompiler, -1, moveToText, createMovingConsant);
 
 		// turning consants
-		addDirConstant(scriptCompiler, 0, turnToText, createTurningConsant);
-		addDirConstant(scriptCompiler, 1, turnToText, createTurningConsant);
-		addDirConstant(scriptCompiler, -1, turnToText, createTurningConsant);
+		addConstant<TurningDir>(scriptCompiler, 0, turnToText, createTurningConsant);
+		addConstant<TurningDir>(scriptCompiler, 1, turnToText, createTurningConsant);
+		addConstant<TurningDir>(scriptCompiler, -1, turnToText, createTurningConsant);
 		
 		// turning consants
-		addDirConstant(scriptCompiler, 0, rotateToTex, createRotatingConsant);
-		addDirConstant(scriptCompiler, 1, rotateToTex, createRotatingConsant);
-		addDirConstant(scriptCompiler, -1, rotateToTex, createRotatingConsant);
+		addConstant<RotatingDir>(scriptCompiler, 0, rotateToTex, createRotatingConsant);
+		addConstant<RotatingDir>(scriptCompiler, 1, rotateToTex, createRotatingConsant);
+		addConstant<RotatingDir>(scriptCompiler, -1, rotateToTex, createRotatingConsant);
+
+		registerGeometryTypes(scriptCompiler);
 
 		// register global functions
 		loadGlobalFunctions(scriptCompiler);

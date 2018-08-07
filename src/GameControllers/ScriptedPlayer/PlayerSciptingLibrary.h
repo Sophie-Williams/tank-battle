@@ -45,15 +45,23 @@ namespace ScriptingLib {
 		bool isAlly(GameObjectId id);
 		bool isEnemy(GameObjectId id);
 
+		const SnapshotTimeObjectPoints* getRadarSnapshot() const;
+		const SnapshotObjectPoints* getCameraSnapshot() const;
+		const SnapshotColissions* getCollisions() const;
+
 	private:
+		void registerGeometryTypes(ffscript::ScriptCompiler* scriptCompiler);
 		void loadContextFunctions(ffscript::ScriptCompiler* scriptCompiler);
 		void loadGlobalFunctions(ffscript::ScriptCompiler* scriptCompiler);
 		void printMovingDir(MovingDir dir);
 		void printTurningDir(TurningDir dir);
 		void printRotatingDir(RotatingDir dir);
+		void printCollisionPosition(CollisionPosition dir);
 		void println(String& rws);
 		void println(std::wstring& s);
 		void println(std::string& s);
+
+
 	public:
 		PlayerContextSciptingLibrary();
 		void setContext(TankPlayerContext* context);

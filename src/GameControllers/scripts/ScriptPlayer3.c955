@@ -25,12 +25,11 @@ void update(float t) {
         float val = compute(line, A);
         
         println(L"value of A" + String(A) + L" base on the line = " + val);
+        //println("value of A" + String(A) + " base on line[" + String(p) + ", " + String(u) + "] = " + val);
     }
 }
 
 void setup() {
-    
-    //println("value of A" + String(A) + " base on line[" + String(P) + ", " + String(u) + "] = " + val);
     previousT = getTime() - 1;
     println(L"script has been setup");
 }
