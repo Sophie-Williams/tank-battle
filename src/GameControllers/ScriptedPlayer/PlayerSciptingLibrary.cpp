@@ -307,9 +307,9 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION2(helper, isAlly, bool, GameObjectId);
 		REGIST_CONTEXT_FUNCTION2(helper, isEnemy, bool, GameObjectId);
 
-		helper.registFunction("getRadarSnapshot", "", 
-			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotTimeObjectPoints*>(helper.getSriptCompiler(), this, "ref GameObjectArray", &PlayerContextSciptingLibrary::getRadarSnapshot));
 		helper.registFunction("getCameraSnapshot", "", 
+			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotTimeObjectPoints*>(helper.getSriptCompiler(), this, "ref GameObjectArray", &PlayerContextSciptingLibrary::getRadarSnapshot));
+		helper.registFunction("getRadarSnapshot", "", 
 			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotObjectPoints*>(helper.getSriptCompiler(), this, "ref GameSnapshotObjectArray", &PlayerContextSciptingLibrary::getCameraSnapshot));
 		helper.registFunction("getCollisions", "", 
 			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotColissions*>(helper.getSriptCompiler(), this, "ref CollissionInfoArray", &PlayerContextSciptingLibrary::getCollisions));

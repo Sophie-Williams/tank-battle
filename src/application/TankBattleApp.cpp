@@ -91,8 +91,6 @@ class BasicApp : public App {
 	shared_ptr<WxTankPeripheralsView> _peripheralsview2;
 	shared_ptr<GameObject> _applicationComponentContainer;
 	shared_ptr<GameStateManager> _gameStateManager;
-	shared_ptr<ScriptedPlayer> _scriptPlayer1;
-	shared_ptr<ScriptedPlayer> _scriptPlayer2;
 
 	int _selectedPlayer1;
 	int _selectedPlayer2;
@@ -281,14 +279,21 @@ void BasicApp::setup()
 		}
 	});
 
-	_controlBoard->setOnPlayer1ChangedHandler([this](Widget*) {
-		if(_playerFlags[_controlBoard->getPlayer1()])
-		ILogger::getInstance()->log(LogLevel::Info, "TODO: compile the selected script\n");
-	});
-	_controlBoard->setOnPlayer2ChangedHandler([this](Widget*) {
-		if (_playerFlags[_controlBoard->getPlayer2()])
-		ILogger::getInstance()->log(LogLevel::Info, "TODO: compile the selected script\n");
-	});
+	auto playerChangedHandeler1 = [this](Widget*) {
+		if (StartState::NOT_STARTED == _startStopButtonState) {
+			_selectedPlayer1 = _controlBoard->getPlayer1();
+			_selectedPlayer2 = _controlBoard->getPlayer2();
+
+			GameEngine::getInstance()->accessEngineResource([this]() {
+				generateGame();
+			});
+		}
+	};
+
+	auto playerChangedHandeler2 = playerChangedHandeler1;
+
+	_controlBoard->setOnPlayer1ChangedHandler(playerChangedHandeler1);
+	_controlBoard->setOnPlayer2ChangedHandler(playerChangedHandeler2);
 	
 	// set the first state of application
 	setSSButtonState(StartState::NOT_STARTED);
