@@ -304,13 +304,13 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION2(helper, geometry, GeometryInfo);
 		REGIST_CONTEXT_FUNCTION2(helper, movingSpeed, float);
 		REGIST_CONTEXT_FUNCTION2(helper, turningSpeed, float);
-		REGIST_CONTEXT_FUNCTION2(helper, isAlly, bool, GameObjectId);
-		REGIST_CONTEXT_FUNCTION2(helper, isEnemy, bool, GameObjectId);
+		REGIST_CONTEXT_FUNCTION2(helper, isAlly, bool, int);
+		REGIST_CONTEXT_FUNCTION2(helper, isEnemy, bool, int);
 
-		helper.registFunction("getCameraSnapshot", "", 
-			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotTimeObjectPoints*>(helper.getSriptCompiler(), this, "ref GameObjectArray", &PlayerContextSciptingLibrary::getRadarSnapshot));
 		helper.registFunction("getRadarSnapshot", "", 
-			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotObjectPoints*>(helper.getSriptCompiler(), this, "ref GameSnapshotObjectArray", &PlayerContextSciptingLibrary::getCameraSnapshot));
+			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotTimeObjectPoints*>(helper.getSriptCompiler(), this, "ref GameSnapshotObjectArray", &PlayerContextSciptingLibrary::getRadarSnapshot));
+		helper.registFunction("getCameraSnapshot", "", 
+			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotObjectPoints*>(helper.getSriptCompiler(), this, "ref GameObjectArray", &PlayerContextSciptingLibrary::getCameraSnapshot));
 		helper.registFunction("getCollisions", "", 
 			createUserFunctionFactoryMember<PlayerContextSciptingLibrary, const SnapshotColissions*>(helper.getSriptCompiler(), this, "ref CollissionInfoArray", &PlayerContextSciptingLibrary::getCollisions));
 	}
@@ -399,9 +399,7 @@ namespace ScriptingLib {
 		scriptCompiler->setTypeSize(type, sizeof(CollisionPosition));
 		ScriptType typeCollisionPosition(type, scriptCompiler->getType(type));
 
-		type = scriptCompiler->registType("GameObjectId");
-		scriptCompiler->setTypeSize(type, sizeof(GameObjectId));
-		ScriptType typeGameObjectId(type, scriptCompiler->getType(type));
+		ScriptType& typeGameObjectId = typeInt;
 
 		// register contants
 		// moving contants
