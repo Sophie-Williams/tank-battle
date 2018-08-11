@@ -1,18 +1,3 @@
-float previousT = -1;
-
-float lastMoveAction;
-float moveChangingDuration;
-
-float lastTurnAction;
-float turnChangingDuration;
-
-float lastRotateGunAction;
-float rotateGunChangingDuration;
-
-array<MovingDir,3> movingDirs = {NO_MOVE, MOVE_FORWARD, MOVE_BACKWARD};
-array<TurningDir,3> turningDirs = {NO_TURN, TURN_LEFT, TURN_RIGHT};
-array<RotatingDir,5> rotatingDirs = {NO_ROTATE, ROTATE_LEFT, NO_ROTATE, ROTATE_RIGHT, NO_ROTATE};
-
 int _lockObject = -1;
 
 // convert angle from range [-PI, PI] to [0, 2PI]
@@ -20,6 +5,7 @@ float convertToAbsoluteAngle(float angle) {
     return angle < 0 ? 2 * PI + angle : angle;
 }
 
+// compute center of a point array
 Point center(ref Point arrPoint, int n) {
     int i = 0;
     Point totalPoint = arrPoint[i++];
@@ -30,15 +16,18 @@ Point center(ref Point arrPoint, int n) {
     return totalPoint/(i * 1.0f);
 }
 
+// return min value
 float min(float a, float b) {
     return (b < a) ? b : a;
 }
 
+// distance square of two points
 float distanceSquare(Point P, Point Q) {
     u = Q - P;
     return u.x * u.x + u.y * u.y;
 }
 
+// return index of nearest object in a GameObject array
 int findNearestObject(ref GameObject gameObjects, int n) {
     // center point of this tank is always at center of coordinate system.
     Point basePoint = {0,0};
@@ -67,6 +56,7 @@ int findNearestObject(ref GameObject gameObjects, int n) {
     return objectIndex;
 }
 
+// update function, the game platform call it each logical controlling frame.
 void update(float t) {
     freeze();
     // game objects captured by camera
@@ -135,11 +125,13 @@ void update(float t) {
     //rotateGun(ROTATE_LEFT);
 }
 
+// setup function, called once right after the Tank is created.
 void setup() {
     previousT = getTime() - 1;
     println(L"script has been setup");
 }
 
+// cleanup function, called once right before the Tank is destroyed.
 void cleanup() {
     println(L"script has been cleanup");
 }
