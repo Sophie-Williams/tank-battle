@@ -1,4 +1,5 @@
 int _lockObject = -1;
+int _radarLockObject = -1;
 
 // convert angle from range [-PI, PI] to [0, 2PI]
 float convertToAbsoluteAngle(float angle) {
@@ -56,6 +57,33 @@ int findNearestObject(ref GameObject gameObjects, int n) {
     return objectIndex;
 }
 
+// return index of earliest scanned object in a GameSnapshotObject array
+int findEaliestObject(ref GameSnapshotObject gameObjects, int n) {
+    // get current time
+    float baseTime = getTime();
+    
+    int objectIndex = -1;
+    int i = 0;
+    // set min time distance is a very large number
+    float minTimeDistance = 1000000.0f;
+    float distance = -1;
+    
+    Point objectCenter;
+    while(i < n) {
+        gameObject = gameObjects[i];
+        if(isEnemy(gameObject.id)) {
+            distance = baseTime - gameObject.t;
+            if(minTimeDistance > distance) {
+                minTimeDistance = distance;
+                objectIndex = i;
+            }
+        }
+        i++;
+    }
+    
+    return objectIndex;
+}
+
 // update function, the game platform call it each logical controlling frame.
 void update(float t) {
     freeze();
@@ -63,7 +91,7 @@ void update(float t) {
     cameraSnapshots = getCameraSnapshot();
     
     int n = cameraSnapshots.count;
-    ref GameObject gameObjects = cameraSnapshots.data;
+    gameObjects = cameraSnapshots.data;
     
     // game objects capture by radars
     radarSnapshots = getRadarSnapshot();
@@ -103,26 +131,58 @@ void update(float t) {
         objectCenter = center(points, gameObject.shape.count);
         objectCenter -= gunVector.start;
     
-        float angle_ = angle(objectCenter, gunDir);
+        float gunBaseAngle = angle(objectCenter, gunDir);
         
-        if(angle_ < 0) {
+        if(gunBaseAngle < 0) {
             rotateGun(ROTATE_LEFT);
         }
-        else if(angle_ > 0){
+        else if(gunBaseAngle > 0){
             rotateGun(ROTATE_RIGHT);
         }
         
-        if( abs(angle_) * 180 / PI < 5.0f) {
+        if( abs(gunBaseAngle) * 180 / PI < 5.0f) {
             fire();
         }
-        //println(L"gun angle = " + angle_ * 180 / PI);
-        //println(L"object pos = " + String(objectCenter));
     }
     else {
-        turn(TURN_LEFT);
+        // no enemy object in camera view, the controller try to find a earliest enemy in radar view
+        // then turn the tank to the earliest scanned enemy.
+        gameSnapshotObjects = radarSnapshots.data;
+        GameSnapshotObject gameObject;
+        int n = radarSnapshots.count;
+        if(_radarLockObject == -1) {
+            lockObjectIdx = findEaliestObject(gameSnapshotObjects, n);
+        }
+        else {
+            int i = 0;
+            
+            while(i < n) {
+                if(_radarLockObject == gameSnapshotObjects[i].id) {
+                   lockObjectIdx = i;
+                }
+                i++;
+            }
+        }
+        if(lockObjectIdx >= 0) {
+            _radarLockObject = gameSnapshotObjects[lockObjectIdx].id;
+            
+            gameObject = gameSnapshotObjects[lockObjectIdx];
+            ref Point points = gameObject.shape.data;
+            objectCenter = center(points, gameObject.shape.count);
+        
+            float objectBaseAngle = PI/2 - atan2(objectCenter.y, objectCenter.x);
+            
+            if(objectBaseAngle < 0) {
+                turn(TURN_LEFT);
+            }
+            else if(objectBaseAngle > 0){
+                turn(TURN_RIGHT);
+            }
+        }
+        else {
+            _radarLockObject = -1;
+        }
     }
-    
-    //rotateGun(ROTATE_LEFT);
 }
 
 // setup function, called once right after the Tank is created.
