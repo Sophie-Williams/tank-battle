@@ -9,6 +9,8 @@ class GameStateManager : public GameComponent
 	bool _gameOver;
 	float _lastStandDetectedAt;
 	float _firstTimeNoKillingObjectDetectedAt;
+	float _maxMatchDuration;
+	float _startMatchTime;
 	GameObjectId _winner;
 	// list of killing object at a specific of time
 	std::list<DrawableObjectRef> _snapshotKillingObjects;

@@ -1,6 +1,11 @@
 int _lockObject = -1;
 int _radarLockObject = -1;
 
+MovingDir _movingDir = NO_MOVE;
+TurningDir _turningDir = NO_TURN;
+float _lastMovingDirChanged = -100.0f;
+bool _onRunning = false;
+
 // convert angle from range [-PI, PI] to [0, 2PI]
 float convertToAbsoluteAngle(float angle) {
     return angle < 0 ? 2 * PI + angle : angle;
@@ -113,11 +118,96 @@ int findNearestObject(ref GameSnapshotObject gameObjects, int n) {
     return objectIndex;
 }
 
+void justFireIfTarget() {
+    // game objects captured by camera
+    cameraSnapshots = getCameraSnapshot();
+    
+    int n = cameraSnapshots.count;
+    gameObjects = cameraSnapshots.data;
+    
+    Ray gunVector = gun();
+    gunDir = gunVector.dir;
+    
+    int i = 0;
+    while(i < n) {
+        gameObject = gameObjects[i];
+        if(isEnemy(gameObject.id)) {
+            ref Point points = gameObject.shape.data;
+            objectCenter = center(points, gameObject.shape.count);
+            objectCenter -= gunVector.start;
+    
+            gunBaseAngle = angle(objectCenter, gunDir);
+            if( abs(gunBaseAngle) <= 0.05f) {
+                fire();
+                break;
+            }
+        }
+        i++;
+    }
+}
+
+void runAndCheckToFire(float t) {
+    move(_movingDir);
+    turn(_turningDir);
+    
+    justFireIfTarget();
+    
+    if(t - _lastMovingDirChanged > 3.0f) {
+        _onRunning = false;
+        _movingDir = NO_MOVE;
+    }
+}
+
 bool processCollisions(float t) {
     // collisions detected between last frame to current frame
-    collisions = getCollisions();
+    collisionSnapshots = getCollisions();
     
-    // current, just do nothing and return false
+    int n = collisionSnapshots.count;
+    collisions = collisionSnapshots.data;
+    int i = 0;
+    while(i < n) {
+        collision = collisions[i];
+        if(collision.isExplosion == true) {
+            break;
+        }
+        i++;
+    }
+    
+    if(i < n) {
+        CollisionPosition hitPosition = collisions[i].position;
+        _movingDir = NO_MOVE;
+        _turningDir = NO_TURN;
+        if(hitPosition == HIT_FRONT) {
+            // step back if there is an explosion ahead
+            _movingDir = MOVE_BACKWARD;
+            _turningDir = TURN_LEFT;
+        }
+        else if(hitPosition == HIT_BOTTOM) {
+            // step forward if there is an explosion behind
+            _movingDir = MOVE_FORWARD;
+            _turningDir = TURN_RIGHT;
+        }
+        else if(hitPosition == HIT_LEFT || hitPosition == HIT_RIGHT) {
+            // step forward if there is an explosion behind
+            if(random(0,1) == 0) {
+                _movingDir = MOVE_BACKWARD;
+            }
+            else {
+                _movingDir = MOVE_FORWARD;
+            }
+        }
+        
+        if(_movingDir != NO_MOVE) {
+            _onRunning = true;
+            _lastMovingDirChanged = t;
+            move(_movingDir);
+            turn(_turningDir);
+            println("Oops! that's hurt.");
+        }
+        return true;
+    }
+    // if the tank is not get hurt at this frame
+    // return false to caller do further processing
     return false;
 }
 
@@ -228,6 +318,11 @@ bool processObjectsInRadar(float t) {
 // update function, the game platform call it each logical controlling frame.
 void update(float t) {
     freeze();
+    
+    if(_onRunning) {
+        runAndCheckToFire(t);
+        return;
+    }
     
     res = processCollisions(t);
     if(res) {return;}

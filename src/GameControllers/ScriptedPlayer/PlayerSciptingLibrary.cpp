@@ -11,8 +11,11 @@
 #include <functional>
 #include <random>
 
+#include <BasicOperators.hpp>
+
 using namespace ffscript;
 using namespace std;
+using namespace ffscript::basic;
 
 // use for random functions
 std::default_random_engine generator;
@@ -338,6 +341,16 @@ namespace ScriptingLib {
 		REGIST_CONTEXT_FUNCTION1(helper, printMovingDir, "println", void, MovingDir);
 		REGIST_CONTEXT_FUNCTION1(helper, printTurningDir, "println", void, TurningDir);
 		REGIST_CONTEXT_FUNCTION1(helper, printRotatingDir, "println", void, RotatingDir);
+
+		REGIST_GLOBAL_FUNCTION1(helper, operators::equal, "==", bool, RotatingDir, RotatingDir);
+		REGIST_GLOBAL_FUNCTION1(helper, operators::equal, "==", bool, MovingDir, MovingDir);
+		REGIST_GLOBAL_FUNCTION1(helper, operators::equal, "==", bool, TurningDir, TurningDir);
+		REGIST_GLOBAL_FUNCTION1(helper, operators::equal, "==", bool, CollisionPosition, CollisionPosition);
+
+		REGIST_GLOBAL_FUNCTION1(helper, operators::not_equal, "!=", bool, RotatingDir, RotatingDir);
+		REGIST_GLOBAL_FUNCTION1(helper, operators::not_equal, "!=", bool, MovingDir, MovingDir);
+		REGIST_GLOBAL_FUNCTION1(helper, operators::not_equal, "!=", bool, TurningDir, TurningDir);
+		REGIST_GLOBAL_FUNCTION1(helper, operators::not_equal, "!=", bool, CollisionPosition, CollisionPosition);
 	}
 
 	PlayerContextSciptingLibrary::PlayerContextSciptingLibrary() : 
@@ -436,7 +449,7 @@ namespace ScriptingLib {
 
 		// register ColissionInfo (ColissionRawInfo in C++)
 		StructClass* colissionInfoStruct = new StructClass(scriptCompiler, "ColissionInfo");
-		colissionInfoStruct->addMember(typeCollisionPosition, "id");
+		colissionInfoStruct->addMember(typeCollisionPosition, "position");
 		colissionInfoStruct->addMember(typeBool, "isExplosion");
 		ScriptType typeColissionInfo(scriptCompiler->registStruct(colissionInfoStruct), colissionInfoStruct->getName());
 

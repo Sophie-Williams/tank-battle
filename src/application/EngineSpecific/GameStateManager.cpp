@@ -33,6 +33,9 @@ int countLiveObject(LiveObject** ppLiveObject = nullptr) {
 
 void GameStateManager::initState() {
 	_lastStandDetectedAt = -1;
+	// max match duration is 5 minutes
+	_maxMatchDuration = 5 * 60;
+	_startMatchTime = GameEngine::getInstance()->getCurrentTime();
 	_gameOver = false;
 	_winner = -1;
 	_snapshotKillingObjects.clear();
@@ -43,13 +46,23 @@ void GameStateManager::initState() {
 void GameStateManager::update(float t) {
 	if (_gameOver) return;
 	if (_mustAliveObjects.size() == 0) return;
-
 	int mustAliveObjectCount = 0;
+	int aliveId = -1;
 	for (auto it = _mustAliveObjects.begin(); it != _mustAliveObjects.end(); it++) {
 		if (it->get()->isAvailable()) {
 			mustAliveObjectCount++;
+			aliveId = it->get()->getId();
 		}
 	}
+
+	if (t - _startMatchTime >= _maxMatchDuration) {
+		ILogger::getInstance()->logV(LogLevel::Info, "The time is over, the match has been force terminate\n");
+		_winner = mustAliveObjectCount == 1 ? aliveId : -1;
+		_gameOver = true;
+		return;
+	}
+
+	
 
 	// check if there is no object in monitored list alive
 	if (mustAliveObjectCount == 0) {

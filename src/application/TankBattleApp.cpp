@@ -379,10 +379,10 @@ void BasicApp::applyController(shared_ptr<Tank> tankRef, int playerIdx,
 	auto objectViewContainer = make_shared<ObjectViewContainer>(tankRef);
 
 	auto radar = make_shared<Radar>(objectViewContainer, glm::pi<float>());
-	radar->setRange(std::max(gameArea.getWidth(), gameArea.getHeight()) / 2);
+	radar->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
 
 	auto camera = make_shared<TankCamera>(objectViewContainer, glm::pi<float>()*2.0f / 3);
-	camera->setRange(sqrt(gameArea.getWidth()*gameArea.getWidth() + gameArea.getHeight()*gameArea.getHeight()));
+	camera->setRange(radar->getRange());
 
 	tankRef->addComponent(objectViewContainer);
 	tankRef->addComponent(radar);

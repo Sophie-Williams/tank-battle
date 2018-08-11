@@ -1,5 +1,7 @@
 int _lockObject = -1;
 int _radarLockObject = -1;
+float _lastMovingDirChange = -100;
+MovingDir _movingDir = NO_MOVE;
 
 // convert angle from range [-PI, PI] to [0, 2PI]
 float convertToAbsoluteAngle(float angle) {
@@ -113,11 +115,33 @@ int findNearestObject(ref GameSnapshotObject gameObjects, int n) {
     return objectIndex;
 }
 
+void ramdomMove(float t) {
+    if( t - _lastMovingDirChange > 3.0f) {
+        val = random(0, 2);
+        if(val == 0) {
+            _movingDir = NO_MOVE;
+        }
+        else if(val == 1) {
+            _movingDir = MOVE_FORWARD;
+        }
+        else {
+            _movingDir = MOVE_BACKWARD;
+        }
+        
+        _lastMovingDirChange = t;
+    }
+    
+    move(_movingDir);
+}
+
 bool processCollisions(float t) {
     // collisions detected between last frame to current frame
     collisions = getCollisions();
     
-    // current, just do nothing and return false
+    ramdomMove(t);
+    
+    // just random move and still let caller do further processing
+    // by return false
     return false;
 }
 
