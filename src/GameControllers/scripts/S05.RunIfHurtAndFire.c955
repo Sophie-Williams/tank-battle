@@ -137,7 +137,7 @@ void justFireIfTarget() {
             objectCenter -= gunVector.start;
     
             gunBaseAngle = angle(objectCenter, gunDir);
-            if( abs(gunBaseAngle) <= 0.05f) {
+            if( abs(gunBaseAngle) <= 0.1f) {
                 fire();
                 break;
             }

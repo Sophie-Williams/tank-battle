@@ -137,7 +137,7 @@ void justFireIfTarget() {
             objectCenter -= gunVector.start;
     
             gunBaseAngle = angle(objectCenter, gunDir);
-            if( abs(gunBaseAngle) <= 0.05f) {
+            if( abs(gunBaseAngle) <= 0.1f) {
                 fire();
                 break;
             }
@@ -159,6 +159,7 @@ void resetFrameState() {
     }
     
     _onStuck = false;
+    _currentState = 0;
 }
 
 void detectStucking() {
@@ -170,10 +171,8 @@ void detectStucking() {
     int i = 0;
     bool collisionDetected = false;
     while(i < n) {
-        collision = collisions[i];
-        if(collision.isExplosion == false) {
+        if(collisions[i].isExplosion == false) {
             collisionDetected = true;
-            println(L"Collision detected");
             break;
         }
         i++;
@@ -194,21 +193,6 @@ void detectStucking() {
     }
     
     _onStuck = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.7f;
-    if(_onStuck) {
-        println("On stuck... " + colissionFrameCount);
-    }
-}
-
-void runAndCheckToFire(float t) {
-    move(_movingDir);
-    turn(_turningDir);
-    
-    justFireIfTarget();
-    
-    if(t - _lastMovingDirChanged > 3.0f) {
-        _onRunning = false;
-        _movingDir = NO_MOVE;
-    }
 }
 
 bool processCollisions(float t) {
@@ -301,19 +285,26 @@ bool processObjectsInCamera(float t) {
         GameObject gameObject = gameObjects[lockObjectIdx];
         ref Point points = gameObject.shape.data;
         objectCenter = center(points, gameObject.shape.count);
-        objectCenter -= gunVector.start;
+        
+        GeneralLine gunLine = {gunVector.start, gunDir};
+        Point nomalDirVector;
+        nomalDirVector.x = -gunDir.y;
+        nomalDirVector.y = gunDir.x;
+        GeneralLine gunNormalLine = {gunVector.start, nomalDirVector};
     
-        float gunBaseAngle = angle(objectCenter, gunDir);
-        
-        if(gunBaseAngle < 0) {
-            rotateGun(ROTATE_LEFT);
-        }
-        else if(gunBaseAngle > 0){
-            rotateGun(ROTATE_RIGHT);
-        }
-        
-        if( abs(gunBaseAngle) * 180 / PI < 5.0f) {
+        float directionalDistance = distance(gunLine, objectCenter);
+        if( compute(gunNormalLine, objectCenter) < 0.0f &&  abs(directionalDistance) < 1.0f) {
             fire();
+        }
+        else {
+            objectCenter -= gunVector.start;
+            float gunBaseAngle = angle(objectCenter, gunDir);
+            if(gunBaseAngle < 0) {
+                rotateGun(ROTATE_LEFT);
+            }
+            else if(gunBaseAngle > 0){
+                rotateGun(ROTATE_RIGHT);
+            }
         }
         
         return true;
@@ -367,6 +358,20 @@ bool processObjectsInRadar(float t) {
     _radarLockObject = -1;
     return false;
 }
+
+
+void runAndCheckToFire(float t) {
+    move(_movingDir);
+    turn(_turningDir);
+    
+    processObjectsInCamera(t);
+    
+    if(t - _lastMovingDirChanged > 3.0f) {
+        _onRunning = false;
+        _movingDir = NO_MOVE;
+    }
+}
+
 
 void updateInternal(float t) {
     freeze();
