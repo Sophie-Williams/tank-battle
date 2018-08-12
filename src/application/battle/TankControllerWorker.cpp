@@ -51,6 +51,10 @@ void TankControllerWorker::onTankCollision(DrawableObjectRef other, const Collis
 	collision.collisionPosition = (CollisionPosition)poistion.relative;
 	collision.isExplosion = dynamic_cast<Bullet*>(other.get()) != nullptr;
 
+	if (other->canBeWentThrough() == true && collision.isExplosion == false) {
+		return;
+	}
+
 	if (collision.collisionPosition == CollisionPosition::Unknown) {
 		// estimate relative collision internally
 		std::vector<ci::vec2> boundingPoly(4);

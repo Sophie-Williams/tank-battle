@@ -386,18 +386,6 @@ namespace ScriptingLib {
 		scriptCompiler->setConstantMap(fConvertToText(constant), createConstantFuncObj);
 	}
 
-	//int registerArrayOfType(ScriptCompiler* scriptCompiler, int type) {
-	//	auto& typeManager = scriptCompiler->getTypeManager();
-	//	auto& basicTypes = typeManager->getBasicTypes();
-
-	//	ScriptType typeInt()
-
-	//	StructClass* arrayStruct = new StructClass(scriptCompiler, "GeometryInfo");
-	//	arrayStruct->addMember(basicTypes.TYPE_INT, "size");
-	//	arrayStruct->addMember(typeFloat, "ref");
-	//	auto iGeometryInfoType = scriptCompiler->registStruct(geometryInfoStruct);
-	//}
-
 	void PlayerContextSciptingLibrary::registerGeometryTypes(ScriptCompiler* scriptCompiler) {
 		auto& typeManager = scriptCompiler->getTypeManager();
 		auto& basicTypes = typeManager->getBasicTypes();
