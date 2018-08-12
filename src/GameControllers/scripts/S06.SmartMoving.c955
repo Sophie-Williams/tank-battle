@@ -1,0 +1,418 @@
+int _lockObject = -1;
+int _radarLockObject = -1;
+
+MovingDir _movingDir = NO_MOVE;
+TurningDir _turningDir = NO_TURN;
+float _lastMovingDirChanged = -100.0f;
+bool _onRunning = false;
+
+// convert angle from range [-PI, PI] to [0, 2PI]
+float convertToAbsoluteAngle(float angle) {
+    return angle < 0 ? 2 * PI + angle : angle;
+}
+
+// compute center of a point array
+Point center(ref Point arrPoint, int n) {
+    int i = 0;
+    Point totalPoint = arrPoint[i++];
+    while( i < n ) {
+        totalPoint += arrPoint[i++];
+    }
+    
+    return totalPoint/(i * 1.0f);
+}
+
+// return min value
+float min(float a, float b) {
+    return (b < a) ? b : a;
+}
+
+// distance square of two points
+float distanceSquare(Point P, Point Q) {
+    u = Q - P;
+    return u.x * u.x + u.y * u.y;
+}
+
+// return index of nearest object in a GameObject array
+int findNearestObject(ref GameObject gameObjects, int n) {
+    // center point of this tank is always at center of coordinate system.
+    Point basePoint = {0,0};
+    
+    int objectIndex = -1;
+    int i = 0;
+    // set min distance is a very large number
+    float minDistance = 1000000.0f;
+    float distance = -1;
+    
+    Point objectCenter;
+    while(i < n) {
+        gameObject = gameObjects[i];
+        if(isEnemy(gameObject.id)) {
+            ref Point points = gameObject.shape.data;
+            objectCenter = center(points, gameObject.shape.count);
+            distance = distanceSquare(objectCenter, basePoint);
+            if(minDistance > distance) {
+                minDistance = distance;
+                objectIndex = i;
+            }
+        }
+        i++;
+    }
+    
+    return objectIndex;
+}
+
+// return index of earliest scanned object in a GameSnapshotObject array
+int findEaliestObject(ref GameSnapshotObject gameObjects, int n) {
+    // get current time
+    float baseTime = getTime();
+    
+    int objectIndex = -1;
+    int i = 0;
+    // set min time distance is a very large number
+    float minTimeDistance = 1000000.0f;
+    float distance = -1;
+    
+    Point objectCenter;
+    while(i < n) {
+        gameObject = gameObjects[i];
+        if(isEnemy(gameObject.id)) {
+            distance = baseTime - gameObject.t;
+            if(minTimeDistance > distance) {
+                minTimeDistance = distance;
+                objectIndex = i;
+            }
+        }
+        i++;
+    }
+    
+    return objectIndex;
+}
+
+// return index of nearest object in a GameSnapshotObject array
+int findNearestObject(ref GameSnapshotObject gameObjects, int n) {
+    // center point of this tank is always at center of coordinate system.
+    Point basePoint = {0,0};
+    
+    int objectIndex = -1;
+    int i = 0;
+    // set min distance is a very large number
+    float minDistance = 1000000.0f;
+    float distance = -1;
+    
+    Point objectCenter;
+    while(i < n) {
+        gameObject = gameObjects[i];
+        if(isEnemy(gameObject.id)) {
+            ref Point points = gameObject.shape.data;
+            objectCenter = center(points, gameObject.shape.count);
+            distance = distanceSquare(objectCenter, basePoint);
+            if(minDistance > distance) {
+                minDistance = distance;
+                objectIndex = i;
+            }
+        }
+        i++;
+    }
+    
+    return objectIndex;
+}
+
+void justFireIfTarget() {
+    // game objects captured by camera
+    cameraSnapshots = getCameraSnapshot();
+    
+    int n = cameraSnapshots.count;
+    gameObjects = cameraSnapshots.data;
+    
+    Ray gunVector = gun();
+    gunDir = gunVector.dir;
+    
+    int i = 0;
+    while(i < n) {
+        gameObject = gameObjects[i];
+        if(isEnemy(gameObject.id)) {
+            ref Point points = gameObject.shape.data;
+            objectCenter = center(points, gameObject.shape.count);
+            objectCenter -= gunVector.start;
+    
+            gunBaseAngle = angle(objectCenter, gunDir);
+            if( abs(gunBaseAngle) <= 0.05f) {
+                fire();
+                break;
+            }
+        }
+        i++;
+    }
+}
+
+array<bool, 20> _frameStates;
+int MAX_FRAME_STATE_COUNT = 20;
+int _currentState = 0;
+bool _onStuck = false;
+
+void resetFrameState() {
+    int i = 0;
+    while(i < MAX_FRAME_STATE_COUNT) {
+        _frameStates[i] = false;
+        i++;
+    }
+    
+    _onStuck = false;
+}
+
+void detectStucking() {
+    // collisions detected between last frame to current frame
+    collisionSnapshots = getCollisions();
+    
+    int n = collisionSnapshots.count;
+    collisions = collisionSnapshots.data;
+    int i = 0;
+    bool collisionDetected = false;
+    while(i < n) {
+        collision = collisions[i];
+        if(collision.isExplosion == false) {
+            collisionDetected = true;
+            println(L"Collision detected");
+            break;
+        }
+        i++;
+    }
+    
+    if(_currentState >= MAX_FRAME_STATE_COUNT) {
+        _currentState = 0;
+    }
+    _frameStates[_currentState++] = collisionDetected;
+    
+    int colissionFrameCount = 0;
+    i = 0;
+    while(i < MAX_FRAME_STATE_COUNT) {
+        if(_frameStates[i] == true) {
+            colissionFrameCount ++;
+        }
+        i++;
+    }
+    
+    _onStuck = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.7f;
+    if(_onStuck) {
+        println("On stuck... " + colissionFrameCount);
+    }
+}
+
+void runAndCheckToFire(float t) {
+    move(_movingDir);
+    turn(_turningDir);
+    
+    justFireIfTarget();
+    
+    if(t - _lastMovingDirChanged > 3.0f) {
+        _onRunning = false;
+        _movingDir = NO_MOVE;
+    }
+}
+
+bool processCollisions(float t) {
+    // collisions detected between last frame to current frame
+    collisionSnapshots = getCollisions();
+    
+    int n = collisionSnapshots.count;
+    collisions = collisionSnapshots.data;
+    int i = 0;
+    while(i < n) {
+        collision = collisions[i];
+        if(collision.isExplosion) {
+            break;
+        }
+        i++;
+    }
+    
+    if(i < n) {
+        CollisionPosition hitPosition = collisions[i].position;
+        _movingDir = NO_MOVE;
+        _turningDir = NO_TURN;
+        if(hitPosition == HIT_FRONT) {
+            // step back if there is an explosion ahead
+            _movingDir = MOVE_BACKWARD;
+            _turningDir = TURN_LEFT;
+        }
+        else if(hitPosition == HIT_BOTTOM) {
+            // step forward if there is an explosion behind
+            _movingDir = MOVE_FORWARD;
+            _turningDir = TURN_RIGHT;
+        }
+        else if(hitPosition == HIT_LEFT || hitPosition == HIT_RIGHT) {
+            // step forward if there is an explosion behind
+            if(random(0,1) == 0) {
+                _movingDir = MOVE_BACKWARD;
+            }
+            else {
+                _movingDir = MOVE_FORWARD;
+            }
+        }
+        
+        if(_movingDir != NO_MOVE) {
+            _onRunning = true;
+            _lastMovingDirChanged = t;
+            move(_movingDir);
+            turn(_turningDir);
+            println("Oops! that's hurt.");
+        }
+        return true;
+    }
+    // if the tank is not get hurt at this frame
+    // return false to caller do further processing
+    return false;
+}
+
+bool processObjectsInCamera(float t) {
+    // game objects captured by camera
+    cameraSnapshots = getCameraSnapshot();
+    
+    int n = cameraSnapshots.count;
+    gameObjects = cameraSnapshots.data;
+    
+    Ray gunVector = gun();
+    gunDir = gunVector.dir;
+    
+    int lockObjectIdx = -1;
+    
+    if(_lockObject == -1) {
+        lockObjectIdx = findNearestObject(gameObjects, n);
+        if(lockObjectIdx >= 0) {
+            _lockObject = gameObjects[lockObjectIdx].id;
+        }
+    }
+    else {
+        int i = 0;
+        while(i < n) {
+            gameObject = gameObjects[i];
+            if(_lockObject == gameObject.id) {
+               lockObjectIdx = i;
+            }
+            i++;
+        }
+        
+        if(lockObjectIdx == -1) {
+            _lockObject = -1;
+        }
+    }
+    
+    if(lockObjectIdx >= 0) {
+        GameObject gameObject = gameObjects[lockObjectIdx];
+        ref Point points = gameObject.shape.data;
+        objectCenter = center(points, gameObject.shape.count);
+        objectCenter -= gunVector.start;
+    
+        float gunBaseAngle = angle(objectCenter, gunDir);
+        
+        if(gunBaseAngle < 0) {
+            rotateGun(ROTATE_LEFT);
+        }
+        else if(gunBaseAngle > 0){
+            rotateGun(ROTATE_RIGHT);
+        }
+        
+        if( abs(gunBaseAngle) * 180 / PI < 5.0f) {
+            fire();
+        }
+        
+        return true;
+    }
+    
+    // no enemy object in camera view, then return false to notify
+    // caller do further processing
+    return false;
+}
+
+bool processObjectsInRadar(float t) {
+    int lockObjectIdx = -1;
+    
+    // game objects capture by radars
+    radarSnapshots = getRadarSnapshot();
+        
+    gameSnapshotObjects = radarSnapshots.data;
+    GameSnapshotObject gameObject;
+    int n = radarSnapshots.count;
+    if(_radarLockObject == -1) {
+        lockObjectIdx = findEaliestObject(gameSnapshotObjects, n);
+    }
+    else {
+        int i = 0;
+        
+        while(i < n) {
+            if(_radarLockObject == gameSnapshotObjects[i].id) {
+               lockObjectIdx = i;
+            }
+            i++;
+        }
+    }
+    if(lockObjectIdx >= 0) {
+        _radarLockObject = gameSnapshotObjects[lockObjectIdx].id;
+        
+        gameObject = gameSnapshotObjects[lockObjectIdx];
+        ref Point points = gameObject.shape.data;
+        objectCenter = center(points, gameObject.shape.count);
+    
+        float objectBaseAngle = PI/2 - atan2(objectCenter.y, objectCenter.x);
+        
+        if(objectBaseAngle < 0) {
+            turn(TURN_LEFT);
+        }
+        else if(objectBaseAngle > 0){
+            turn(TURN_RIGHT);
+        }
+        return true;
+    }
+    
+    _radarLockObject = -1;
+    return false;
+}
+
+void updateInternal(float t) {
+    freeze();
+    
+    if(_onRunning) {
+        runAndCheckToFire(t);
+        return;
+    }
+    
+    res = processCollisions(t);
+    if(res) {return;}
+    
+    res = processObjectsInCamera(t);
+    if(res) {return;}
+    
+    res = processObjectsInRadar(t);
+    if(res) {return;}
+}
+
+// update function, the game platform call it each logical controlling frame.
+void update(float t) {
+    updateInternal(t);
+    
+    detectStucking();
+    
+    if(_onStuck) {
+        resetFrameState();
+        
+        if(_movingDir == MOVE_BACKWARD) {
+            _movingDir = MOVE_FORWARD;
+        }
+        else if(_movingDir == MOVE_FORWARD) {
+            _movingDir = MOVE_BACKWARD;
+        }
+    }
+}
+
+// setup function, called once right after the Tank is created.
+void setup() {
+    // set each frame in frame state array is free state
+    resetFrameState();
+    
+    println(L"script has been setup");
+}
+
+// cleanup function, called once right before the Tank is destroyed.
+void cleanup() {
+    println(L"script has been cleanup");
+}
