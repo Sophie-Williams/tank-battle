@@ -5,6 +5,79 @@ MovingDir _movingDir = NO_MOVE;
 TurningDir _turningDir = NO_TURN;
 float _lastMovingDirChanged = -100.0f;
 bool _onRunning = false;
+float _lastChangedDirectionOnStick = -100.0f;
+float _runOnHurtDuration = 3.0f;
+float _lastCounting = -100.0f;
+
+void countObjectToChangeDuration(float t) {
+    if( t - _lastCounting < 0.5f) {
+        return;
+    }
+    _lastCounting = t;
+    
+    int max_object = 15;
+    array<int, 15> objectIds;
+    int count = 0;
+     int id;
+    
+    // game objects captured by camera
+    cameraSnapshots = getCameraSnapshot();
+    
+    int n = cameraSnapshots.count;
+    gameObjects = cameraSnapshots.data;
+    
+    int i = 0;
+    // count moving game object in camera view
+    while(i < n && count < max_object) {
+        id = gameObjects[i].id;
+        if(isEnemy(id) || isAlly(id)) {
+            objectIds[count] = gameObjects[i].id;
+            count++;
+        }
+        i++;
+        
+    }
+    
+    radarSnapshots = getRadarSnapshot();
+        
+    gameSnapshotObjects = radarSnapshots.data;
+    n = radarSnapshots.count;
+    i = 0;
+    int j;
+   
+    // count moving game object in radar view
+    while(i < n && count < max_object) {
+        id = gameSnapshotObjects[i].id;
+        if(isEnemy(id) || isAlly(id)) {
+            j = 0;
+            while(j < count) {
+                if( objectIds[j] == id) {
+                    break;
+                }
+                j++;
+            }
+            if(j == count) {
+                objectIds[count] = gameSnapshotObjects[i].id;
+                count++;
+            }
+        }
+        i++;
+    }
+    if(count <= 4) {
+        // always run after get hurt
+        if(_runOnHurtDuration < 300000.0f) {
+            _runOnHurtDuration = 300000.0f;
+            println(L"keep moving mode is enable");
+        }
+    }
+    else {
+        if(_runOnHurtDuration > 3.0f) {
+            // run 3 seconds after get hurt then stop
+            _runOnHurtDuration = 3.0f;
+            println(L"keep moving mode is disable");
+        }
+    }
+}
 
 // convert angle from range [-PI, PI] to [0, 2PI]
 float convertToAbsoluteAngle(float angle) {
@@ -146,10 +219,36 @@ void justFireIfTarget() {
     }
 }
 
-array<bool, 20> _frameStates;
-int MAX_FRAME_STATE_COUNT = 20;
+void checkToFireToTarget(Point target) {
+    Ray gunVector = gun();
+    gunDir = gunVector.dir;
+    
+    GeneralLine gunLine = {gunVector.start, gunDir};
+    Point nomalDirVector;
+    nomalDirVector.x = -gunDir.y;
+    nomalDirVector.y = gunDir.x;
+    GeneralLine gunNormalLine = {gunVector.start, nomalDirVector};
+
+    float directionalDistance = distance(gunLine, target);
+    if( compute(gunNormalLine, target) < 0.0f &&  abs(directionalDistance) < 0.5f) {
+        fire();
+    }
+    else {
+        target -= gunVector.start;
+        float gunBaseAngle = angle(target, gunDir);
+        if(gunBaseAngle < 0) {
+            rotateGun(ROTATE_LEFT);
+        }
+        else if(gunBaseAngle > 0){
+            rotateGun(ROTATE_RIGHT);
+        }
+    }
+}
+
+array<bool, 10> _frameStates;
+int MAX_FRAME_STATE_COUNT = 10;
 int _currentState = 0;
-bool _onStuck = false;
+bool _onStick = false;
 
 void resetFrameState() {
     int i = 0;
@@ -158,11 +257,11 @@ void resetFrameState() {
         i++;
     }
     
-    _onStuck = false;
+    _onStick = false;
     _currentState = 0;
 }
 
-void detectStucking() {
+void detectSticking() {
     // collisions detected between last frame to current frame
     collisionSnapshots = getCollisions();
     
@@ -186,13 +285,13 @@ void detectStucking() {
     int colissionFrameCount = 0;
     i = 0;
     while(i < MAX_FRAME_STATE_COUNT) {
-        if(_frameStates[i] == true) {
+        if(_frameStates[i]) {
             colissionFrameCount ++;
         }
         i++;
     }
     
-    _onStuck = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.7f;
+    _onStick = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.5f;
 }
 
 bool processCollisions(float t) {
@@ -203,8 +302,7 @@ bool processCollisions(float t) {
     collisions = collisionSnapshots.data;
     int i = 0;
     while(i < n) {
-        collision = collisions[i];
-        if(collision.isExplosion) {
+        if(collisions[i].isExplosion) {
             break;
         }
         i++;
@@ -241,6 +339,9 @@ bool processCollisions(float t) {
             turn(_turningDir);
             println("Oops! that's hurt.");
         }
+        // reset time of change direction on stick to allow resolving sticking state later
+        // if not reset this variable, the tank cannot change direction while sticking and being fired.
+        _lastChangedDirectionOnStick = -100.0f;
         return true;
     }
     // if the tank is not get hurt at this frame
@@ -254,9 +355,6 @@ bool processObjectsInCamera(float t) {
     
     int n = cameraSnapshots.count;
     gameObjects = cameraSnapshots.data;
-    
-    Ray gunVector = gun();
-    gunDir = gunVector.dir;
     
     int lockObjectIdx = -1;
     
@@ -286,26 +384,7 @@ bool processObjectsInCamera(float t) {
         ref Point points = gameObject.shape.data;
         objectCenter = center(points, gameObject.shape.count);
         
-        GeneralLine gunLine = {gunVector.start, gunDir};
-        Point nomalDirVector;
-        nomalDirVector.x = -gunDir.y;
-        nomalDirVector.y = gunDir.x;
-        GeneralLine gunNormalLine = {gunVector.start, nomalDirVector};
-    
-        float directionalDistance = distance(gunLine, objectCenter);
-        if( compute(gunNormalLine, objectCenter) < 0.0f &&  abs(directionalDistance) < 1.0f) {
-            fire();
-        }
-        else {
-            objectCenter -= gunVector.start;
-            float gunBaseAngle = angle(objectCenter, gunDir);
-            if(gunBaseAngle < 0) {
-                rotateGun(ROTATE_LEFT);
-            }
-            else if(gunBaseAngle > 0){
-                rotateGun(ROTATE_RIGHT);
-            }
-        }
+        checkToFireToTarget(objectCenter);
         
         return true;
     }
@@ -315,6 +394,7 @@ bool processObjectsInCamera(float t) {
     return false;
 }
 
+Point objectDir = {0.0f, 1.0f};
 bool processObjectsInRadar(float t) {
     int lockObjectIdx = -1;
     
@@ -325,7 +405,8 @@ bool processObjectsInRadar(float t) {
     GameSnapshotObject gameObject;
     int n = radarSnapshots.count;
     if(_radarLockObject == -1) {
-        lockObjectIdx = findEaliestObject(gameSnapshotObjects, n);
+        //lockObjectIdx = findEaliestObject(gameSnapshotObjects, n);
+        lockObjectIdx = findNearestObject(gameSnapshotObjects, n);
     }
     else {
         int i = 0;
@@ -344,14 +425,29 @@ bool processObjectsInRadar(float t) {
         ref Point points = gameObject.shape.data;
         objectCenter = center(points, gameObject.shape.count);
     
-        float objectBaseAngle = PI/2 - atan2(objectCenter.y, objectCenter.x);
+        float objectBaseAngle = gunBaseAngle = angle(objectCenter, objectDir);
         
         if(objectBaseAngle < 0) {
-            turn(TURN_LEFT);
+            _turningDir = TURN_LEFT;
         }
         else if(objectBaseAngle > 0){
-            turn(TURN_RIGHT);
+            _turningDir = TURN_RIGHT;
         }
+        
+        turn(_turningDir);
+        if(_onStick) {
+            checkToFireToTarget(objectCenter);
+            if(t - _lastChangedDirectionOnStick > 2.0f) {
+                if(_movingDir == NO_MOVE || _movingDir == MOVE_BACKWARD) {
+                    _movingDir = MOVE_FORWARD;
+                }
+                else {
+                    _movingDir = MOVE_BACKWARD;
+                }
+                _lastChangedDirectionOnStick = t;
+            }
+        }
+        //println("processObjectsInRadar at _onStick = " + _onStick);
         return true;
     }
     
@@ -364,9 +460,41 @@ void runAndCheckToFire(float t) {
     move(_movingDir);
     turn(_turningDir);
     
-    processObjectsInCamera(t);
+    // collisions detected between last frame to current frame
+    collisionSnapshots = getCollisions();
     
-    if(t - _lastMovingDirChanged > 3.0f) {
+    int n = collisionSnapshots.count;
+    collisions = collisionSnapshots.data;
+    int i = 0;
+    while(i < n) {
+        if(collisions[i].isExplosion) {
+            break;
+        }
+        i++;
+    }
+    
+    // update running duration if get hurt while running
+    if(i < n) {
+        CollisionPosition hitPosition = collisions[i].position;
+        if(hitPosition == HIT_LEFT && _movingDir == MOVE_BACKWARD) {
+            _turningDir = TURN_RIGHT;
+        }
+        else if(hitPosition == HIT_RIGHT && _movingDir == MOVE_FORWARD) {
+            // step forward if there is an explosion behind
+            _movingDir = MOVE_FORWARD;
+            _turningDir = TURN_LEFT;
+        }
+        
+        _onRunning = true;
+        _lastMovingDirChanged = t;
+        println(L"Ouch!");
+    }
+    
+    if(processObjectsInCamera(t) == false) {
+        processObjectsInRadar(t);
+    }
+    
+    if(t - _lastMovingDirChanged > _runOnHurtDuration) {
         _onRunning = false;
         _movingDir = NO_MOVE;
     }
@@ -393,19 +521,30 @@ void updateInternal(float t) {
 
 // update function, the game platform call it each logical controlling frame.
 void update(float t) {
+    countObjectToChangeDuration(t);
+    detectSticking();
+    
     updateInternal(t);
     
-    detectStucking();
-    
-    if(_onStuck) {
-        resetFrameState();
-        
+    if(_onStick && t - _lastChangedDirectionOnStick > 2.0f) {
+        // try to make new move to solve sticking state
         if(_movingDir == MOVE_BACKWARD) {
             _movingDir = MOVE_FORWARD;
         }
         else if(_movingDir == MOVE_FORWARD) {
             _movingDir = MOVE_BACKWARD;
         }
+        else {
+            if(_turningDir == TURN_LEFT) {
+                _turningDir = TURN_RIGHT;
+            }
+            else if(_turningDir == TURN_RIGHT) {
+                _turningDir = TURN_LEFT;
+            }
+        }
+        _lastChangedDirectionOnStick = t;
+        // reset frame state after change the moving or turning direction
+        //resetFrameState();
     }
 }
 
