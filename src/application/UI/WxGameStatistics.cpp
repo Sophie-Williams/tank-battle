@@ -54,9 +54,8 @@ void WxGameStatistics::update() {
 		return;
 	}
 	char buffer[128];
-	sprintf(buffer, "Summary(%d round)", (int)_records.size());
 	ImGui::CollapsingHeader("Game statistics", ImGuiTreeNodeFlags_Leaf);
-	if (ImGui::TreeNode(buffer)) {
+	if (ImGui::TreeNode("Summary")) {
 		ImGui::Columns(3, nullptr, false);
 		ImGui::SetColumnWidth(0, 150);
 		ImGui::SetColumnWidth(1, 30);

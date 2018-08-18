@@ -3,12 +3,25 @@ int _radarLockObject = -1;
 
 MovingDir _movingDir = NO_MOVE;
 TurningDir _turningDir = NO_TURN;
-float _lastMovingDirChanged = -100.0f;
+float _lastMovingDirChangedOnRunning = -100.0f;
 bool _onRunning = false;
 float _lastChangedDirectionOnStick = -100.0f;
 float _runOnHurtDuration = 3.0f;
 float _lastCounting = -100.0f;
 float _lastFireTime = -100.0f;
+float _lastMovingDirChanged = -100.0f;
+
+void updateMoving(MovingDir movingDir, TurningDir turningDir, float t) {
+	if(_movingDir != movingDir) {
+		_lastMovingDirChanged = t;
+		_movingDir = movingDir;
+	}
+	if(_turningDir != turningDir) {
+		_lastMovingDirChanged = t;
+		_turningDir = turningDir;
+	}
+}
+
 
 void countObjectToChangeDuration(float t) {
     if( t - _lastCounting < 0.5f) {
@@ -222,7 +235,8 @@ void checkToFireToTarget(Point target) {
 array<bool, 10> _frameStates;
 int MAX_FRAME_STATE_COUNT = 10;
 int _currentState = 0;
-bool _onStick = false;
+bool _isGettingStuck = false;
+bool _lastPrintStickingVal = false;
 
 void resetFrameState() {
     int i = 0;
@@ -230,7 +244,7 @@ void resetFrameState() {
         _frameStates[i++] = false;
     }
     
-    _onStick = false;
+    _isGettingStuck = false;
     _currentState = 0;
 }
 
@@ -262,7 +276,7 @@ void detectSticking() {
         }
     }
     
-    _onStick = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.5f;
+    _isGettingStuck = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.5f;	
 }
 
 bool processCollisions(float t) {
@@ -281,34 +295,38 @@ bool processCollisions(float t) {
     
     if(i < n) {
         CollisionPosition hitPosition = collisions[i].position;
-        _movingDir = NO_MOVE;
-        _turningDir = NO_TURN;
+        movingDir = NO_MOVE;
+        turningDir = NO_TURN;
         if(hitPosition == HIT_FRONT) {
             // step back if there is an explosion ahead
-            _movingDir = MOVE_BACKWARD;
-            _turningDir = TURN_LEFT;
+            movingDir = MOVE_BACKWARD;
+            turningDir = TURN_LEFT;
         }
         else if(hitPosition == HIT_BOTTOM) {
             // step forward if there is an explosion behind
-            _movingDir = MOVE_FORWARD;
-            _turningDir = TURN_RIGHT;
+            movingDir = MOVE_FORWARD;
+            turningDir = TURN_RIGHT;
         }
         else if(hitPosition == HIT_LEFT || hitPosition == HIT_RIGHT) {
             // step forward if there is an explosion behind
             if(random(0,1) == 0) {
-                _movingDir = MOVE_BACKWARD;
+                movingDir = MOVE_BACKWARD;
             }
             else {
-                _movingDir = MOVE_FORWARD;
+                movingDir = MOVE_FORWARD;
             }
         }
         
-        if(_movingDir != NO_MOVE) {
+        if(movingDir != NO_MOVE || turningDir != NO_TURN) {
             _onRunning = true;
-            _lastMovingDirChanged = t;
+            _lastMovingDirChangedOnRunning = t;
+			// update moving
+			updateMoving(movingDir, turningDir, t);
+			
+			// make the move immediately at this frame
             move(_movingDir);
             turn(_turningDir);
-            println("Oops! that's hurt.");
+            //println("Oops! that's hurt.");
         }
         // reset time of change direction on stick to allow resolving sticking state later
         // if not reset this variable, the tank cannot change direction while sticking and being fired.
@@ -397,28 +415,34 @@ bool processObjectsInRadar(float t) {
         objectCenter = center(points, gameObject.shape.count);
     
         float objectBaseAngle = gunBaseAngle = angle(objectCenter, objectDir);
+		
+		turningDir = _turningDir;
+		movingDir = _movingDir;
         
         if(objectBaseAngle < 0) {
-            _turningDir = TURN_LEFT;
+            turningDir = TURN_LEFT;
         }
         else if(objectBaseAngle > 0){
-            _turningDir = TURN_RIGHT;
-        }
+            turningDir = TURN_RIGHT;
+        }        
         
-        turn(_turningDir);
-        if(_onStick) {
+        if(_isGettingStuck) {
             checkToFireToTarget(objectCenter);
             if(t - _lastChangedDirectionOnStick > 1.0f) {
-                if(_movingDir == NO_MOVE || _movingDir == MOVE_BACKWARD) {
-                    _movingDir = MOVE_FORWARD;
+                if(movingDir == NO_MOVE || movingDir == MOVE_BACKWARD) {
+                    movingDir = MOVE_FORWARD;
                 }
                 else {
-                    _movingDir = MOVE_BACKWARD;
+                    movingDir = MOVE_BACKWARD;
                 }
                 _lastChangedDirectionOnStick = t;
             }
         }
-        //println("processObjectsInRadar at _onStick = " + _onStick);
+		updateMoving(movingDir, turningDir, t);
+		// make the move immediately at this frame
+		turn(_turningDir);
+		move(_movingDir);
+        //println("processObjectsInRadar at _isGettingStuck = " + _isGettingStuck);
         return true;
     }
     
@@ -427,10 +451,7 @@ bool processObjectsInRadar(float t) {
 }
 
 
-void runAndCheckToFire(float t) {
-    move(_movingDir);
-    turn(_turningDir);
-    
+void runAndCheckToFire(float t) {    
     // collisions detected between last frame to current frame
     collisionSnapshots = getCollisions();
     
@@ -446,34 +467,43 @@ void runAndCheckToFire(float t) {
     
     // update running duration if get hurt while running
     if(i < n) {
+		
+		movingDir = _movingDir;
+		turningDir = _turningDir;
+		
         CollisionPosition hitPosition = collisions[i].position;
-        if(hitPosition == HIT_LEFT && _movingDir == MOVE_BACKWARD) {
-            _turningDir = TURN_RIGHT;
+        if(hitPosition == HIT_LEFT && movingDir == MOVE_BACKWARD) {
+            turningDir = TURN_RIGHT;
         }
-        else if(hitPosition == HIT_RIGHT && _movingDir == MOVE_FORWARD) {
+        else if(hitPosition == HIT_RIGHT && movingDir == MOVE_FORWARD) {
             // step forward if there is an explosion behind
-            _movingDir = MOVE_FORWARD;
-            _turningDir = TURN_LEFT;
+            movingDir = MOVE_FORWARD;
+            turningDir = TURN_LEFT;
         }
+		
+		updateMoving(movingDir, turningDir, t);
         
         _onRunning = true;
-        _lastMovingDirChanged = t;
-        println(L"Ouch!");
+        _lastMovingDirChangedOnRunning = t;
+        //println(L"Ouch!");
     }
     
     if(processObjectsInCamera(t) == false) {
         processObjectsInRadar(t);
     }
     
-    if(t - _lastMovingDirChanged > _runOnHurtDuration) {
+    if(t - _lastMovingDirChangedOnRunning > _runOnHurtDuration) {
         _onRunning = false;
-        _movingDir = NO_MOVE;
+        updateMoving(NO_MOVE, NO_TURN, t);
     }
 }
 
 
 void updateInternal(float t) {
     freeze();
+	
+    move(_movingDir);
+    turn(_turningDir);
     
     if(_onRunning) {
         runAndCheckToFire(t);
@@ -490,34 +520,45 @@ void updateInternal(float t) {
     if(res) {return;}
 }
 
-void reverseDirection() {
-    if(_movingDir == MOVE_BACKWARD) {
-        _movingDir = MOVE_FORWARD;
+void reverseDirection(float t) {
+	movingDir = _movingDir;
+	turningDir = _turningDir;
+	
+    if(movingDir == MOVE_BACKWARD || movingDir == NO_MOVE) {
+        movingDir = MOVE_FORWARD;
     }
-    else if(_movingDir == MOVE_FORWARD) {
-        _movingDir = MOVE_BACKWARD;
+    else if(movingDir == MOVE_FORWARD) {
+        movingDir = MOVE_BACKWARD;
     }
     else {
-        if(_turningDir == TURN_LEFT) {
-            _turningDir = TURN_RIGHT;
+        if(turningDir == TURN_LEFT) {
+            turningDir = TURN_RIGHT;
         }
-        else if(_turningDir == TURN_RIGHT) {
-            _turningDir = TURN_LEFT;
+        else if(turningDir == TURN_RIGHT) {
+            turningDir = TURN_LEFT;
         }
     }
+	
+	updateMoving(movingDir, turningDir, t);
 }
+
 
 // update function, the game platform call it each logical controlling frame.
 void update(float t) {
     countObjectToChangeDuration(t);
     detectSticking();
+	
+	if(_lastPrintStickingVal != _isGettingStuck) {
+		println(L"getting stuck = " + _isGettingStuck);
+		_lastPrintStickingVal = _isGettingStuck;
+	}
     
     updateInternal(t);
     
-    if(_onStick) {
+    if(_isGettingStuck) {
         if(t - _lastChangedDirectionOnStick > 1.0f) {
             // try to make new move to solve sticking state
-            reverseDirection();
+            reverseDirection(t);
             _lastChangedDirectionOnStick = t;
             // reset frame state after change the moving or turning direction
             //resetFrameState();
@@ -529,8 +570,44 @@ void update(float t) {
         // break the loop
         // check if the last fire time is more than 15 seconds
         if(t - _lastFireTime > 15.0f) {
-            reverseDirection();
+            reverseDirection(t);
         }
+		else {
+			// can fire target but there are some times, the target cannot be hitPosition
+			// because it is on running on the same way direction of the tank
+			// in this case, it may run in to a loop forever.
+			// to break the loop, it should change the direction for some specific of time
+			// change direction each 14 seconds if it is not on running state.
+			if(t - _lastMovingDirChanged > 14.0f && t - _lastMovingDirChangedOnRunning > 5.0f) {
+				movingDir = _movingDir;
+				turningDir = _turningDir;
+				
+				// random a nummber to choose what moving behavior should be changed
+				changeOption = random(0, 1);
+				if(changeOption == 0 || movingDir == NO_MOVE) {
+					if(movingDir == NO_MOVE || movingDir == MOVE_BACKWARD) {
+						movingDir = MOVE_FORWARD;
+					}
+					else {
+						movingDir = MOVE_BACKWARD;
+					}
+				}
+				else {
+					if(turningDir == NO_TURN || turningDir == TURN_RIGHT) {
+						turningDir = TURN_LEFT;
+					}
+					else {
+						turningDir = TURN_RIGHT;
+					}
+				}
+				
+				updateMoving(movingDir, turningDir, t);
+				// make the move immediately at this frame
+				move(_movingDir);
+				turn(_turningDir);
+				println(L"make the change on moving");
+			}
+		}
     }
 }
 
@@ -539,7 +616,7 @@ void setup() {
     // set each frame in frame state array is free state
     resetFrameState();
     _lastFireTime = getTime();
-    
+    _lastMovingDirChanged = _lastFireTime;
     println(L"script has been setup");
 }
 
