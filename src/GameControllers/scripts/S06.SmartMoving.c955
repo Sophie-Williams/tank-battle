@@ -8,6 +8,7 @@ bool _onRunning = false;
 float _lastChangedDirectionOnStick = -100.0f;
 float _runOnHurtDuration = 3.0f;
 float _lastCounting = -100.0f;
+float _lastFireTime = -100.0f;
 
 void countObjectToChangeDuration(float t) {
     if( t - _lastCounting < 0.5f) {
@@ -31,7 +32,7 @@ void countObjectToChangeDuration(float t) {
     while(i < n && count < max_object) {
         id = gameObjects[i].id;
         if(isEnemy(id) || isAlly(id)) {
-            objectIds[count] = gameObjects[i].id;
+            objectIds[count] = id;
             count++;
         }
         i++;
@@ -57,7 +58,7 @@ void countObjectToChangeDuration(float t) {
                 j++;
             }
             if(j == count) {
-                objectIds[count] = gameSnapshotObjects[i].id;
+                objectIds[count] = id;
                 count++;
             }
         }
@@ -191,34 +192,6 @@ int findNearestObject(ref GameSnapshotObject gameObjects, int n) {
     return objectIndex;
 }
 
-void justFireIfTarget() {
-    // game objects captured by camera
-    cameraSnapshots = getCameraSnapshot();
-    
-    int n = cameraSnapshots.count;
-    gameObjects = cameraSnapshots.data;
-    
-    Ray gunVector = gun();
-    gunDir = gunVector.dir;
-    
-    int i = 0;
-    while(i < n) {
-        gameObject = gameObjects[i];
-        if(isEnemy(gameObject.id)) {
-            ref Point points = gameObject.shape.data;
-            objectCenter = center(points, gameObject.shape.count);
-            objectCenter -= gunVector.start;
-    
-            gunBaseAngle = angle(objectCenter, gunDir);
-            if( abs(gunBaseAngle) <= 0.1f) {
-                fire();
-                break;
-            }
-        }
-        i++;
-    }
-}
-
 void checkToFireToTarget(Point target) {
     Ray gunVector = gun();
     gunDir = gunVector.dir;
@@ -232,6 +205,7 @@ void checkToFireToTarget(Point target) {
     float directionalDistance = distance(gunLine, target);
     if( compute(gunNormalLine, target) < 0.0f &&  abs(directionalDistance) < 0.5f) {
         fire();
+        _lastFireTime = getTime();
     }
     else {
         target -= gunVector.start;
@@ -253,8 +227,7 @@ bool _onStick = false;
 void resetFrameState() {
     int i = 0;
     while(i < MAX_FRAME_STATE_COUNT) {
-        _frameStates[i] = false;
-        i++;
+        _frameStates[i++] = false;
     }
     
     _onStick = false;
@@ -270,11 +243,10 @@ void detectSticking() {
     int i = 0;
     bool collisionDetected = false;
     while(i < n) {
-        if(collisions[i].isExplosion == false) {
+        if(collisions[i++].isExplosion == false) {
             collisionDetected = true;
             break;
         }
-        i++;
     }
     
     if(_currentState >= MAX_FRAME_STATE_COUNT) {
@@ -285,10 +257,9 @@ void detectSticking() {
     int colissionFrameCount = 0;
     i = 0;
     while(i < MAX_FRAME_STATE_COUNT) {
-        if(_frameStates[i]) {
+        if(_frameStates[i++]) {
             colissionFrameCount ++;
         }
-        i++;
     }
     
     _onStick = float(colissionFrameCount)/MAX_FRAME_STATE_COUNT >= 0.5f;
@@ -437,7 +408,7 @@ bool processObjectsInRadar(float t) {
         turn(_turningDir);
         if(_onStick) {
             checkToFireToTarget(objectCenter);
-            if(t - _lastChangedDirectionOnStick > 2.0f) {
+            if(t - _lastChangedDirectionOnStick > 1.0f) {
                 if(_movingDir == NO_MOVE || _movingDir == MOVE_BACKWARD) {
                     _movingDir = MOVE_FORWARD;
                 }
@@ -519,6 +490,23 @@ void updateInternal(float t) {
     if(res) {return;}
 }
 
+void reverseDirection() {
+    if(_movingDir == MOVE_BACKWARD) {
+        _movingDir = MOVE_FORWARD;
+    }
+    else if(_movingDir == MOVE_FORWARD) {
+        _movingDir = MOVE_BACKWARD;
+    }
+    else {
+        if(_turningDir == TURN_LEFT) {
+            _turningDir = TURN_RIGHT;
+        }
+        else if(_turningDir == TURN_RIGHT) {
+            _turningDir = TURN_LEFT;
+        }
+    }
+}
+
 // update function, the game platform call it each logical controlling frame.
 void update(float t) {
     countObjectToChangeDuration(t);
@@ -526,25 +514,23 @@ void update(float t) {
     
     updateInternal(t);
     
-    if(_onStick && t - _lastChangedDirectionOnStick > 2.0f) {
-        // try to make new move to solve sticking state
-        if(_movingDir == MOVE_BACKWARD) {
-            _movingDir = MOVE_FORWARD;
+    if(_onStick) {
+        if(t - _lastChangedDirectionOnStick > 1.0f) {
+            // try to make new move to solve sticking state
+            reverseDirection();
+            _lastChangedDirectionOnStick = t;
+            // reset frame state after change the moving or turning direction
+            //resetFrameState();
         }
-        else if(_movingDir == MOVE_FORWARD) {
-            _movingDir = MOVE_BACKWARD;
+    }
+    else {
+        // not on stick but cannot fire target in a long time
+        // it may be in a loop situation. So, we need to change moving or turning rotation to
+        // break the loop
+        // check if the last fire time is more than 15 seconds
+        if(t - _lastFireTime > 15.0f) {
+            reverseDirection();
         }
-        else {
-            if(_turningDir == TURN_LEFT) {
-                _turningDir = TURN_RIGHT;
-            }
-            else if(_turningDir == TURN_RIGHT) {
-                _turningDir = TURN_LEFT;
-            }
-        }
-        _lastChangedDirectionOnStick = t;
-        // reset frame state after change the moving or turning direction
-        //resetFrameState();
     }
 }
 
@@ -552,6 +538,7 @@ void update(float t) {
 void setup() {
     // set each frame in frame state array is free state
     resetFrameState();
+    _lastFireTime = getTime();
     
     println(L"script has been setup");
 }
