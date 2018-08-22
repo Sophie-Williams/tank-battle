@@ -205,7 +205,7 @@ int findNearestObject(ref GameSnapshotObject gameObjects, int n) {
     return objectIndex;
 }
 
-void checkToFireToTarget(Point target) {
+bool checkToFireToTarget(Point target) {
     Ray gunVector = gun();
     gunDir = gunVector.dir;
     
@@ -219,6 +219,7 @@ void checkToFireToTarget(Point target) {
     if( compute(gunNormalLine, target) < 0.0f &&  abs(directionalDistance) < 0.5f) {
         fire();
         _lastFireTime = getTime();
+        return true;
     }
     else {
         target -= gunVector.start;
@@ -230,6 +231,7 @@ void checkToFireToTarget(Point target) {
             rotateGun(ROTATE_RIGHT);
         }
     }
+    return false;
 }
 
 array<bool, 10> _frameStates;
@@ -373,7 +375,11 @@ bool processObjectsInCamera(float t) {
         ref Point points = gameObject.shape.data;
         objectCenter = center(points, gameObject.shape.count);
         
-        checkToFireToTarget(objectCenter);
+        if(checkToFireToTarget(objectCenter)) {
+            if(_movingDir == NO_MOVE) {
+                _turningDir = NO_TURN;
+            }
+        }
         
         return true;
     }
@@ -542,6 +548,8 @@ void reverseDirection(float t) {
 	updateMoving(movingDir, turningDir, t);
 }
 
+int _continuousStickingCount = 0;
+float _lastCountingOfSticking = -100.0f;
 
 // update function, the game platform call it each logical controlling frame.
 void update(float t) {
@@ -556,6 +564,17 @@ void update(float t) {
     updateInternal(t);
     
     if(_isGettingStuck) {
+        // statistic sticking every 
+        if(t - _lastCountingOfSticking > 0.5f) {
+            _continuousStickingCount++;
+            _lastCountingOfSticking = t;
+            println(L"sticking count each 0.5 second = " + _continuousStickingCount);
+        }
+        
+        if(_continuousStickingCount > 3) {
+            _turningDir = NO_TURN;
+        }
+        
         if(t - _lastChangedDirectionOnStick > 1.0f) {
             // try to make new move to solve sticking state
             reverseDirection(t);
@@ -563,8 +582,11 @@ void update(float t) {
             // reset frame state after change the moving or turning direction
             //resetFrameState();
         }
+        
+        
     }
     else {
+        _continuousStickingCount = 0;
         // not on stick but cannot fire target in a long time
         // it may be in a loop situation. So, we need to change moving or turning rotation to
         // break the loop
