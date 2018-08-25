@@ -568,7 +568,6 @@ void update(float t) {
         if(t - _lastCountingOfSticking > 0.5f) {
             _continuousStickingCount++;
             _lastCountingOfSticking = t;
-            println(L"sticking count each 0.5 second = " + _continuousStickingCount);
         }
         
         if(_continuousStickingCount > 3) {

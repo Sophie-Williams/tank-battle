@@ -16,6 +16,7 @@
 #include <RawStringLib.h>
 #include <MathLib.h>
 #include <GeometryLib.h>
+#include <CLamdaProg.h>
 
 #include <memory>
 
@@ -46,47 +47,48 @@ public:
 };
 
 class ScriptedPlayer::ScriptedPlayerImpl {
-	GlobalScopeRef rootScope;
-	Program* _program;
+	CLamdaProg* _program;
 	int _functionIdOfMainFunction;
 	int _setupFunctionId = -1;
 	int _cleanupFunctionId = -1;
 
-	shared_ptr<ScriptTask> _scriptTask;
+	shared_ptr<ScriptRunner> _scriptRunner;
 	ScriptingLib::PlayerContextSciptingLibrary _myScriptLib;
-	CompilerSuite _compiler;
 	MyComplicationLogger _compicationLoger;
 	string _errorMessage;
+	//GlobalScopeRef _rootScope;
 public:
 	ScriptedPlayerImpl(TankController* controller) : _functionIdOfMainFunction(-1), _compicationLoger(controller) {
 		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
-		_compiler.getCompiler()->setLogger(&_compicationLoger);
-		_compiler.initialize(1024);
+		_myScriptLib.setController(controller);
+	}
 
-		rootScope = _compiler.getGlobalScope();
+	const char* setProgramScipt(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
+		CompilerSuite _compiler;
+		_compiler.getCompiler()->setLogger(&_compicationLoger);
+		_compiler.initialize(5 * 1024 * 1024);
+
+		auto& rootScope = _compiler.getGlobalScope();
+		//_rootScope = rootScope;
 		auto scriptCompiler = rootScope->getCompiler();
 		includeRawStringToCompiler(scriptCompiler);
 		includeMathToCompiler(scriptCompiler);
 		includeGeoLibToCompiler(scriptCompiler);
-
-		_myScriptLib.setController(controller);
-		_myScriptLib.loadLibrary(scriptCompiler);
 		
+		_myScriptLib.loadLibrary(scriptCompiler);
+
 		scriptCompiler->beginUserLib();
 		_compiler.setPreprocessor(std::make_shared<DefaultPreprocessor>());
-	}
 
-	const char* setProgramScipt(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
-		auto scriptCompiler = rootScope->getCompiler();
 		scriptCompiler->setErrorText("");
 
 		_functionIdOfMainFunction = -1;
-		_program = _compiler.compileProgram(scriptStart, scriptEnd);
-		if (_program) {
+		auto program = _compiler.compileProgram(scriptStart, scriptEnd);
+		if (program) {
 			_functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
 			if (_functionIdOfMainFunction >= 0) {
 				auto functionFactory = scriptCompiler->getFunctionFactory(_functionIdOfMainFunction);
-				_scriptTask = make_shared<ScriptTask>(_program);
+				_scriptRunner = make_shared<ScriptRunner>(program);
 			}
 			else {
 				_errorMessage = "function 'void update(float)' is not found";
@@ -101,6 +103,7 @@ public:
 			if (_cleanupFunctionId < 0) {
 				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), "function 'void cleanup()' is not found\n");
 			}
+			_program = rootScope->detachScriptProgram(program);
 		}
 		else {
 			_errorMessage = scriptCompiler->getLastError();
@@ -120,13 +123,15 @@ public:
 	}
 
 	void setup(TankPlayerContext* player){
-		rootScope->runGlobalCode();
+		_program->runGlobalCode();
 		_myScriptLib.resetCommand();
 		_myScriptLib.setContext(player);
 
 		if (_setupFunctionId >= 0) {
 			try {
-				_scriptTask->runFunction(5 * 1024 * 1024, _setupFunctionId, nullptr);
+				auto& context = _program->getGlobalContext();
+				Context::makeCurrent(context.get());
+				_scriptRunner->runFunction(_setupFunctionId, nullptr);
 			}
 			catch (std::exception&e) {
 				string message = "setup funtion failed to execute:";
@@ -142,7 +147,9 @@ public:
 
 		if (_cleanupFunctionId >= 0) {
 			try {
-				_scriptTask->runFunction(5 * 1024 * 1024, _cleanupFunctionId, nullptr);
+				auto& context = _program->getGlobalContext();
+				Context::makeCurrent(context.get());
+				_scriptRunner->runFunction(_cleanupFunctionId, nullptr);
 			}
 			catch (std::exception&e) {
 				string message = "clean funtion failed to execute:";
@@ -151,6 +158,8 @@ public:
 				GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
 			}
 		}
+
+		_program->cleanupGlobalMemory();
 	}
 
 	TankOperations giveOperations(TankPlayerContext* player) {
@@ -161,7 +170,9 @@ public:
 			float t = GameInterface::getInstance()->getTime();
 			try {
 				ScriptParamBuffer paramsBuffer(t);
-				_scriptTask->runFunction(5 * 1024 * 1024, _functionIdOfMainFunction, paramsBuffer);
+				auto& context = _program->getGlobalContext();
+				Context::makeCurrent(context.get());
+				_scriptRunner->runFunction(_functionIdOfMainFunction, &paramsBuffer);
 				return _myScriptLib.getOperations();
 			}
 			catch (std::exception&e) {
