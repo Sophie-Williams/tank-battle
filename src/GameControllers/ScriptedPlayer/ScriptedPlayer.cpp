@@ -48,17 +48,16 @@ public:
 
 class ScriptedPlayer::ScriptedPlayerImpl {
 	CLamdaProg* _program;
-	int _functionIdOfMainFunction;
+	ScriptRunner* _updateRunner;
 	int _setupFunctionId = -1;
 	int _cleanupFunctionId = -1;
+	float _lastPrintSize = -1;
 
-	shared_ptr<ScriptRunner> _scriptRunner;
 	ScriptingLib::PlayerContextSciptingLibrary _myScriptLib;
 	MyComplicationLogger _compicationLoger;
 	string _errorMessage;
-	//GlobalScopeRef _rootScope;
 public:
-	ScriptedPlayerImpl(TankController* controller) : _functionIdOfMainFunction(-1), _compicationLoger(controller) {
+	ScriptedPlayerImpl(TankController* controller) : _updateRunner(nullptr), _compicationLoger(controller) {
 		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
 		_myScriptLib.setController(controller);
 	}
@@ -66,10 +65,10 @@ public:
 	const char* setProgramScipt(const wchar_t* scriptStart, const wchar_t* scriptEnd) {
 		CompilerSuite _compiler;
 		_compiler.getCompiler()->setLogger(&_compicationLoger);
+		// initialize compiler and specify 5mb of stack memory
 		_compiler.initialize(5 * 1024 * 1024);
 
 		auto& rootScope = _compiler.getGlobalScope();
-		//_rootScope = rootScope;
 		auto scriptCompiler = rootScope->getCompiler();
 		includeRawStringToCompiler(scriptCompiler);
 		includeMathToCompiler(scriptCompiler);
@@ -82,13 +81,15 @@ public:
 
 		scriptCompiler->setErrorText("");
 
-		_functionIdOfMainFunction = -1;
+		if (_updateRunner) delete _updateRunner;
+		_updateRunner = nullptr;
+
 		auto program = _compiler.compileProgram(scriptStart, scriptEnd);
 		if (program) {
-			_functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
-			if (_functionIdOfMainFunction >= 0) {
-				auto functionFactory = scriptCompiler->getFunctionFactory(_functionIdOfMainFunction);
-				_scriptRunner = make_shared<ScriptRunner>(program);
+			auto functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
+			if (functionIdOfMainFunction >= 0) {
+				auto functionFactory = scriptCompiler->getFunctionFactory(functionIdOfMainFunction);
+				_updateRunner = new ScriptRunner(program, functionIdOfMainFunction);
 			}
 			else {
 				_errorMessage = "function 'void update(float)' is not found";
@@ -109,7 +110,7 @@ public:
 			_errorMessage = scriptCompiler->getLastError();
 		}
 
-		if (_functionIdOfMainFunction < 0) {
+		if (_updateRunner == nullptr) {
 			return _errorMessage.c_str();
 		}
 
@@ -131,7 +132,8 @@ public:
 			try {
 				auto& context = _program->getGlobalContext();
 				Context::makeCurrent(context.get());
-				_scriptRunner->runFunction(_setupFunctionId, nullptr);
+				ScriptRunner setupRunner(_program->getProgram(), _setupFunctionId);
+				setupRunner.runFunction(nullptr);
 			}
 			catch (std::exception&e) {
 				string message = "setup funtion failed to execute:";
@@ -149,7 +151,8 @@ public:
 			try {
 				auto& context = _program->getGlobalContext();
 				Context::makeCurrent(context.get());
-				_scriptRunner->runFunction(_cleanupFunctionId, nullptr);
+				ScriptRunner setupRunner(_program->getProgram(), _cleanupFunctionId);
+				setupRunner.runFunction(nullptr);
 			}
 			catch (std::exception&e) {
 				string message = "clean funtion failed to execute:";
@@ -165,14 +168,27 @@ public:
 	TankOperations giveOperations(TankPlayerContext* player) {
 		_myScriptLib.setContext(player);
 
-		if (_program && _functionIdOfMainFunction >= 0) {
-			// run function and allow maxium 5mb stack size
+		if (_program && _updateRunner) {
 			float t = GameInterface::getInstance()->getTime();
+			//if (t - _lastPrintSize > 1.0f) {
+			//	auto context = _program->getGlobalContext();
+			//	auto totalSize = context->getTotalAllocatedSize();
+			//	auto offset = context->getCurrentOffset();
+
+			//	string message = "script allocated:";
+			//	message += std::to_string(totalSize);
+			//	message += "\nscript offset:";
+			//	message += std::to_string(offset);
+			//	message += "\n";
+			//	GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
+			//	_lastPrintSize = t;
+			//}
+
 			try {
 				ScriptParamBuffer paramsBuffer(t);
 				auto& context = _program->getGlobalContext();
 				Context::makeCurrent(context.get());
-				_scriptRunner->runFunction(_functionIdOfMainFunction, &paramsBuffer);
+				_updateRunner->runFunction(&paramsBuffer);
 				return _myScriptLib.getOperations();
 			}
 			catch (std::exception&e) {
