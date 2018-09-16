@@ -57,7 +57,7 @@ class ScriptedPlayer::ScriptedPlayerImpl {
 	MyComplicationLogger _compicationLoger;
 	string _errorMessage;
 public:
-	ScriptedPlayerImpl(TankController* controller) : _updateRunner(nullptr), _compicationLoger(controller) {
+	ScriptedPlayerImpl(TankController* controller) : _program(nullptr), _updateRunner(nullptr), _compicationLoger(controller) {
 		//wstring scriptWstr = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.from_bytes(script);
 		_myScriptLib.setController(controller);
 	}
@@ -84,7 +84,22 @@ public:
 		if (_updateRunner) delete _updateRunner;
 		_updateRunner = nullptr;
 
-		auto program = _compiler.compileProgram(scriptStart, scriptEnd);
+		Program* program = nullptr;
+		try {
+			program = _compiler.compileProgram(scriptStart, scriptEnd);
+		}
+		catch (exception& e) {
+			_errorMessage = e.what();
+			scriptCompiler->setErrorText(_errorMessage);
+			int line, column;
+			_compiler.getLastCompliedPosition(line, column);
+			string message("error at line = ");
+			message += std::to_string(line);
+			message.append(", column =");
+			message += std::to_string(column);
+			message += '\n';
+			GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
+		}
 		if (program) {
 			auto functionIdOfMainFunction = scriptCompiler->findFunction("update", "float");
 			if (functionIdOfMainFunction >= 0) {
