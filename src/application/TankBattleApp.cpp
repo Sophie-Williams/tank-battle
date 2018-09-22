@@ -23,7 +23,6 @@ using fs = std::filesystem;
 #include "UI/Spliter.h"
 #include "UI/WxControlBoard.h"
 #include "UI/Panel.h"
-#include "UI/WxPlayerInfo.h"
 #include "Engine/GameEngine.h"
 #include "LogAdapter.h"
 #include "../common/Utility.h"

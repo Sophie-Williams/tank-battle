@@ -1,10 +1,10 @@
 #include "Tank.h"
 #include "Bullet.h"
-#include "Scene.h"
-#include "GameEngine.h"
+#include "engine/Scene.h"
+#include "engine/GameEngine.h"
 #include "GameController.h"
-#include "LifeTimeControlComponent.h"
-#include "GameResource.h"
+#include "engine/LifeTimeControlComponent.h"
+#include "engine/GameResource.h"
 #include "../battle/GameInterfaceImpl.h"
 
 using namespace ci;

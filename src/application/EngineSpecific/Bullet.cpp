@@ -1,9 +1,9 @@
 #include "Bullet.h"
-#include "Animation.h"
-#include "Scene.h"
-#include "LifeTimeControlComponent.h"
-#include "GameEngine.h"
-#include "GameResource.h"
+#include "engine/Animation.h"
+#include "engine/Scene.h"
+#include "engine/LifeTimeControlComponent.h"
+#include "engine/GameEngine.h"
+#include "engine/GameResource.h"
 
 using namespace ci;
 

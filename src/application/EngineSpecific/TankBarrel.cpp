@@ -1,5 +1,5 @@
 #include "TankBarrel.h"
-#include "GameResource.h"
+#include "engine/GameResource.h"
 
 using namespace ci;
 

@@ -1,6 +1,6 @@
 #pragma once
-#include "GameObject.h"
-#include "DrawableObject.h"
+#include "engine/GameObject.h"
+#include "engine/DrawableObject.h"
 #include <map>
 
 class GameController

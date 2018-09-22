@@ -1,5 +1,5 @@
 #pragma once
-#include "DrawableObject.h"
+#include "engine/DrawableObject.h"
 
 class Barrier : public DrawableObject
 {

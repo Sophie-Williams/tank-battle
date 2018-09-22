@@ -1,6 +1,6 @@
 #pragma once
-#include "TexturedObject.h"
-#include "Animation.h"
+#include "engine/TexturedObject.h"
+#include "engine/Animation.h"
 
 class TankBarrel : public TexturedObject
 {

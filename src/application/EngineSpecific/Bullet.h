@@ -1,5 +1,5 @@
 #pragma once
-#include "TexturedObject.h"
+#include "engine/TexturedObject.h"
 #include "cinder/gl/gl.h"
 
 class Bullet : public TexturedObject

@@ -19,26 +19,12 @@ SET (ENGINE_SRC
     engine/GameObject.cpp
     engine/Scene.h
     engine/Scene.cpp
-    engine/Tank.h
-    engine/Tank.cpp
-    engine/TankBarrel.h
-    engine/TankBarrel.cpp
-    engine/TankBody.h
-    engine/TankBody.cpp
     engine/TexturedObject.h
     engine/TexturedObject.cpp
-    engine/PlayerController.h
-    engine/PlayerController.cpp
-    engine/Bullet.h
-    engine/Bullet.cpp
     engine/CollisionDetector.h
     engine/CollisionDetector.cpp
-    engine/GameController.h
-    engine/GameController.cpp
     engine/LiveObject.h
     engine/LiveObject.cpp
-    engine/Barrier.h
-    engine/Barrier.cpp
     engine/Animation.h
     engine/Animation.cpp
     engine/DrawableObject.h
@@ -58,6 +44,20 @@ SET (ENGINE_SRC
 SET (ENGINE_SPECIFIC_SRC
     EngineSpecific/GameStateManager.h
     EngineSpecific/GameStateManager.cpp
+    EngineSpecific/Tank.h
+    EngineSpecific/Tank.cpp
+    EngineSpecific/TankBarrel.h
+    EngineSpecific/TankBarrel.cpp
+    EngineSpecific/TankBody.h
+    EngineSpecific/TankBody.cpp
+    EngineSpecific/Barrier.h
+    EngineSpecific/Barrier.cpp
+    EngineSpecific/GameController.h
+    EngineSpecific/GameController.cpp
+    EngineSpecific/Bullet.h
+    EngineSpecific/Bullet.cpp
+    EngineSpecific/PlayerController.h
+    EngineSpecific/PlayerController.cpp
 )
 
 SET (UI_SRC
@@ -77,8 +77,6 @@ SET (UI_SRC
     UI/Panel.cpp
     UI/ImPopup.h
     UI/ImPopup.cpp
-    UI/WxPlayerInfo.h
-    UI/WxPlayerInfo.cpp
     UI/WxGameView.h
     UI/WxGameView.cpp
     UI/WxRadarView.h

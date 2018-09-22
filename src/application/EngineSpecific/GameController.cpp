@@ -1,8 +1,8 @@
 #include "GameController.h"
 #include "Bullet.h"
 #include "Tank.h"
-#include "Scene.h"
-#include "LiveObject.h"
+#include "engine/Scene.h"
+#include "engine/LiveObject.h"
 
 
 GameController* GameController::getInstance() {
