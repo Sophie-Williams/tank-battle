@@ -5,7 +5,7 @@ A tank game allow users write their own tank bots using C++ or Cλ language then
 ## Purpose
 This is not just a game project, I've created it with two main objectives.
 * Demonstrate Cλ language (my created language) in a real project.
-* Challenge myself to build a game engine and use it in a real project before explore the game industry.
+* Challenge myself to build a game engine and use it in a real project beforing explore the game industry.
 
 ## Dependencies.
 * Cinder - Graphics library.
