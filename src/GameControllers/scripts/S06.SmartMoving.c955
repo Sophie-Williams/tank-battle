@@ -81,14 +81,14 @@ void countObjectToChangeDuration(float t) {
         // always run after get hurt
         if(_runOnHurtDuration < 300000.0f) {
             _runOnHurtDuration = 300000.0f;
-            println(L"keep moving mode is enable");
+            //println(L"keep moving mode is enable");
         }
     }
     else {
         if(_runOnHurtDuration > 3.0f) {
             // run 3 seconds after get hurt then stop
             _runOnHurtDuration = 3.0f;
-            println(L"keep moving mode is disable");
+            //println(L"keep moving mode is disable");
         }
     }
 }
@@ -557,7 +557,7 @@ void update(float t) {
     detectSticking();
 	
 	if(_lastPrintStickingVal != _isGettingStuck) {
-		println(L"getting stuck = " + _isGettingStuck);
+		//println(L"getting stuck = " + _isGettingStuck);
 		_lastPrintStickingVal = _isGettingStuck;
 	}
     
