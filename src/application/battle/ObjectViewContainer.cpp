@@ -1,6 +1,6 @@
 #include "ObjectViewContainer.h"
 #include "BattlePlatform.h"
-#include "Engine/Barrier.h"
+#include "EngineSpecific/Barrier.h"
 #include "../common/Geometry.h"
 #include "Engine/GameEngine.h"
 

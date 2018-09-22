@@ -1,9 +1,9 @@
 #include "GameInterfaceImpl.h"
 #include "BattlePlatform.h"
 #include "Engine/GameEngine.h"
-#include "Engine/Tank.h"
-#include "Engine/Barrier.h"
-#include "Engine/Bullet.h"
+#include "EngineSpecific/Tank.h"
+#include "EngineSpecific/Barrier.h"
+#include "EngineSpecific/Bullet.h"
 #include "../common/ILogger.h"
 
 static GameInterfaceImpl gameInterface;

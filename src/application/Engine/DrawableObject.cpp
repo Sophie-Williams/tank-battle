@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        DrawableObject.cpp
+* Description: implement DrawableObject class. This is a base class
+*              of game object that wants to be shown in game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "DrawableObject.h"
 #include "glm\gtx\matrix_decompose.hpp"
 

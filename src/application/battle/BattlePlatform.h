@@ -1,6 +1,6 @@
 #pragma once
 #include "cinder/gl/gl.h"
-#include "Engine/Tank.h"
+#include "EngineSpecific/Tank.h"
 
 #define CAPTURE_REFRESH_RATE (1.0f/24)
 

@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameEngine.cpp
+* Description: implement GameEngine class. This class responsibles
+*              running the game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "GameEngine.h"
 #include <iostream>
 #include <fstream>

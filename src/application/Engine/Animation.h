@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Animation.h
+* Description: declare Animation class. This class make a sprite
+*              become animation when it's played.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "TexturedObject.h"
 

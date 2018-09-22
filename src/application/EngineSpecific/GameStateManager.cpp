@@ -1,7 +1,7 @@
 #include "GameStateManager.h"
 #include "../Engine/GameEngine.h"
-#include "../Engine/Tank.h"
-#include "../Engine/Bullet.h"
+#include "../EngineSpecific/Tank.h"
+#include "../EngineSpecific/Bullet.h"
 
 GameStateManager::GameStateManager() {
 	initState();

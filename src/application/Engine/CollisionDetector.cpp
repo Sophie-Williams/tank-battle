@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        CollisionDetector.cpp
+* Description: implement CollisionDetector class. This class detects
+*              collisions in the game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "CollisionDetector.h"
 #include "../common/Geometry.h"
 #include <memory>

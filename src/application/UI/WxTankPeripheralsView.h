@@ -5,7 +5,7 @@
 #include "cinder/app/Renderer.h"
 #include "WxRadarView.h"
 #include "battle/TankCamera.h"
-#include "../Engine/Tank.h"
+#include "../EngineSpecific/Tank.h"
 
 class WxTankPeripheralsView : public CiWidget
 {
