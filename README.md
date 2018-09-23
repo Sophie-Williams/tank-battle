@@ -1,5 +1,5 @@
 # Tank battle
-A tank game allow users write their own tank bots using C++ or Cλ language then run them as players on a battle.
+A tank game allow users write their own tank bots using C++ or Cλ language then run them as players in a battle.
 ![](https://github.com/VincentPT/ffscript/blob/master/doc/images/best-practice.gif)
 
 ## Purpose
