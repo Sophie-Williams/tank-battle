@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Utility.h
+* Description: declare and implement some common interfaces, template
+*              function and utility functions.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 
 #include <string>

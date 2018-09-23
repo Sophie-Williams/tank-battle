@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Widget.h
+* Description: declare Widget class. This is base class of all
+*              UI controls.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 //#include <Windows.h>
 //#define FUNCTON_LOG() OutputDebugStringA(__FUNCTION__ " begin\n"); std::unique_ptr<char, std::function<void(char*)>> logger(__FUNCTION__ " end\n", [](char* text) { OutputDebugStringA(text);})

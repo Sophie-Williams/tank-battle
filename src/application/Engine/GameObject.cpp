@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameObject.cpp
+* Description: implement GameObject class. This is a base class
+*              of any game object.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "GameObject.h"
 
 static int s_globalObjectId = 0;

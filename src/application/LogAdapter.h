@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        LogAdapter.h
+* Description: declare LogAdapter class. A logger adapter class
+*              used to print debugging information in game engine to
+*              game UI.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "../common/ILogger.h"
 #include <memory>

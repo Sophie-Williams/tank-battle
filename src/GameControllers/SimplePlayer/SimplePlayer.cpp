@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        SimplePlayer.cpp
+* Description: implement SimplePlayer class. This is a tank controller
+*              class.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "SimplePlayer.h"
 #include "../GameControllers.h"
 #include "../common/GameUtil.hpp"

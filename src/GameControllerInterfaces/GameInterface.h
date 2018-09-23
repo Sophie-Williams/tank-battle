@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameInterface.h
+* Description: declare GameInterface class. This is an abstract class
+*              provide information of game to plugged-in libraries.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once;
 #include "GameControllerInterfaces.h"
 

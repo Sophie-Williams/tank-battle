@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        CiWidget.cpp
+* Description: implement CiWidget class. This a base class of UI
+*              controlls that use Cinder to render.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "CiWidget.h"
 
 CiWidget::CiWidget()

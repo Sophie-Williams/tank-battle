@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        Spliter.cpp
+* Description: implement Spliter class. This class is a binary.
+*              container class which splits its two control objects
+*              side by side or up and down.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "Spliter.h"
 
 void Spliter::updateChildrenrGeometrics() {

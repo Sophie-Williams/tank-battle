@@ -1,7 +1,8 @@
 /******************************************************************
 * File:        GameComponent.h
-* Description: declare GameComponent class. This is a base class
-*              of any game object.
+* Description: declare GameComponent class. A gameComponent object
+*              is contained in a game object. It may define behavior
+*              of that object.
 * Author:      Vincent Pham
 *
 * Copyright (c) 2018 VincentPT.

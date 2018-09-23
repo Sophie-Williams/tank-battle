@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameStateManager.h
+* Description: declare GameStateManager class. This class is
+*              responsible for managing game state.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "../Engine/GameComponent.h"
 #include "../Engine/LiveObject.h"

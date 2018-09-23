@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        TimerObject.h
+* Description: declare TimerObject class. A TimerObject object
+*              is a game component object that hold a timer and
+*              notify timer event to a handler.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include <functional>
 #include "GameComponent.h"

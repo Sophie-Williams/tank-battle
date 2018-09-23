@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameControllerInterfaces.h
+* Description: declare common interfaces and functions that used
+*              in plugged-in C++ player controller library or script.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 
 #ifdef _WIN32

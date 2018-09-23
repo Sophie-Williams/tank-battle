@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        WxRadarView.h
+* Description: declare WxRadarView class. This class is responsible
+*              for showing view of a tank's radar.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "CiWidget.h"
 #include <memory>

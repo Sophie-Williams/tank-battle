@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        WxControlBoard.h
+* Description: declare WxControlBoard class. This class is responsible
+*              for showing command control and forwarding their event
+*              to handler for processing.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "ImWidget.h"
 #include <functional>

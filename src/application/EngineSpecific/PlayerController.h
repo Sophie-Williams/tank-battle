@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        PlayerController.h
+* Description: declare PlayerController class. This is abstract class
+*              responsible for controlling a tank in game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "Tank.h"
 

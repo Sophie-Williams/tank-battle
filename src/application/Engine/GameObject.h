@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameObject.h
+* Description: declare GameObject class. This is a base class
+*              of any game object.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include <list>
 

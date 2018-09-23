@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Bullet.cpp
+* Description: implement Bullet class. Instances of this class are
+*              bullets in game. They can hurt a lived object.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "Bullet.h"
 #include "engine/Animation.h"
 #include "engine/Scene.h"

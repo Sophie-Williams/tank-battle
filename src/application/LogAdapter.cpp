@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        LogAdapter.cpp
+* Description: implement LogAdapter class. A logger adapter class
+*              used to print debugging information in game engine to
+*              game UI.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "LogAdapter.h"
 #include "UI/WxAppLog.h"
 #include "spdlog/spdlog.h"

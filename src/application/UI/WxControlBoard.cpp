@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        WxControlBoard.cpp
+* Description: implement WxControlBoard class. This class is responsible
+*              for showing command control and forwarding their event
+*              to handler for processing.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "WxControlBoard.h"
 #include "../common/Utility.h"
 #include <sstream>

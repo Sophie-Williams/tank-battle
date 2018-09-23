@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        WxGameView.cpp
+* Description: implement WxGameView class. This class is responsible
+*              for showing a game sence real time.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "WxGameView.h"
 #include "Engine/GameEngine.h"
 

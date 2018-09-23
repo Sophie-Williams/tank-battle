@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        WxTankPeripheralsView.h
+* Description: declare WxTankPeripheralsView class. This class is
+*              designed to show tank's peripheral views. Currently
+*              it mixes radar view and camera view in the same area.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "CiWidget.h"
 #include <memory>

@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        DumpPlayer.h
+* Description: declare DumpPlayer class. This is tank controller
+*              class.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "GameControllerInterfaces.h"
 #include "TankCommandsBuilder.h"

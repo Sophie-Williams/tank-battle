@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        WxAppLog.h
+* Description: declare WxAppLog class. This class is responsible
+*              for showing log.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "ImWidget.h"
 

@@ -1,3 +1,17 @@
+/******************************************************************
+* File:        TankBattleApp.cpp
+* Description: declare and implement TankBattleApp class. A class
+*              is resonsible to connect all of application component
+*              such as UI, game engine,... and make them work togheter.
+*              game UI.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #ifdef WIN32
 #include <Windows.h>
 #include <experimental/filesystem> // C++-standard header file name  

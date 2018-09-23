@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        WxGameStatistics.h
+* Description: declare WxGameStatistics class. This class is responsible
+*              for showing result of matches in game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "ImWidget.h"
 #include <vector>

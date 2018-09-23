@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        WxRadarView.cpp
+* Description: implement WxRadarView class. This class is responsible
+*              for showing view of a tank's radar.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "WxRadarView.h"
 
 #include "cinder/gl/gl.h"

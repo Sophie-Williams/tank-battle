@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        CiWidget.h
+* Description: declare CiWidget class. This a base class of UI
+*              controlls that use Cinder to render.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "Widget.h"
 #include "cinder/gl/gl.h"

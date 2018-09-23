@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameComponent.cpp
+* Description: implement GameResource class. A class manages resource
+*              of the game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "GameResource.h"
 #include "cinder/app/App.h"
 #include "../common/ILogger.h"

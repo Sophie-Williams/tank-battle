@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameController.cpp
+* Description: implement GameController class. This class is
+*              responsible for controlling game logic.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "GameController.h"
 #include "Bullet.h"
 #include "Tank.h"

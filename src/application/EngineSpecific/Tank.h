@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Tank.h
+* Description: declare Tank class. Instances of this class are
+*              players in game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "engine/LiveObject.h"
 #include "cinder/gl/gl.h"

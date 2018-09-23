@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameInterface.cpp
+* Description: implement GameInterface class. This is an abstract class
+*              providing information of game to plugged-in libraries.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "GameInterface.h"
 
 static GameInterface* s_gameInstance = nullptr;

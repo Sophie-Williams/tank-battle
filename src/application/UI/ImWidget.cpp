@@ -1,6 +1,16 @@
+/******************************************************************
+* File:        ImWidget.cpp
+* Description: implement ImWidget class. This is base class of UI
+*              controlls that use ImGui to render.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "ImWidget.h"
-
-
 
 ImWidget::ImWidget() : _window_size(300, 200)
 {

@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        GameStateManager.cpp
+* Description: implement GameStateManager class. This class is
+*              responsible for managing game state.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "GameStateManager.h"
 #include "../Engine/GameEngine.h"
 #include "../EngineSpecific/Tank.h"

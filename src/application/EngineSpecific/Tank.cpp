@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Tank.cpp
+* Description: implement Tank class. Instances of this class are
+*              players in game.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "Tank.h"
 #include "Bullet.h"
 #include "engine/Scene.h"

@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        DumpPlayer.cpp
+* Description: implement DumpPlayer class. This is a tank controller
+*              class.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "DumpPlayer.h"
 #include "../GameControllers.h"
 #include "../common/GameUtil.hpp"

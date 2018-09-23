@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        ImPopup.cpp
+* Description: implement ImPopup class. This is a popup dialog class
+*              that use ImGUI to render.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "ImPopup.h"
 
 ImGuiID ImPopup::_autoIdGenerator = 0;

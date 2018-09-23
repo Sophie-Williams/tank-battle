@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        TankCommandsBuilder.cpp
+* Description: implement TankCommandsBuilder class. This is a helper 
+*              class responsible for building tank commands.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "TankCommandsBuilder.h"
 
 TankCommandsBuilder::TankCommandsBuilder(TankOperations& initCommands) : _commands(initCommands)

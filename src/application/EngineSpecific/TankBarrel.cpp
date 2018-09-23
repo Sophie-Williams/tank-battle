@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        TankBarrel.cpp
+* Description: implement TankBarrel class. A TankBarrel object
+*              equivalient to a tank component in real life which
+*              used to put a gun on.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "TankBarrel.h"
 #include "engine/GameResource.h"
 

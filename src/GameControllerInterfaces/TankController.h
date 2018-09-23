@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        TankController.h
+* Description: declare TankController class. This is abstract class
+*              designed to control a tank.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "GameControllerInterfaces.h"
 #include "TankCommandsBuilder.h"

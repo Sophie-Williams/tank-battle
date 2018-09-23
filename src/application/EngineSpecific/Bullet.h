@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Bullet.h
+* Description: declare Bullet class. Instances of this class are
+*              bullets in game. They can hurt a lived object.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "engine/TexturedObject.h"
 #include "cinder/gl/gl.h"

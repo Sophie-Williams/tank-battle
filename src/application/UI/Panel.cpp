@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Panel.cpp
+* Description: implement Panel class. This class is a container class.
+*              Its object are used to contain UI controls.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "Panel.h"
 
 void Panel::updateChildrenrGeometrics() {

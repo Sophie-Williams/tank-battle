@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        WxGameView.h
+* Description: declare WxGameView class. This class is responsible
+*              for showing a game sence real time.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include "CiWidget.h"
 #include <memory>

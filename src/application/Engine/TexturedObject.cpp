@@ -1,3 +1,16 @@
+/******************************************************************
+* File:        TexturedObject.cpp
+* Description: implement TexturedObject class. A TexturedObject object
+*              is a drawable object using a texture to show its
+*              appearance.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #include "TexturedObject.h"
 #include "cinder/app/App.h"
 using namespace ci;

@@ -1,3 +1,15 @@
+/******************************************************************
+* File:        Scene.h
+* Description: declare Scene class. A Scene object contains any
+*              drawable object in a game at a specific scene or map.
+* Author:      Vincent Pham
+*
+* Copyright (c) 2018 VincentPT.
+** Distributed under the MIT License (http://opensource.org/licenses/MIT)
+**
+*
+**********************************************************************/
+
 #pragma once
 #include <list>
 #include <cinder/gl/gl.h>
