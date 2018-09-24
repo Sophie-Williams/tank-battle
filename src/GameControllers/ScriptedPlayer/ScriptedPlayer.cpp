@@ -30,6 +30,8 @@ public:
 	}
 
 	void log(MessageType type, const wchar_t* message) {
+		// we process error case when compiler stop
+		if (type == MESSAGE_ERROR) return;
 		string str;
 		if (type == MESSAGE_INFO) {
 			str.append("[INFO]   ");
@@ -45,6 +47,18 @@ public:
 		GameInterface::getInstance()->printMessage(_controller->getName(), str.c_str());
 	}
 };
+
+std::string getErrorPosition(CompilerSuite* compiler) {
+	int line, column;
+	compiler->getLastCompliedPosition(line, column);
+	string message("error at line = ");
+	message += std::to_string(line + 1);
+	message.append(", column = ");
+	message += std::to_string(column + 1);
+	message += '\n';
+
+	return message;
+}
 
 class ScriptedPlayer::ScriptedPlayerImpl {
 	CLamdaProg* _program;
@@ -91,13 +105,7 @@ public:
 		catch (exception& e) {
 			_errorMessage = e.what();
 			scriptCompiler->setErrorText(_errorMessage);
-			int line, column;
-			_compiler.getLastCompliedPosition(line, column);
-			string message("error at line = ");
-			message += std::to_string(line);
-			message.append(", column =");
-			message += std::to_string(column);
-			message += '\n';
+			string message = getErrorPosition(&_compiler);
 			GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
 		}
 		if (program) {
@@ -122,6 +130,8 @@ public:
 			_program = rootScope->detachScriptProgram(program);
 		}
 		else {
+			string message = getErrorPosition(&_compiler);
+			GameInterface::getInstance()->printMessage(_myScriptLib.getController()->getName(), message.c_str());
 			_errorMessage = scriptCompiler->getLastError();
 		}
 
