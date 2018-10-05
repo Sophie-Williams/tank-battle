@@ -20,7 +20,7 @@ void TankCamera::setRange(float range) {
 
 	auto angleStart = -_viewAngle / 2;
 
-	constexpr float maxSweepAngle = glm::pi<float>() / 18 ;
+	 float maxSweepAngle = glm::pi<float>() / 18 ;
 	int n = (int)(_viewAngle / maxSweepAngle) + 1;
 	auto sweepAngle = _viewAngle / n;
 

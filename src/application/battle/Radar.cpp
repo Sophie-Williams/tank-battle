@@ -41,7 +41,7 @@ void Radar::update(float t) {
 
 	_ray = computeRay(_range, _angle);
 
-	constexpr float scanMinAngle = glm::pi<float>() / 24;
+ float scanMinAngle = glm::pi<float>() / 24;
 
 	// update the detected object list during time event
 	auto expiredTime = 2 * glm::pi<float>() / _scanSpeed;
