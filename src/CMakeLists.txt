@@ -1,9 +1,15 @@
 cmake_minimum_required (VERSION 3.2)
 project(TankBattle)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
+
 add_subdirectory(common)
 add_subdirectory(GameControllerInterfaces)
 add_subdirectory(application)
 add_subdirectory(GameControllers/SimplePlayer)
 add_subdirectory(GameControllers/DumpPlayer)
 add_subdirectory(GameControllers/ScriptedPlayer)
+
+set_target_properties(SimplePlayer PROPERTIES FOLDER bot-controllers)
+set_target_properties(DumpPlayer PROPERTIES FOLDER bot-controllers)
+set_target_properties(ScriptedPlayer PROPERTIES FOLDER bot-controllers)
