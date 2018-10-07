@@ -19,10 +19,11 @@ Following these simple step to compile the project.
 1. Download the project from github.  
    git clone --recursive https://github.com/VincentPT/tank-battle.git
 
-2. Download external projects.  
+2. Download external projects.
+   run following command in project root folder.
    ```
    cd tank-battle\src\external
-   downloadScripts.bat
+   download-externals
    ```
 3. Compile extenal projects.  
    run following command in 'external' folder above.
