@@ -5,6 +5,9 @@ SET CURR_DIR=%cd%
 SET THIS_SCRIPT_PATH=%~dp0
 cd %THIS_SCRIPT_PATH%
 
+REM download spdlog
+git clone -b v1.x https://github.com/gabime/spdlog.git
+
 REM download Cinder at version v0.9.1
 git clone --recursive https://github.com/cinder/Cinder.git
 cd Cinder
