@@ -1,36 +1,30 @@
 cmake_minimum_required(VERSION 3.2.0)
 
-# set include directories
-SET (I_CINDER_IMGUI_BLOCK_DIR "")
-SET (I_CINDER_IMGUI_INCLUDE_DIR "")
-SET (I_CINDER_IMGUI_LIB_DIR "")
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    SET (PLATFORM x64)
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    SET (PLATFORM x86)
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
-# if CINDER_INCLUDE_DIR is defined, set include dir
-if (DEFINED CINDER_INCLUDE_DIR)
-    SET(I_CINDER_IMGUI_BLOCK_DIR ${CINDER_INCLUDE_DIR}/../blocks/Cinder-ImGui)
-    SET(I_CINDER_IMGUI_INCLUDE_DIR ${I_CINDER_IMGUI_BLOCK_DIR}/include)
-    SET(I_CINDER_IMGUI_LIB_DIR ${I_CINDER_IMGUI_BLOCK_DIR}/lib/msw/x64)
+if (NOT DEFINED CINDER_PATH)
+	set( CINDER_PATH ${CMAKE_SOURCE_PATH}/external/Cinder)
 endif()
 
-# apply opencv inlcude dir to cmake
-if (NOT ${I_CINDER_IMGUI_INCLUDE_DIR} EQUAL "")
-    target_include_directories(${PROJECT_NAME} PRIVATE ${I_CINDER_IMGUI_INCLUDE_DIR})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${I_CINDER_IMGUI_BLOCK_DIR}/lib/imgui)
-endif()
+set( CINDER_IMGUI_BUILT_PATH ${CINDER_PATH}/blocks/Cinder-ImGui/lib/msw/${PLATFORM} )
 
-find_library (CINDER_IMGUI_D cinder_imgui PATHS ${I_CINDER_IMGUI_LIB_DIR}/Debug/v140)
-find_library (CINDER_IMGUI_R cinder_imgui PATHS ${I_CINDER_IMGUI_LIB_DIR}/Release/v140)
+file(GLOB_RECURSE CINDER_IMGUI_LIBS ${CINDER_IMGUI_BUILT_PATH}/*.lib)
+foreach(LIB_PATH ${CINDER_IMGUI_LIBS})
+	string(FIND ${LIB_PATH} "Debug" LIB_FOR_CONFIG)
+	if( ${LIB_FOR_CONFIG} LESS 0 )
+		string(FIND ${LIB_PATH} "Release" LIB_FOR_CONFIG)
+		if( ${LIB_FOR_CONFIG} GREATER -1 )
+			set (CINDER_IMGUI_R ${LIB_PATH})
+		endif()
+	else()
+		set (CINDER_IMGUI_D ${LIB_PATH})
+	endif()
+endforeach()
 
-# if(WIN32)
-    # string(REGEX REPLACE "/./lib" ".dll" CINDER_IMGUI_BIN_D ${CINDER_IMGUI_D})
-    # string(REGEX REPLACE "/./lib" ".dll" CINDER_IMGUI_BIN_R ${CINDER_IMGUI_R})
-# endif()
-
-# if(WIN32)
-# get_filename_component(CINDER_IMGUI_BIN_D ${CINDER_IMGUI_D} DIRECTORY)
-# get_filename_component(CINDER_IMGUI_BIN_R ${CINDER_IMGUI_R} DIRECTORY)
-# set (CINDER_IMGUI_BIN_D ${CINDER_IMGUI_BIN_D}/cinder_imgui.dll)
-# set (CINDER_IMGUI_BIN_R ${CINDER_IMGUI_BIN_R}/cinder_imgui.dll)
-# endif()
-
+target_include_directories(${PROJECT_NAME} PRIVATE ${CINDER_PATH}/blocks/Cinder-ImGui/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CINDER_PATH}/blocks/Cinder-ImGui/lib/imgui)
 target_link_libraries(${PROJECT_NAME} debug "${CINDER_IMGUI_D}" optimized "${CINDER_IMGUI_R}")
