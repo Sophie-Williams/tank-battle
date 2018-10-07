@@ -13,22 +13,33 @@ This is not just a game project, I've created it with two main objectives.
 * FFscript - Cλ library.
 
 ## Compile.
-1. Download ffscript project version 1.0 in bellow link.  
-   https://github.com/VincentPT/ffscript/releases
-2. Compile ffscript project.
-3. Run configure command
-   go to folder ./src/GameControllers/ScriptedPlayer/cmake/ffscript of the game project run following command.
-   ```
-   cmake.exe -DFFSCRIPT_ROOT=<ffscript downloaded folder> .
-   ```
-4. Build the project.   
-   goto root folder of project then run following commands
-   ```
-   cd build
-   cmake -G "Visual Studio 14 2015 Win64" ../src -DCINDER_INCLUDE_DIR=<cinder headers folder> -DCINDER_LIB_DIR=<cinder prebuilt folder>
-   cmake --build . --target INSTALL --config Release
-   ```
+The project has been updated to new version of Cinder (v0.9.1) and ImGui (v1.65). The compiling progress is quite complex. So, I write some script to download externals, patch to fix compile error and compile the external dependencies.
+Following these simple step to compile the project.
 
+1. Download the project from github.
+   git clone --recursive https://github.com/VincentPT/tank-battle.git
+
+2. Download external projects.  
+   ```
+   cd tank-battle\src\external
+   downloadScripts.bat
+   ```
+3. Compile extenal projects.
+   run following command in 'external' folder above.
+   ```
+   build-externals.bat <Configuration>
+   ```
+   Configuration should be Debug or Release.
+   
+4. Compile the project.
+   run following commands.
+   ```
+   cd tank-battle\build
+   cmake -DCMAKE_GENERATOR_PLATFORM=x64 ../src
+   build.bat <Configuration>
+   ```
+   Configuration should be Debug or Release.
+   
 # Feedback
  The objective of this project is sharing knowledge and contributing a litle of effort to open source community. As a contributor, I am happy if someone use my contribution in their products.  
  So, if you have any issue, any ideal or even a greeting message you can contact me via Github issue management system or my E-mail: minhpta@outlook.com.  
