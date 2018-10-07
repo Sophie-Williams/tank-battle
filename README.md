@@ -16,7 +16,7 @@ This is not just a game project, I've created it with two main objectives.
 The project has been updated to new version of Cinder (v0.9.1) and ImGui (v1.65). The compiling progress is quite complex. So, I write some script to download externals, patch to fix compile error and compile the external dependencies.
 Following these simple step to compile the project.
 
-1. Download the project from github.
+1. Download the project from github.  
    git clone --recursive https://github.com/VincentPT/tank-battle.git
 
 2. Download external projects.  
@@ -24,14 +24,14 @@ Following these simple step to compile the project.
    cd tank-battle\src\external
    downloadScripts.bat
    ```
-3. Compile extenal projects.
+3. Compile extenal projects.  
    run following command in 'external' folder above.
    ```
    build-externals.bat <Configuration>
    ```
    Configuration should be Debug or Release.
    
-4. Compile the project.
+4. Compile the project.  
    run following commands.
    ```
    cd tank-battle\build
