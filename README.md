@@ -22,25 +22,27 @@ Following these simple step to compile the project.
 2. Download external projects.
    run following command in project root folder.
    ```
-   cd tank-battle\src\external
+   cd tank-battle/src/external
    download-externals
    ```
 3. Compile extenal projects.  
    run following command in 'external' folder above.
    ```
-   build-externals.bat <Configuration>
+   build-externals.bat [Configuration] [Platform]
    ```
-   Configuration should be Debug or Release.
+   * Configuration should be Debug or Release. Default is Release.
+   * Platform should be 'x64' or 'x86'. Default is x64.
    
 4. Compile the project.  
    run following commands.
    ```
-   cd tank-battle\build
-   cmake -DCMAKE_GENERATOR_PLATFORM=x64 ../src
-   build.bat <Configuration>
+   cd tank-battle/build
+   configure [Platform]
+   install.bat [Configuration]
    ```
-   Configuration should be Debug or Release.
-   
+   * Configuration should be Debug or Release. Default is Release.
+   * Platform should be 'x64' or 'x86'. Default is x64.  
+   After build success. The binrary package will be put in folder ./tank-battle/build/bin
 # Feedback
  The objective of this project is sharing knowledge and contributing a litle of effort to open source community. As a contributor, I am happy if someone use my contribution in their products.  
  So, if you have any issue, any ideal or even a greeting message you can contact me via Github issue management system or my E-mail: minhpta@outlook.com.  

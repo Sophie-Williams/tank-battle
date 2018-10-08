@@ -14,13 +14,22 @@ IF /I %CONFIGURATION%==debug (
     SET CONFIGURATION=Release
 )
 
+SET PLATFORM=%2
+IF '%PLATFORM%'=='' SET PLATFORM=x64
+
+IF /I '%PLATFORM%'=='x64' (
+	SET PLATFORM=x64
+) ELSE (
+	SET PLATFORM=Win32
+)
+
 echo Compiling Cinder...
 REM build cinder with cmake
 cd %THIS_SCRIPT_PATH%\Cinder
 mkdir build
 cd build
 del CMakeCache.txt
-cmake -DCINDER_TARGET=MSW -DCMAKE_GENERATOR_PLATFORM=x64 ..
+cmake -DCINDER_TARGET=MSW -DCMAKE_GENERATOR_PLATFORM=%PLATFORM% ..
 cmake --build . --target ALL_BUILD --config %CONFIGURATION%
 
 echo Compiling Cinder completed!
@@ -30,7 +39,7 @@ cd %THIS_SCRIPT_PATH%Cinder\blocks\Cinder-ImGui
 mkdir build
 cd build
 del CMakeCache.txt
-cmake -DCMAKE_GENERATOR_PLATFORM=x64 ..
+cmake -DCMAKE_GENERATOR_PLATFORM=%PLATFORM% ..
 cmake --build . --target ALL_BUILD --config %CONFIGURATION%
 
 cd %CURR_DIR%
