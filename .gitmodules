@@ -1,0 +1,3 @@
+[submodule "src/GameControllers/ScriptedPlayer/ffscript"]
+	path = src/GameControllers/ScriptedPlayer/ffscript
+	url = https://github.com/VincentPT/ffscript
