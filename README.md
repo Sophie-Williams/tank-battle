@@ -42,7 +42,7 @@ Following these simple step to compile the project.
    ```
    * Configuration should be Debug or Release. Default is Release.
    * Platform should be 'x64' or 'x86'. Default is x64.  
-   After build success. The binrary package will be put in folder ./tank-battle/build/bin
+   After build success, the binrary package will be put in folder ./tank-battle/build/bin
 # Feedback
  The objective of this project is sharing knowledge and contributing a litle of effort to open source community. As a contributor, I am happy if someone use my contribution in their products.  
  So, if you have any issue, any ideal or even a greeting message you can contact me via Github issue management system or my E-mail: minhpta@outlook.com.  
