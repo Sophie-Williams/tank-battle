@@ -4,8 +4,6 @@ if (NOT DEFINED CINDER_PATH)
     set(CINDER_PATH ${CMAKE_SOURCE_DIR}/external/Cinder)
 endif()
 
-message(STATUS "xxxx ${CINDER_PATH}")
-
 include( "${CINDER_PATH}/proj/cmake/configure.cmake" )
 find_package( cinder REQUIRED PATHS
 	  "${CINDER_PATH}/${CINDER_LIB_DIRECTORY}"
