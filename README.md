@@ -14,12 +14,12 @@ This is not just a game project, I've created it with two main objectives.
 
 ## Compile.
 The project has been updated to new version of Cinder (v0.9.1) and ImGui (v1.65). The compiling progress is quite complex. So, I write some script to download externals, patch to fix compile error and compile the external dependencies.
-Following these simple step to compile the project.
+Following these simple steps to compile the project.
 
 1. Download the project from github.  
    git clone --recursive https://github.com/VincentPT/tank-battle.git
 
-2. Download external projects.
+2. Download external projects.  
    run following command in project root folder.
    ```
    cd tank-battle/src/external
@@ -42,7 +42,7 @@ Following these simple step to compile the project.
    ```
    * Configuration should be Debug or Release. Default is Release.
    * Platform should be 'x64' or 'x86'. Default is x64.  
-   After build success. The binrary package will be put in folder ./tank-battle/build/bin
+   After build success, the binrary package will be put in folder ./tank-battle/build/bin
 # Feedback
  The objective of this project is sharing knowledge and contributing a litle of effort to open source community. As a contributor, I am happy if someone use my contribution in their products.  
  So, if you have any issue, any ideal or even a greeting message you can contact me via Github issue management system or my E-mail: minhpta@outlook.com.  
