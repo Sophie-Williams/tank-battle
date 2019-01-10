@@ -2,7 +2,7 @@
 #include "../common/GameUtil.hpp"
 #include "GameInterface.h"
 
-#include <function/CdeclFunction.hpp>
+#include <function/FunctionDelegate.hpp>
 #include <function/MemberFunction2.hpp>
 #include <BasicFunction.h>
 #include <Utils.h>
@@ -243,7 +243,8 @@ namespace ScriptingLib {
 		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
-	const char* collisionPositionToText(CollisionPosition pos) {
+	const char* collisionPositionToText(char posTmp) {
+		CollisionPosition pos = (CollisionPosition)posTmp;
 		switch (pos)
 		{
 		case CollisionPosition::Unknown:
@@ -263,12 +264,12 @@ namespace ScriptingLib {
 
 	RawString collisionPositionToString(CollisionPosition pos) {
 		RawString rws;
-		constantConstructor(rws, collisionPositionToText(pos));
+		constantConstructor(rws, collisionPositionToText((char)pos));
 		return rws;
 	}
 
 	void PlayerContextSciptingLibrary::printCollisionPosition(CollisionPosition pos) {
-		std::string str = collisionPositionToText(pos);
+		std::string str = collisionPositionToText((char)pos);
 		str.append(1, '\n');
 		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
@@ -380,10 +381,8 @@ namespace ScriptingLib {
 
 	template<typename T>
 	inline void addConstant(ScriptCompiler* scriptCompiler, T constant,
-		const char* (*fConvertToText)(T), ConstOperandBase* (*fCreateConsant)(T)) {
-		auto createConstantFuncObj = make_shared<CdeclFunction<ConstOperandBase*, T>>(fCreateConsant);
-		createConstantFuncObj->pushParam((void*)constant);
-		scriptCompiler->setConstantMap(fConvertToText(constant), createConstantFuncObj);
+		const char* (*fConvertToText)(T), const char* typeName) {
+		setConstantMap(scriptCompiler, fConvertToText(constant), typeName, constant);
 	}
 
 	void PlayerContextSciptingLibrary::registerGeometryTypes(ScriptCompiler* scriptCompiler) {
@@ -404,11 +403,11 @@ namespace ScriptingLib {
 
 		// register contants
 		// moving contants
-		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Unknown, collisionPositionToText, createCollisionPositionConsant);
-		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Front, collisionPositionToText, createCollisionPositionConsant);
-		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Right, collisionPositionToText, createCollisionPositionConsant);
-		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Bottom, collisionPositionToText, createCollisionPositionConsant);
-		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Left, collisionPositionToText, createCollisionPositionConsant);
+		addConstant<char>(scriptCompiler, (char)CollisionPosition::Unknown, collisionPositionToText, "CollisionPosition");
+		addConstant<char>(scriptCompiler, (char)CollisionPosition::Front, collisionPositionToText, "CollisionPosition");
+		addConstant<char>(scriptCompiler, (char)CollisionPosition::Right, collisionPositionToText, "CollisionPosition");
+		addConstant<char>(scriptCompiler, (char)CollisionPosition::Bottom, collisionPositionToText, "CollisionPosition");
+		addConstant<char>(scriptCompiler, (char)CollisionPosition::Left, collisionPositionToText, "CollisionPosition");
 
 		// register struct GeometryInfo must be same as GeometryInfo of C++ type
 		StructClass* geometryInfoStruct = new StructClass(scriptCompiler, "GeometryInfo");
@@ -473,19 +472,19 @@ namespace ScriptingLib {
 
 		// register contants
 		// moving contants
-		addConstant<MovingDir>(scriptCompiler, 0, moveToText, createMovingConsant);
-		addConstant<MovingDir>(scriptCompiler, 1, moveToText, createMovingConsant);
-		addConstant<MovingDir>(scriptCompiler, -1, moveToText, createMovingConsant);
+		addConstant<MovingDir>(scriptCompiler, 0, moveToText, "MovingDir");
+		addConstant<MovingDir>(scriptCompiler, 1, moveToText, "MovingDir");
+		addConstant<MovingDir>(scriptCompiler, -1, moveToText, "MovingDir");
 
 		// turning consants
-		addConstant<TurningDir>(scriptCompiler, 0, turnToText, createTurningConsant);
-		addConstant<TurningDir>(scriptCompiler, 1, turnToText, createTurningConsant);
-		addConstant<TurningDir>(scriptCompiler, -1, turnToText, createTurningConsant);
+		addConstant<TurningDir>(scriptCompiler, 0, turnToText, "TurningDir");
+		addConstant<TurningDir>(scriptCompiler, 1, turnToText, "TurningDir");
+		addConstant<TurningDir>(scriptCompiler, -1, turnToText, "TurningDir");
 		
 		// turning consants
-		addConstant<RotatingDir>(scriptCompiler, 0, rotateToTex, createRotatingConsant);
-		addConstant<RotatingDir>(scriptCompiler, 1, rotateToTex, createRotatingConsant);
-		addConstant<RotatingDir>(scriptCompiler, -1, rotateToTex, createRotatingConsant);
+		addConstant<RotatingDir>(scriptCompiler, 0, rotateToTex, "RotatingDir");
+		addConstant<RotatingDir>(scriptCompiler, 1, rotateToTex, "RotatingDir");
+		addConstant<RotatingDir>(scriptCompiler, -1, rotateToTex, "RotatingDir");
 
 		registerGeometryTypes(scriptCompiler);
 

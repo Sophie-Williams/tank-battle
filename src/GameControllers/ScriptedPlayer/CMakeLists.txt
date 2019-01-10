@@ -11,7 +11,8 @@ SET (MAIN_SOURCES
 
 SET (SOURCES ${MAIN_SOURCES})
 
-add_subdirectory(cmake/ffscript)
+add_subdirectory(./ffscript/ffscript)
+add_subdirectory(./ffscript/ffscriptLibrary)
 
 # define project's build target with project's source files
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
@@ -19,7 +20,7 @@ add_library(${PROJECT_NAME} SHARED ${SOURCES})
 add_definitions(-DEXPORT_GAME_CONTROLLER)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${GameControllerInterfaces_SOURCE_DIR} )
-target_link_libraries(${PROJECT_NAME} PRIVATE GameControllerInterfaces ffscriptLibrary ffscript)
+target_link_libraries(${PROJECT_NAME} PRIVATE GameControllerInterfaces ffscriptLibrary)
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     SET (PLATFORM x64)
