@@ -243,8 +243,7 @@ namespace ScriptingLib {
 		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
 
-	const char* collisionPositionToText(char posTmp) {
-		CollisionPosition pos = (CollisionPosition)posTmp;
+	const char* collisionPositionToText(CollisionPosition pos) {
 		switch (pos)
 		{
 		case CollisionPosition::Unknown:
@@ -264,12 +263,12 @@ namespace ScriptingLib {
 
 	RawString collisionPositionToString(CollisionPosition pos) {
 		RawString rws;
-		constantConstructor(rws, collisionPositionToText((char)pos));
+		constantConstructor(rws, collisionPositionToText(pos));
 		return rws;
 	}
 
 	void PlayerContextSciptingLibrary::printCollisionPosition(CollisionPosition pos) {
-		std::string str = collisionPositionToText((char)pos);
+		std::string str = collisionPositionToText(pos);
 		str.append(1, '\n');
 		GameInterface::getInstance()->printMessage(_theController->getName(), str.c_str());
 	}
@@ -382,7 +381,8 @@ namespace ScriptingLib {
 	template<typename T>
 	inline void addConstant(ScriptCompiler* scriptCompiler, T constant,
 		const char* (*fConvertToText)(T), const char* typeName) {
-		setConstantMap(scriptCompiler, fConvertToText(constant), typeName, constant);
+		auto constantInString = fConvertToText(constant);
+		setConstantMap(scriptCompiler, constantInString, typeName, constant, constantInString);
 	}
 
 	void PlayerContextSciptingLibrary::registerGeometryTypes(ScriptCompiler* scriptCompiler) {
@@ -403,11 +403,11 @@ namespace ScriptingLib {
 
 		// register contants
 		// moving contants
-		addConstant<char>(scriptCompiler, (char)CollisionPosition::Unknown, collisionPositionToText, "CollisionPosition");
-		addConstant<char>(scriptCompiler, (char)CollisionPosition::Front, collisionPositionToText, "CollisionPosition");
-		addConstant<char>(scriptCompiler, (char)CollisionPosition::Right, collisionPositionToText, "CollisionPosition");
-		addConstant<char>(scriptCompiler, (char)CollisionPosition::Bottom, collisionPositionToText, "CollisionPosition");
-		addConstant<char>(scriptCompiler, (char)CollisionPosition::Left, collisionPositionToText, "CollisionPosition");
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Unknown, collisionPositionToText, "CollisionPosition");
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Front, collisionPositionToText, "CollisionPosition");
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Right, collisionPositionToText, "CollisionPosition");
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Bottom, collisionPositionToText, "CollisionPosition");
+		addConstant<CollisionPosition>(scriptCompiler, CollisionPosition::Left, collisionPositionToText, "CollisionPosition");
 
 		// register struct GeometryInfo must be same as GeometryInfo of C++ type
 		StructClass* geometryInfoStruct = new StructClass(scriptCompiler, "GeometryInfo");

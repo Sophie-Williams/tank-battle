@@ -32,6 +32,7 @@ Following these simple steps to compile the project.
    ```
    * Configuration should be Debug or Release. Default is Release.
    * Platform should be 'x64' or 'x86'. Default is x64.
+   * Note: If you want to work with multi-configurations, you must build the external project for all desired configurations before going to step 4.
    
 4. Compile the project.  
    run following commands.
