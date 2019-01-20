@@ -39,8 +39,13 @@ endif()
 
 add_library( ${PROJECT_NAME} ${CINDER_IMGUI_SOURCES} )
 
+if (UNIX)
+	set (CINDER_IMGUI_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
+	configure_file(cinder-imgui-mac.cmake.in ${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/cinder-imgui-mac.cmake @ONLY)
+endif()
+
 target_include_directories( ${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui ${CMAKE_CURRENT_SOURCE_DIR}/include)
-	  
+
 include( "${CINDER_PATH}/proj/cmake/configure.cmake" )
 find_package( cinder REQUIRED PATHS
 	  "${CINDER_PATH}/${CINDER_LIB_DIRECTORY}"

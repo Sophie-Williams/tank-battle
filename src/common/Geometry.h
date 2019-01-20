@@ -14,6 +14,7 @@
 #include <memory>
 #include <algorithm>
 #include <cmath>
+#include <list>
 
 #define GEOMETRY_EPSILON 0.000001
 #define MIN_POINT_DISTANCE 5.0f
@@ -369,7 +370,7 @@ template <class T>
 auto polyArea(const std::vector<T>& poly) {
 	int n = (int)poly.size();
 	double area = 0;
-	auto& A = poly[j];
+	auto& A = poly[0];
 	for (int j = 1; j < n - 1; j++) {
 		auto& B = poly[j];
 		auto& C = poly[j + 1];

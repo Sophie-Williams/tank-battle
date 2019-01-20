@@ -4,7 +4,9 @@
 #include "EngineSpecific/Bullet.h"
 #include "../common/GameUtil.hpp"
 
+#if defined(_WIN32)
 #include <Windows.h>
+#endif
 
 template <class T>
 void freeSnapshotsRaw(T& obj) {
@@ -315,6 +317,7 @@ void TankControllerWorker::run() {
 }
 
 bool stopAndWait(std::thread& worker, int milisecond) {
+#if defined(_WIN32)
 	HANDLE hThread = (HANDLE)worker.native_handle();
 	DWORD waitRes = WaitForSingleObject(hThread, (DWORD)milisecond);
 
@@ -328,8 +331,11 @@ bool stopAndWait(std::thread& worker, int milisecond) {
 		worker.join();
 		return res;
 	}
-
-	return false;
+    return false;
+#else
+    worker.join();
+    return true;
+#endif
 }
 
 bool TankControllerWorker::stopAndWait(int milisecond) {

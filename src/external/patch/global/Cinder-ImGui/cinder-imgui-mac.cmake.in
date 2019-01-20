@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.2.0)
+
+target_include_directories(${PROJECT_NAME} PRIVATE @CMAKE_CURRENT_SOURCE_DIR@/include)
+target_include_directories(${PROJECT_NAME} PRIVATE @CMAKE_CURRENT_SOURCE_DIR@/lib/imgui)
+
+find_library(CINDER_IMGUI_TARGET Cinder-ImGui @CINDER_IMGUI_TARGET_DIR@)
+target_link_libraries(${PROJECT_NAME} ${CINDER_IMGUI_TARGET})

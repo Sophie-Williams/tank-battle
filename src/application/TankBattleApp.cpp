@@ -17,15 +17,21 @@
 #include <experimental/filesystem> // C++-standard header file name  
 #include <filesystem>
 using namespace std::experimental::filesystem::v1;
+#define PATH_TO_STRING(p) p.u8string()
+#elif __APPLE__
+#define PATH_TO_STRING(p) p.string()
 #else
 #include <unistd.h>
 #include <filesystem>
 using namespace std;
 using fs = std::filesystem;
+#define PATH_TO_STRING(p) p.u8string()
 #endif
 
+#include <exception>
+
 #include <stdio.h>
-#include <io.h>
+//#include <io.h>
 #include <fcntl.h>
 
 #include "cinder/app/App.h"
@@ -119,7 +125,7 @@ public:
 	void setup() override;
 	void update() override;
 	void draw() override;
-	void cleanup();
+	void cleanup() override;
 	void startStopButtonClick();
 	void setupGame();
 	void loadPlayers();
@@ -191,7 +197,7 @@ std::string getExecutableAbsolutePath() {
 #ifdef WIN32
 	GetModuleFileNameA(nullptr, buff, sizeof(buff));
 #else
-	readlink("/proc/self/exe", buff, sizeof(buff));
+	auto res = readlink("/proc/self/exe", buff, sizeof(buff));
 #endif // WIN32
 	return buff;
 }
@@ -203,14 +209,14 @@ void BasicApp::setup()
 	fs::path path = fs::current_path();
 	path.append("assets");
 	if (fs::exists(path) && fs::is_directory(path)) {
-		_workingDir = path.parent_path().u8string();
+		_workingDir = PATH_TO_STRING(path.parent_path());
 	}
 	else {
 		path = fs::path(getExecutableAbsolutePath());
 		path = path.parent_path();
 		path.append("assets");
 		if (fs::exists(path) && fs::is_directory(path)) {
-			_workingDir = path.parent_path().u8string();
+			_workingDir = PATH_TO_STRING(path.parent_path());
 		}
 		else {
 			quit();
@@ -268,7 +274,7 @@ void BasicApp::setup()
 		_runFlag = false;
 	});
 
-	getWindow()->getSignalKeyDown().connect([this](ci::app::KeyEvent& e) {
+	getWindow()->getSignalKeyDown().connect([](ci::app::KeyEvent& e) {
 		if (e.getCode() == app::KeyEvent::KEY_p) {
 			auto gameEngine = GameEngine::getInstance();
 			if (gameEngine->isPausing()) {
@@ -456,6 +462,8 @@ void BasicApp::loadPlayers() {
 			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 #ifdef WIN32
 			if (ext == ".dll" || ext == SCRIPT_EXT)
+#elif __APPLE__
+            if (ext == ".dylib" || ext == SCRIPT_EXT)
 #else
 			if (ext == ".so" || ext == SCRIPT_EXT)
 #endif
@@ -472,7 +480,10 @@ void BasicApp::loadPlayers() {
 #ifdef WIN32
 		BOOL res = SetDllDirectoryA(controllersPath.string().c_str());
 #else
-		throw std::std::runtime_error("dynamic library search path is not implemented");
+        char expression[256];
+        sprintf(expression, "DYLD_LIBRARY_PATH=%s",controllersPath.string().c_str());
+        putenv(expression);
+		//throw std::runtime_error("dynamic library search path is not implemented");
 #endif
 	}
 
@@ -510,7 +521,7 @@ void BasicApp::generateGame() {
 void BasicApp::setupGame() {
 	fs::path assetsPath(_workingDir);
 	assetsPath.append("assets");
-	addAssetDirectory(assetsPath.u8string());
+	addAssetDirectory(PATH_TO_STRING(assetsPath));
 
 	_peripheralsview1 = make_shared<WxTankPeripheralsView>(getWindow());
 	_peripheralsview2 = make_shared<WxTankPeripheralsView>(getWindow());
@@ -708,8 +719,6 @@ void BasicApp::update()
 	_uiThreadRunner.executeTasks(0);
 
 	if (_gameStateManager->isGameOver()) {
-		auto winnner = _gameStateManager->getWinner();
-
 		auto gameController = GameController::getInstance();
 		auto& records = _gameStatistics->records();
 		auto& players = _gameStatistics->getPlayers();

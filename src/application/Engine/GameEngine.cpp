@@ -199,7 +199,7 @@ void GameEngine::doUpdate(float t) {
 		{
 			auto& objects = _gameScene->getDrawableObjects();
 			for (auto it = objects.begin(); it != objects.end();) {
-				auto& obj2 = *it;
+				//auto& obj2 = *it;
 				if (it->get()->isAvailable()) {
 					it++;
 				}

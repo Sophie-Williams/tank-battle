@@ -1,4 +1,13 @@
+#if defined(_WIN32)
 #include <Windows.h>
+#else
+#include <dlfcn.h>
+typedef void* HMODULE;
+#define LoadLibraryA(filename) dlopen(filename, RTLD_NOW)
+#define FreeLibrary(hLib) dlclose(hLib)
+#define GetProcAddress(hLib, procName) dlsym(hLib, procName)
+#endif
+
 #include "TankControllerModuleWrapper.h"
 #include "../GameControllers/ScriptedPlayer/ScriptedPlayer.h"
 

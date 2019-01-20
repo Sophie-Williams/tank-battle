@@ -69,7 +69,6 @@ void WxTankPeripheralsView::setPos(float x, float y) {
 }
 
 void WxTankPeripheralsView::draw() {
-	auto h = _parent->getHeight();
 	Rectf destRect(getX(), getY(), getX() + getWidth(), getY() + getHeight());
 
 	{
@@ -131,7 +130,6 @@ void WxTankPeripheralsView::draw() {
 		if (_tank) {
 			auto gunSegment = _tank->getGun();
 			gl::ScopedColor lineColorScope(1, 1, 1);
-			constexpr float demonstrateGunLength = 20;
 
 			vec2 gunStart(gunSegment.x, gunSegment.y);
 			vec2 gunDir(gunSegment.z - gunStart.x, gunSegment.w - gunStart.y);

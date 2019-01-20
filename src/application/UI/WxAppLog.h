@@ -36,7 +36,7 @@ public:
 	~WxAppLog();
     void    clear()     { Buf.clear(); LineOffsets.clear(); }
 
-	void    addLog(LogLevel logLevel, const char* fmt, ...) IM_FMTARGS(2);
+    void    addLog(LogLevel logLevel, const char* fmt, ...) ;//IM_FMTARGS(2);
 	void    addLogV(LogLevel logLevel, const char* fmt, va_list args);
 	void    update();
 	void setLogLevel(LogLevel logLevel);

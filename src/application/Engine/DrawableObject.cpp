@@ -11,7 +11,7 @@
 **********************************************************************/
 
 #include "DrawableObject.h"
-#include "glm\gtx\matrix_decompose.hpp"
+#include "glm/gtx/matrix_decompose.hpp"
 
 using namespace ci;
 

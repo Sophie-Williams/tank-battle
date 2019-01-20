@@ -24,7 +24,7 @@ WxAppLog::~WxAppLog() {
 
 }
 
-void WxAppLog::addLog(WxAppLog::LogLevel logLevel, const char* fmt, ...) IM_FMTARGS(2)
+void WxAppLog::addLog(WxAppLog::LogLevel logLevel, const char* fmt, ...) //IM_FMTARGS(2)
 {
     va_list args;
     va_start(args, fmt);
@@ -87,7 +87,6 @@ void WxAppLog::update()
 	const char* logLevels[] = { "Verbose" ,"Debug", "Info", "Error"};
 	if (ImGui::BeginCombo("Log level", logLevels[logLevel]))
 	{
-		int oldSelection = logLevel;
 		for (int n = 0; n < IM_ARRAYSIZE(logLevels); n++)
 		{
 			bool is_selected = logLevel == n;

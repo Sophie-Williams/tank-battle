@@ -160,7 +160,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.
 target_link_libraries(${PROJECT_NAME} GameControllerInterfaces ScriptedPlayer)
 
 include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder.cmake)
-include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder-imgui.cmake)
+if (WIN32)
+    include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder-imgui.cmake)
+else ()
+    include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/cinder-imgui-unix.cmake)
+endif ()    
 
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     SET (PLATFORM x64)

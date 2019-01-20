@@ -25,18 +25,18 @@ std::default_random_engine generator;
 #define REGIST_GLOBAL_FUNCTION1(helper, nativeFunc, scriptFunc, returnType,...) \
 	helper.registFunction(\
 		scriptFunc, #__VA_ARGS__,\
-		createUserFunctionFactory<returnType, __VA_ARGS__>(helper.getSriptCompiler(), #returnType, nativeFunc)\
+createUserFunctionFactory<returnType, ##__VA_ARGS__>(helper.getSriptCompiler(), #returnType, nativeFunc)\
 	)
 
-#define REGIST_GLOBAL_FUNCTION2(helper, func, returnType, ...) REGIST_GLOBAL_FUNCTION1(helper, func, #func, returnType, __VA_ARGS__)
+#define REGIST_GLOBAL_FUNCTION2(helper, func, returnType, ...) REGIST_GLOBAL_FUNCTION1(helper, func, #func, returnType, ##__VA_ARGS__)
 
 #define REGIST_CONTEXT_FUNCTION1(helper, nativeFunc, scriptFunc, returnType,...) \
 	helper.registFunction(\
 		scriptFunc, #__VA_ARGS__,\
-		createUserFunctionFactoryMember<PlayerContextSciptingLibrary, returnType, __VA_ARGS__>(helper.getSriptCompiler(), this, #returnType, &PlayerContextSciptingLibrary::nativeFunc)\
+createUserFunctionFactoryMember<PlayerContextSciptingLibrary, returnType, ##__VA_ARGS__>(helper.getSriptCompiler(), this, #returnType, &PlayerContextSciptingLibrary::nativeFunc)\
 	)
 
-#define REGIST_CONTEXT_FUNCTION2(helper, func, returnType, ...) REGIST_CONTEXT_FUNCTION1(helper, func, #func, returnType, __VA_ARGS__)
+#define REGIST_CONTEXT_FUNCTION2(helper, func, returnType, ...) REGIST_CONTEXT_FUNCTION1(helper, func, #func, returnType, ##__VA_ARGS__)
 
 namespace ScriptingLib {
 	///////////////////////////////////////////////////////////////////////////////////////////

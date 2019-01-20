@@ -26,9 +26,6 @@ void TankCamera::setRange(float range) {
 
 	_viewArea.resize(n + 1 + 1);
 
-	// view base ray
-	float startX = 0;
-	float startY = _range;
 	// roate ray around origin
 	float angle = angleStart;
 	int i;

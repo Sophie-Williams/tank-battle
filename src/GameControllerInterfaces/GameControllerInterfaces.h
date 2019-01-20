@@ -95,7 +95,11 @@ struct RawTimeObject {
 
 #pragma pack(pop)
 
+#if defined(__MACH__)
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 
 template <class T>
 void initRawArray(RawArray<T>& arr) {

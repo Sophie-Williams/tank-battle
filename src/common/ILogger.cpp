@@ -1,6 +1,6 @@
 #include "ILogger.h"
 
-static ILogger* s_ILoggerInstance = NULL;
+static ILogger* s_ILoggerInstance = nullptr;
 
 ILogger::ILogger() {
     s_ILoggerInstance = this;

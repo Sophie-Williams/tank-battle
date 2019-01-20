@@ -1208,7 +1208,7 @@ int findIntersect(const T& P, const T& u, const std::vector<T>& poly, float& t1,
 	int nSub1 = (int)poly.size() - 1;
 	for (int i = 0; i <= nSub1; i++) {
 		auto& Q = poly[i];
-		auto& v = poly[next(i, nSub1)] - Q;
+		const auto& v = poly[next(i, nSub1)] - Q;
 		if (Intersect2D_Lines(P, u, Q, v, &t1, &t2) && t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
 			return i;
 		}
@@ -1226,7 +1226,7 @@ int findIntersect(const T& P, const T& u, const T* poly, int nSub1, int start, i
 	do {
 		auto& Q = poly[i];
 		nextI = next(i, nSub1);
-		auto& v = poly[nextI] - Q;
+		const auto& v = poly[nextI] - Q;
 		if (Intersect2D_Lines(P, u, Q, v, &t1, &t2) && t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
 			return i;
 		}

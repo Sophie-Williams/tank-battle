@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.2)
 project(TankBattle)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
 
 add_subdirectory(common)
