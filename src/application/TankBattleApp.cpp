@@ -812,7 +812,11 @@ void BasicApp::draw()
 		text.append(" start in ");
 		text.append(std::to_string(durationLeft));
 		text.append("s");
-        ci::Font font = ci::Font::getDefault();
+#ifdef _WIN32
+		ci::Font font("Aria", 56);
+#else
+		ci::Font font = ci::Font::getDefault();
+#endif
 		gl::drawStringCentered(text, textPos, ci::ColorA(1, 1, 1, 1), font);
 	}
 }
