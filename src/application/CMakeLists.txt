@@ -120,8 +120,6 @@ SET (MAIN_SOURCES
     TankBattle.h
     LogAdapter.h
     LogAdapter.cpp
-    Resources/Resources.h
-    Resources/Resources.rc
     ${UI_SRC}
     ${ENGINE_SRC}
     ${COMMON_SRC}
@@ -130,9 +128,12 @@ SET (MAIN_SOURCES
     ${ENGINE_SPECIFIC_SRC}
 )
 
-SET (SOURCES ${MAIN_SOURCES})
-
 if(MSVC)
+    SET (MAIN_SOURCES
+        Resources/Resources.h
+        Resources/Resources.rc
+        ${MAIN_SOURCES}
+    )
     source_group(UI FILES ${UI_SRC})
     source_group(Common FILES ${COMMON_SRC})
     source_group(Engine FILES ${ENGINE_SRC})
@@ -152,8 +153,16 @@ if(MSVC)
 	endforeach()
 endif()
 
+SET (SOURCES ${MAIN_SOURCES})
+
 # define project's build target with project's source files
-add_executable(${PROJECT_NAME} WIN32  ${SOURCES})
+
+if (WIN32)
+	add_executable(${PROJECT_NAME} WIN32  ${SOURCES})
+else ()
+	add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SOURCES})
+endif ()
+
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} PRIVATE ${GameControllerInterfaces_SOURCE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../external/spdlog/include)

@@ -88,5 +88,5 @@ DrawableObjectRef GameInterfaceImpl::getObject(GameObjectId id) const {
 }
 
 void GameInterfaceImpl::printMessage(const char* header, const char* message) const {
-	ILogger::getInstance()->logV(LogLevel::Info, "[%s] %s", header, message);
+	//ILogger::getInstance()->logV(LogLevel::Info, "[%s] %s", header, message);
 }
